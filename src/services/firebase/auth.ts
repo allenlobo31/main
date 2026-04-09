@@ -34,6 +34,10 @@ export async function registerUser(params: {
     name,
     email: user.email ?? email,
     avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
+    place: '',
+    phoneNumber: '',
+    address: '',
+    emergencyContactNumber: '',
     createdAt: serverTimestamp(),
   };
 

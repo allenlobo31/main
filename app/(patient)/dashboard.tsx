@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { useGamification } from '../../src/hooks/useGamification';
 import { XPBar } from '../../src/components/gamification/XPBar';
-import { LevelBadge } from '../../src/components/gamification/LevelBadge';
 import { StreakCounter } from '../../src/components/gamification/StreakCounter';
 import { TaskCard } from '../../src/components/gamification/TaskCard';
 import { Card } from '../../src/components/ui/Card';
@@ -22,6 +22,7 @@ import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const gamification = useGamification();
   const { isCompact, horizontalPadding } = useResponsiveLayout();
@@ -56,10 +57,13 @@ export default function DashboardScreen() {
               </Text>
             </View>
           </View>
-          <View style={styles.headerRight}>
-            <LevelBadge xp={gamification.xp} size="md" />
-            <Avatar uri={user?.avatarUrl} name={user?.name} size={40} />
-          </View>
+          <TouchableOpacity
+            style={styles.headerRight}
+            activeOpacity={0.8}
+            onPress={() => router.push('/(patient)/profile')}
+          >
+            <Avatar name={user?.name} size={40} />
+          </TouchableOpacity>
         </View>
 
         {/* XP Bar */}
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
   phaseChip: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
   phaseDot: { width: 8, height: 8, borderRadius: 4 },
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  headerRight: { alignItems: 'center', justifyContent: 'center' },
   xpCard: { marginBottom: theme.spacing.md },
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
   statsRowCompact: { rowGap: theme.spacing.sm },

@@ -63,6 +63,12 @@ export default function PatientLayout() {
           tabBarIcon: ({ size }) => <TabEmoji symbol="📓" size={size} />,
         }}
       />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

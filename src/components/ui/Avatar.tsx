@@ -9,12 +9,7 @@ interface AvatarProps {
 }
 
 export function Avatar({ uri, name, size = 40 }: AvatarProps) {
-  const initials = (name ?? '?')
-    .split(' ')
-    .map((w) => w[0] ?? '')
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  const initials = (name ?? '?').trim().charAt(0).toUpperCase() || '?';
 
   if (uri) {
     return (

@@ -10,6 +10,10 @@ export interface User {
   name: string;
   email: string;
   avatarUrl: string;
+  place?: string;
+  phoneNumber?: string;
+  address?: string;
+  emergencyContactNumber?: string;
   createdAt: Timestamp;
   expoPushToken?: string;
 }
