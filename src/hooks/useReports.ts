@@ -17,7 +17,7 @@ import { Report, ReportType } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { useGamificationStore } from '../store/gamificationStore';
 import { uploadFile } from '../services/firebase/storage';
-import { callGetSignedUrl, callGetSignedUploadUrl } from '../services/firebase/functions';
+import { callGetSignedUrl } from '../services/firebase/functions';
 import {
   generateEncryptionKey,
   encryptData,
@@ -89,18 +89,10 @@ export function useReports() {
         const reportId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const path = `reports/${user.uid}/${reportId}/${params.filename}`;
 
-        const { uploadUrl } = await callGetSignedUploadUrl({
-          path,
-          contentType: params.contentType,
-        });
-
-        setUploadProgress(50);
-
         await uploadFile({
-          uploadUrl,
+          path,
           data: encryptedBytes,
           contentType: params.contentType,
-          filename: params.filename,
         });
 
         setUploadProgress(100);

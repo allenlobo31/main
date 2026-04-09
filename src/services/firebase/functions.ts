@@ -29,6 +29,16 @@ interface SignedUploadUrlResponse {
   path: string;
 }
 
+interface UploadEncryptedReportRequest {
+  path: string;
+  contentType: string;
+  dataBase64: string;
+}
+
+interface UploadEncryptedReportResponse {
+  path: string;
+}
+
 interface SendNotificationRequest {
   token: string;
   title: string;
@@ -67,6 +77,19 @@ export async function callGetSignedUploadUrl(params: {
   const fn = httpsCallable<SignedUploadUrlRequest, SignedUploadUrlResponse>(
     functions,
     'getSignedUploadUrl',
+  );
+  const result = await fn(params);
+  return result.data;
+}
+
+export async function callUploadEncryptedReport(params: {
+  path: string;
+  contentType: string;
+  dataBase64: string;
+}): Promise<UploadEncryptedReportResponse> {
+  const fn = httpsCallable<UploadEncryptedReportRequest, UploadEncryptedReportResponse>(
+    functions,
+    'uploadEncryptedReport',
   );
   const result = await fn(params);
   return result.data;

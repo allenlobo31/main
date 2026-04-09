@@ -1,41 +1,45 @@
-import { File, Paths } from 'expo-file-system';
-import { fetch } from 'expo/fetch';
+import * as FileSystem from 'expo-file-system/legacy';
+import { callGetSignedUploadUrl } from './functions';
 
 export async function uploadFile(params: {
-  uploadUrl: string;
+  path: string;
   data: Uint8Array;
   contentType: string;
-  filename: string;
 }): Promise<void> {
-  const { uploadUrl, data, contentType, filename } = params;
-  const tempFile = new File(Paths.cache, `report-${Date.now()}-${filename}`);
-  tempFile.create();
-  tempFile.write(data);
+  const { path, data, contentType } = params;
 
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': contentType,
-    },
-    body: tempFile,
+  const { uploadUrl } = await callGetSignedUploadUrl({ path, contentType });
+
+  const tempFileUri = `${FileSystem.cacheDirectory}report-${Date.now()}.bin`;
+  const base64 = uint8ArrayToBase64(data);
+  await FileSystem.writeAsStringAsync(tempFileUri, base64, {
+    encoding: FileSystem.EncodingType.Base64,
   });
 
-  if (!response.ok) {
-    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+  try {
+    const response = await FileSystem.uploadAsync(uploadUrl, tempFileUri, {
+      httpMethod: 'PUT',
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        'Content-Type': contentType,
+      },
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(
+        `Storage upload failed: ${response.status} ${response.body ?? ''}`.trim(),
+      );
+    }
+  } finally {
+    await FileSystem.deleteAsync(tempFileUri, { idempotent: true }).catch(() => undefined);
   }
 }
 
-// ─── Get signed download URL (via Cloud Function for security) ────────────────
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]!);
+  }
 
-interface SignedUrlResponse {
-  url: string;
-}
-
-export async function getSignedDownloadUrl(filePath: string): Promise<string> {
-  const getUrl = httpsCallable<{ filePath: string }, SignedUrlResponse>(
-    functions,
-    'getSignedUrl',
-  );
-  const result = await getUrl({ filePath });
-  return result.data.url;
+  return globalThis.btoa(binary);
 }
