@@ -11,14 +11,13 @@ import {
   gamificationDoc,
   runTransaction,
   getDoc,
+  setDoc,
   arrayUnion,
-  increment,
   serverTimestamp,
 } from '../services/firebase/firestore';
-import { doc } from 'firebase/firestore';
+import { todayDateString } from '../utils/dateHelpers';
 import { getLevelForXP } from '../constants/gamification';
 import { getStreakStatus } from '../utils/dateHelpers';
-import { Timestamp } from 'firebase/firestore';
 
 const handledFirestoreCodes = new Set<string>();
 
@@ -71,9 +70,25 @@ interface GamificationActions {
   setProfile: (profile: GamificationProfile | null) => void;
   addXP: (userId: string, amount: number) => Promise<void>;
   checkStreak: (userId: string) => Promise<void>;
+  completeDailyTask: (userId: string, taskId: string, xpReward: number) => Promise<void>;
   unlockBadge: (userId: string, badgeId: BadgeId) => Promise<void>;
   transitionPhase: (userId: string, nextPhase: Phase) => Promise<void>;
   fetchProfile: (userId: string) => Promise<void>;
+}
+
+function buildDefaultProfile(): Omit<GamificationProfile, 'lastCheckIn'> & { lastCheckIn: ReturnType<typeof serverTimestamp> } {
+  const now = todayDateString();
+  return {
+    xp: 0,
+    level: 1,
+    streakDays: 1,
+    lastCheckIn: serverTimestamp(),
+    badges: [],
+    phase: 'pre-op',
+    surgeryDate: null,
+    tasksCompletedToday: [],
+    lastTaskResetDate: now,
+  };
 }
 
 export const useGamificationStore = create<GamificationState & GamificationActions>()(
@@ -84,11 +99,38 @@ export const useGamificationStore = create<GamificationState & GamificationActio
       setProfile: (profile) => set({ profile }),
 
       fetchProfile: async (userId) => {
+        const ref = gamificationDoc(userId);
         try {
-          const snap = await getDoc(gamificationDoc(userId));
-          if (snap.exists()) {
-            set({ profile: snap.data() as GamificationProfile });
+          let snap = await getDoc(ref);
+
+          if (!snap.exists()) {
+            await setDoc(ref as never, buildDefaultProfile() as never);
+            snap = await getDoc(ref);
           }
+
+          if (!snap.exists()) return;
+
+          const data = snap.data() as GamificationProfile;
+          const today = todayDateString();
+          const resetNeeded = data.lastTaskResetDate !== today;
+
+          if (resetNeeded) {
+            await setDoc(
+              ref as never,
+              {
+                tasksCompletedToday: [],
+                lastTaskResetDate: today,
+              } as never,
+              { merge: true },
+            );
+            const refreshed = await getDoc(ref);
+            if (refreshed.exists()) {
+              set({ profile: refreshed.data() as GamificationProfile });
+            }
+            return;
+          }
+
+          set({ profile: data });
         } catch (error) {
           logFirestoreIssue('fetchProfile', error);
         }
@@ -129,7 +171,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
 
             let newStreak: number;
             if (status === 'increment') {
-              newStreak = (current.streakDays ?? 0) + 1;
+              newStreak = Math.max(current.streakDays ?? 0, 0) + 1;
             } else {
               newStreak = 1; // reset
             }
@@ -144,6 +186,60 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
         } catch (error) {
           logFirestoreIssue('checkStreak', error);
+        }
+      },
+
+      completeDailyTask: async (userId, taskId, xpReward) => {
+        try {
+          const ref = gamificationDoc(userId);
+          await runTransaction(db, async (tx) => {
+            const snap = await tx.get(ref as never);
+            const today = todayDateString();
+
+            if (!snap.exists()) {
+              const newXP = xpReward;
+              tx.set(
+                ref as never,
+                {
+                  ...buildDefaultProfile(),
+                  xp: newXP,
+                  level: getLevelForXP(newXP).level,
+                  tasksCompletedToday: [taskId],
+                  lastTaskResetDate: today,
+                  badges: ['first_checkin'],
+                } as never,
+              );
+              return;
+            }
+
+            const current = snap.data() as GamificationProfile;
+            const completedToday = current.lastTaskResetDate === today
+              ? current.tasksCompletedToday ?? []
+              : [];
+
+            if (completedToday.includes(taskId)) {
+              return;
+            }
+
+            const updatedCompleted = [...completedToday, taskId];
+            const newXP = (current.xp ?? 0) + xpReward;
+            const newLevel = getLevelForXP(newXP).level;
+            const shouldUnlockFirstBadge =
+              updatedCompleted.length === 1 && !(current.badges ?? []).includes('first_checkin');
+
+            tx.update(ref as never, {
+              xp: newXP,
+              level: newLevel,
+              tasksCompletedToday: updatedCompleted,
+              lastTaskResetDate: today,
+              ...(shouldUnlockFirstBadge ? { badges: arrayUnion('first_checkin') } : {}),
+            });
+          });
+
+          const updated = await getDoc(ref);
+          if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
+        } catch (error) {
+          logFirestoreIssue('completeDailyTask', error);
         }
       },
 

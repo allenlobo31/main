@@ -61,6 +61,7 @@ export interface GamificationProfile {
   phase: Phase;
   surgeryDate: Timestamp | null;
   tasksCompletedToday: string[];
+  lastTaskResetDate?: string;
 }
 
 export interface Task {

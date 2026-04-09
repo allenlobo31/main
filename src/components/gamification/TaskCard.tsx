@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
     rowGap: theme.spacing.sm,
   },
   completed: {
-    opacity: 0.55,
     borderColor: theme.colors.success,
+    backgroundColor: `${theme.colors.success}1A`,
   },
   left: {
     flexDirection: 'row',

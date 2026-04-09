@@ -30,6 +30,14 @@ export function useGamification() {
     await store.checkStreak(uid);
   }, [uid]);
 
+  const completeTask = useCallback(
+    async (taskId: string, xpReward: number) => {
+      if (!uid) return;
+      await store.completeDailyTask(uid, taskId, xpReward);
+    },
+    [uid],
+  );
+
   const updatePhase = useCallback(
     async (nextPhase: Phase) => {
       if (!uid) return;
@@ -47,12 +55,13 @@ export function useGamification() {
     profile: store.profile,
     xp: store.profile?.xp ?? 0,
     level: store.profile?.level ?? 1,
-    streak: store.profile?.streakDays ?? 0,
+    streak: Math.max(store.profile?.streakDays ?? 1, 1),
     badges: store.profile?.badges ?? [],
     phase: store.profile?.phase ?? 'pre-op',
     tasksCompletedToday: store.profile?.tasksCompletedToday ?? [],
     awardXP,
     earnBadge,
+    completeTask,
     checkDailyStreak,
     updatePhase,
     refresh,

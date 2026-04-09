@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { StreakCounter } from '../../src/components/gamification/StreakCounter';
 import { TaskCard } from '../../src/components/gamification/TaskCard';
 import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
+import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
@@ -26,6 +27,8 @@ export default function DashboardScreen() {
   const { user } = useAuthStore();
   const gamification = useGamification();
   const { isCompact, horizontalPadding } = useResponsiveLayout();
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     gamification.refresh();
@@ -35,10 +38,28 @@ export default function DashboardScreen() {
   const phase = gamification.phase;
   const phaseConfig = PHASE_CONFIGS[phase];
 
-  const tasks = DAILY_TASKS.map((t) => ({
-    ...t,
-    completed: gamification.tasksCompletedToday.includes(t.id),
-  }));
+  const tasks = useMemo(
+    () =>
+      DAILY_TASKS.map((t) => ({
+        ...t,
+        completed: gamification.tasksCompletedToday.includes(t.id),
+      })),
+    [gamification.tasksCompletedToday],
+  );
+
+  const pendingTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.completed);
+
+  const onCompleteTask = async (taskId: string, xpReward: number) => {
+    if (!user?.uid) return;
+    setCompletingTaskId(taskId);
+    try {
+      await gamification.completeTask(taskId, xpReward);
+      setExpandedTaskId(null);
+    } finally {
+      setCompletingTaskId(null);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -92,9 +113,31 @@ export default function DashboardScreen() {
 
         {/* Today's Tasks */}
         <Text style={styles.sectionTitle}>Today's tasks</Text>
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
+        {pendingTasks.length === 0 ? (
+          <Text style={styles.noBadges}>All daily tasks completed. Great job!</Text>
+        ) : (
+          pendingTasks.map((task) => {
+            const isExpanded = expandedTaskId === task.id;
+            return (
+              <View key={task.id}>
+                <TaskCard
+                  task={task}
+                  onPress={() => setExpandedTaskId((current) => (current === task.id ? null : task.id))}
+                />
+                {isExpanded ? (
+                  <View style={styles.completeActionWrap}>
+                    <Button
+                      label="Completed"
+                      onPress={() => onCompleteTask(task.id, task.xpReward)}
+                      isLoading={completingTaskId === task.id}
+                      style={styles.completeBtn}
+                    />
+                  </View>
+                ) : null}
+              </View>
+            );
+          })
+        )}
 
         {/* Badges */}
         <Text style={styles.sectionTitle}>Badges earned</Text>
@@ -113,6 +156,13 @@ export default function DashboardScreen() {
             })
           )}
         </ScrollView>
+
+        <Text style={styles.sectionTitle}>Tasks completed today</Text>
+        {completedTasks.length === 0 ? (
+          <Text style={styles.noBadges}>No tasks completed yet.</Text>
+        ) : (
+          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} />)
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -139,6 +189,17 @@ const styles = StyleSheet.create({
   statLabel: { ...theme.typography.caption, color: theme.colors.textMuted, marginTop: 2 },
   sectionTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.sm, marginTop: theme.spacing.sm },
   badgesRow: { marginTop: theme.spacing.xs },
+  completeActionWrap: {
+    marginTop: -theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+  },
+  completeBtn: {
+    backgroundColor: theme.colors.success,
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    paddingHorizontal: theme.spacing.lg,
+  },
   badgeItem: { alignItems: 'center', marginRight: theme.spacing.md, width: 60 },
   badgeEmoji: { fontSize: 32, marginBottom: 4 },
   badgeLabel: { ...theme.typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
