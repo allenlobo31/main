@@ -11,8 +11,10 @@ service cloud.firestore {
     }
 
     function isLinkedDoctor(userId) {
-      return request.auth.uid ==
-        get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId;
+      return request.auth != null
+        && exists(/databases/$(database)/documents/users/$(userId))
+        && request.auth.uid ==
+          get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId;
     }
 
     match /users/{userId} {
@@ -39,7 +41,7 @@ service cloud.firestore {
 
       match /gamification/{doc} {
         allow read: if isOwner(userId) || isLinkedDoctor(userId);
-        allow write: if false;  // only Cloud Functions write gamification
+        allow write: if isOwner(userId);
       }
     }
 

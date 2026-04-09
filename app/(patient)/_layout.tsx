@@ -1,7 +1,11 @@
 import React from 'react';
+import { Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '../../src/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
+
+function TabEmoji({ symbol, size }: { symbol: string; size: number }) {
+  return <Text style={{ fontSize: size, lineHeight: size + 2 }}>{symbol}</Text>;
+}
 
 export default function PatientLayout() {
   return (
@@ -28,45 +32,35 @@ export default function PatientLayout() {
         name="dashboard"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" color={color} size={size} />
-          ),
+          tabBarIcon: ({ size }) => <TabEmoji symbol="🏠" size={size} />,
         }}
       />
       <Tabs.Screen
         name="ai-monitor"
         options={{
           title: 'AI',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pulse-outline" color={color} size={size} />
-          ),
+          tabBarIcon: ({ size }) => <TabEmoji symbol="📈" size={size} />,
         }}
       />
       <Tabs.Screen
         name="experts"
         options={{
           title: 'Experts',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="call-outline" color={color} size={size} />
-          ),
+          tabBarIcon: ({ size }) => <TabEmoji symbol="📞" size={size} />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: 'Reports',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="folder-outline" color={color} size={size} />
-          ),
+          tabBarIcon: ({ size }) => <TabEmoji symbol="📁" size={size} />,
         }}
       />
       <Tabs.Screen
         name="diary"
         options={{
           title: 'Diary',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book-outline" color={color} size={size} />
-          ),
+          tabBarIcon: ({ size }) => <TabEmoji symbol="📓" size={size} />,
         }}
       />
     </Tabs>

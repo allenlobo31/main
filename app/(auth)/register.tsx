@@ -17,7 +17,6 @@ import { parseAuthError } from '../../src/services/firebase/auth';
 import { safeParse, registerSchema } from '../../src/utils/validators';
 import { theme } from '../../src/constants/theme';
 import { UserRole } from '../../src/types';
-import { AuthError } from 'firebase/auth';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -44,7 +43,7 @@ export default function RegisterScreen() {
         role,
       });
     } catch (err) {
-      setError(parseAuthError(err as AuthError));
+      setError(parseAuthError(err));
     }
   };
 

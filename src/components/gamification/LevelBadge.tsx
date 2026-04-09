@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../constants/theme';
 import { getLevelForXP } from '../../constants/gamification';
-import { Ionicons } from '@expo/vector-icons';
 
 interface LevelBadgeProps {
   xp: number;

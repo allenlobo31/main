@@ -16,7 +16,6 @@ import { useAuthStore } from '../../src/store/authStore';
 import { parseAuthError } from '../../src/services/firebase/auth';
 import { safeParse, loginSchema } from '../../src/utils/validators';
 import { theme } from '../../src/constants/theme';
-import { AuthError } from 'firebase/auth';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -36,7 +35,7 @@ export default function LoginScreen() {
     try {
       await login(email.trim().toLowerCase(), password);
     } catch (err) {
-      setErrors({ general: parseAuthError(err as AuthError) });
+      setErrors({ general: parseAuthError(err) });
     }
   };
 

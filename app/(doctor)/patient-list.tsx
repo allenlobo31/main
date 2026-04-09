@@ -44,7 +44,7 @@ export default function PatientListScreen() {
       const doctorData = doctorSnap.data() as DoctorProfile;
       const patientIds = doctorData.linkedPatientIds ?? [];
 
-      const summaries = await Promise.all(
+      const summaries = await Promise.allSettled(
         patientIds.map(async (patientId) => {
           const snap = await getDoc(userDoc(patientId));
           if (!snap.exists()) return null;
@@ -69,7 +69,12 @@ export default function PatientListScreen() {
         }),
       );
 
-      setPatients(summaries.filter(Boolean) as PatientSummary[]);
+      const accessiblePatients = summaries
+        .filter((result): result is PromiseFulfilledResult<PatientSummary | null> => result.status === 'fulfilled')
+        .map((result) => result.value)
+        .filter(Boolean) as PatientSummary[];
+
+      setPatients(accessiblePatients);
     } catch (error) {
       console.error('[PatientList] loadPatients error:', error);
     } finally {

@@ -5,12 +5,13 @@ import {
   onAuthStateChanged,
   updateProfile,
   User as FirebaseUser,
-  AuthError,
 } from 'firebase/auth';
 import { auth } from './config';
 import { db, userDoc, setDoc, serverTimestamp } from './firestore';
 import { UserRole } from '../../types';
 import { getDoc } from 'firebase/firestore';
+
+const loggedAuthCodes = new Set<string>();
 
 // ─── Register ─────────────────────────────────────────────────────────────────
 
@@ -92,14 +93,28 @@ export async function fetchUserRole(uid: string): Promise<UserRole | null> {
 
 // ─── Error Parser ─────────────────────────────────────────────────────────────
 
-export function parseAuthError(error: AuthError): string {
-  switch (error.code) {
+export function parseAuthError(error: unknown): string {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code)
+      : '';
+
+  if (__DEV__ && code && !loggedAuthCodes.has(code)) {
+    loggedAuthCodes.add(code);
+    console.warn('[Auth] Firebase error code:', code);
+  }
+
+  switch (code) {
     case 'auth/email-already-in-use':
       return 'An account with this email already exists.';
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
     case 'auth/weak-password':
       return 'Password must be at least 6 characters.';
+    case 'auth/operation-not-allowed':
+      return 'Email/password sign-up is disabled in Firebase Authentication.';
+    case 'auth/configuration-not-found':
+      return 'Firebase Auth configuration was not found. Verify FIREBASE_API_KEY, FIREBASE_PROJECT_ID, and enable Email/Password sign-in in Firebase Console.';
     case 'auth/user-not-found':
     case 'auth/wrong-password':
     case 'auth/invalid-credential':
@@ -108,6 +123,12 @@ export function parseAuthError(error: AuthError): string {
       return 'Too many attempts. Please try again later.';
     case 'auth/network-request-failed':
       return 'Network error. Please check your connection.';
+    case 'permission-denied':
+      return 'Registration is blocked by Firestore security rules. Check your Firebase rules.';
+    case 'failed-precondition':
+      return 'Firestore is not fully set up yet. Create the Firestore database in Firebase console.';
+    case 'unavailable':
+      return 'Firebase service is temporarily unavailable. Please try again.';
     default:
       return 'An unexpected error occurred. Please try again.';
   }

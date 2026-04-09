@@ -1,8 +1,5 @@
 import {
   getFirestore,
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
   FirestoreDataConverter,
   DocumentData,
   WithFieldValue,
@@ -43,16 +40,7 @@ import {
 
 // ─── Initialize Firestore with offline persistence ────────────────────────────
 
-let db: ReturnType<typeof getFirestore>;
-try {
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager(),
-    }),
-  });
-} catch {
-  db = getFirestore(app);
-}
+const db = getFirestore(app);
 
 export { db };
 

@@ -20,6 +20,49 @@ import { getLevelForXP } from '../constants/gamification';
 import { getStreakStatus } from '../utils/dateHelpers';
 import { Timestamp } from 'firebase/firestore';
 
+const handledFirestoreCodes = new Set<string>();
+
+function getFirebaseCode(error: unknown): string {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    return String((error as { code?: unknown }).code ?? '');
+  }
+  return '';
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+function isNonFatalFirestoreIssue(error: unknown): boolean {
+  const code = getFirebaseCode(error);
+  const msg = getErrorMessage(error);
+  if (code === 'unavailable' || code === 'failed-precondition' || code === 'unimplemented') {
+    return true;
+  }
+  return (
+    msg.includes('client is offline') ||
+    msg.includes('database (default) does not exist') ||
+    msg.includes('Database \'(default)\' not found')
+  );
+}
+
+function logFirestoreIssue(scope: string, error: unknown): void {
+  const code = getFirebaseCode(error) || 'unknown';
+  const key = `${scope}:${code}`;
+  const msg = getErrorMessage(error);
+
+  if (isNonFatalFirestoreIssue(error)) {
+    if (!handledFirestoreCodes.has(key)) {
+      handledFirestoreCodes.add(key);
+      console.warn(`[GamificationStore] ${scope} skipped: ${msg}`);
+    }
+    return;
+  }
+
+  console.error(`[GamificationStore] ${scope} error:`, error);
+}
+
 interface GamificationState {
   profile: GamificationProfile | null;
 }
@@ -47,7 +90,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
             set({ profile: snap.data() as GamificationProfile });
           }
         } catch (error) {
-          console.error('[GamificationStore] fetchProfile error:', error);
+          logFirestoreIssue('fetchProfile', error);
         }
       },
 
@@ -69,7 +112,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const updated = await getDoc(ref);
           if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
         } catch (error) {
-          console.error('[GamificationStore] addXP error:', error);
+          logFirestoreIssue('addXP', error);
         }
       },
 
@@ -100,7 +143,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const updated = await getDoc(ref);
           if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
         } catch (error) {
-          console.error('[GamificationStore] checkStreak error:', error);
+          logFirestoreIssue('checkStreak', error);
         }
       },
 
@@ -123,7 +166,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const updated = await getDoc(ref);
           if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
         } catch (error) {
-          console.error('[GamificationStore] unlockBadge error:', error);
+          logFirestoreIssue('unlockBadge', error);
         }
       },
 
@@ -138,7 +181,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const updated = await getDoc(ref);
           if (updated.exists()) set({ profile: updated.data() as GamificationProfile });
         } catch (error) {
-          console.error('[GamificationStore] transitionPhase error:', error);
+          logFirestoreIssue('transitionPhase', error);
         }
       },
     }),
