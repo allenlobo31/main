@@ -19,6 +19,16 @@ interface SignedUrlResponse {
   url: string;
 }
 
+interface SignedUploadUrlRequest {
+  path: string;
+  contentType: string;
+}
+
+interface SignedUploadUrlResponse {
+  uploadUrl: string;
+  path: string;
+}
+
 interface SendNotificationRequest {
   token: string;
   title: string;
@@ -48,6 +58,18 @@ export async function callGetSignedUrl(filePath: string): Promise<string> {
   );
   const result = await fn({ filePath });
   return result.data.url;
+}
+
+export async function callGetSignedUploadUrl(params: {
+  path: string;
+  contentType: string;
+}): Promise<SignedUploadUrlResponse> {
+  const fn = httpsCallable<SignedUploadUrlRequest, SignedUploadUrlResponse>(
+    functions,
+    'getSignedUploadUrl',
+  );
+  const result = await fn(params);
+  return result.data;
 }
 
 export async function callSendPushNotification(

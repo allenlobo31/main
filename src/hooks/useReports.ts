@@ -17,7 +17,7 @@ import { Report, ReportType } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { useGamificationStore } from '../store/gamificationStore';
 import { uploadFile } from '../services/firebase/storage';
-import { callGetSignedUrl } from '../services/firebase/functions';
+import { callGetSignedUrl, callGetSignedUploadUrl } from '../services/firebase/functions';
 import {
   generateEncryptionKey,
   encryptData,
@@ -89,25 +89,21 @@ export function useReports() {
         const reportId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const path = `reports/${user.uid}/${reportId}/${params.filename}`;
 
-        // Upload with progress
-        const { uploadTask } = uploadFile({
+        const { uploadUrl } = await callGetSignedUploadUrl({
           path,
-          data: encryptedBytes,
           contentType: params.contentType,
         });
 
-        await new Promise<void>((resolve, reject) => {
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress =
-                snapshot.bytesTransferred / snapshot.totalBytes;
-              setUploadProgress(Math.round(progress * 100));
-            },
-            reject,
-            resolve,
-          );
+        setUploadProgress(50);
+
+        await uploadFile({
+          uploadUrl,
+          data: encryptedBytes,
+          contentType: params.contentType,
+          filename: params.filename,
         });
+
+        setUploadProgress(100);
 
         const fileUrl = path;
 
@@ -136,7 +132,7 @@ export function useReports() {
         return null;
       }
     },
-    [user?.uid],
+    [user?.uid, fetchReports, gamStore],
   );
 
   const getSignedUrl = useCallback(async (filePath: string) => {

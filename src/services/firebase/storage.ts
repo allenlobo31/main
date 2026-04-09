@@ -1,37 +1,28 @@
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  uploadString,
-  UploadTask,
-  StorageReference,
-} from 'firebase/storage';
-import { app } from './config';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { uint8ToBase64 } from '../../utils/encryption';
+import { File, Paths } from 'expo-file-system';
+import { fetch } from 'expo/fetch';
 
-const storage = getStorage(app);
-const functions = getFunctions(app);
-
-export { storage };
-
-// ─── Upload with progress ─────────────────────────────────────────────────────
-
-export interface UploadResult {
-  uploadTask: UploadTask;
-  storageRef: StorageReference;
-}
-
-export function uploadFile(params: {
-  path: string;
-  data: Uint8Array | string;
+export async function uploadFile(params: {
+  uploadUrl: string;
+  data: Uint8Array;
   contentType: string;
-}): UploadResult {
-  const { path, data, contentType } = params;
-  const storageRef = ref(storage, path);
-  const payload = typeof data === 'string' ? data : uint8ToBase64(data);
-  const uploadTask = uploadString(storageRef, payload, 'base64', { contentType });
-  return { uploadTask, storageRef };
+  filename: string;
+}): Promise<void> {
+  const { uploadUrl, data, contentType, filename } = params;
+  const tempFile = new File(Paths.cache, `report-${Date.now()}-${filename}`);
+  tempFile.create();
+  tempFile.write(data);
+
+  const response = await fetch(uploadUrl, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': contentType,
+    },
+    body: tempFile,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+  }
 }
 
 // ─── Get signed download URL (via Cloud Function for security) ────────────────
