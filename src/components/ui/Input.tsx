@@ -6,13 +6,14 @@ import {
   StyleSheet,
   ViewStyle,
   TextInputProps,
+  StyleProp,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  containerStyle?: ViewStyle;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export function Input({ label, error, containerStyle, ...props }: InputProps) {
@@ -58,6 +59,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     color: theme.colors.textPrimary,
     ...theme.typography.body,
+    minHeight: 48,
   },
   inputFocused: {
     borderColor: theme.colors.primary,

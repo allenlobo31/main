@@ -16,6 +16,7 @@ import { TaskCard } from '../../src/components/gamification/TaskCard';
 import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
@@ -23,6 +24,7 @@ import { BadgeId } from '../../src/types';
 export default function DashboardScreen() {
   const { user } = useAuthStore();
   const gamification = useGamification();
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   useEffect(() => {
     gamification.refresh();
@@ -39,7 +41,10 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -63,17 +68,17 @@ export default function DashboardScreen() {
         </Card>
 
         {/* Streak + Stats Row */}
-        <View style={styles.statsRow}>
-          <Card style={styles.statCard}>
+        <View style={[styles.statsRow, isCompact && styles.statsRowCompact]}>
+          <Card style={[styles.statCard, isCompact && styles.statCardCompact]}>
             <StreakCounter streak={gamification.streak} />
           </Card>
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, isCompact && styles.statCardCompact]}>
             <View style={styles.statCenter}>
               <Text style={styles.statValue}>{gamification.xp}</Text>
               <Text style={styles.statLabel}>Total XP</Text>
             </View>
           </Card>
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, isCompact && styles.statCardFull]}> 
             <View style={styles.statCenter}>
               <Text style={styles.statValue}>{gamification.badges.length}</Text>
               <Text style={styles.statLabel}>Badges</Text>
@@ -111,7 +116,7 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg },
   headerLeft: { gap: 4 },
   greeting: { ...theme.typography.h2, color: theme.colors.textPrimary },
@@ -120,8 +125,11 @@ const styles = StyleSheet.create({
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
   xpCard: { marginBottom: theme.spacing.md },
-  statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl },
-  statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center' },
+  statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
+  statsRowCompact: { rowGap: theme.spacing.sm },
+  statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center', minWidth: 0 },
+  statCardCompact: { flexBasis: '48%' },
+  statCardFull: { flexBasis: '100%' },
   statCenter: { alignItems: 'center' },
   statValue: { ...theme.typography.h2, color: theme.colors.textPrimary, fontWeight: '800' },
   statLabel: { ...theme.typography.caption, color: theme.colors.textMuted, marginTop: 2 },

@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  StyleProp,
 } from 'react-native';
 import { theme } from '../../constants/theme';
 
@@ -17,8 +18,8 @@ interface ButtonProps {
   variant?: ButtonVariant;
   isLoading?: boolean;
   disabled?: boolean;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
   fullWidth?: boolean;
 }
 
@@ -69,6 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
+    flexShrink: 1,
   },
   primary: {
     backgroundColor: theme.colors.primary,
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
   label: {
     ...theme.typography.body,
     fontWeight: '600',
+    textAlign: 'center',
   },
   primaryText: {
     color: theme.colors.textPrimary,

@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
+    flexWrap: 'wrap',
   },
   icon: { fontSize: 22 },
   content: { flex: 1 },

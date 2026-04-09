@@ -39,12 +39,12 @@ export async function generateEncryptionKey(): Promise<string> {
  *
  * @param data - Raw bytes to encrypt
  * @param hexKey - 64-char hex-encoded 256-bit key
- * @returns Hex-encoded encrypted output (IV prepended)
+ * @returns Binary encrypted output with the IV prepended
  */
 export async function encryptData(
   data: Uint8Array,
   hexKey: string,
-): Promise<string> {
+): Promise<Uint8Array> {
   const iv = await Crypto.getRandomBytesAsync(16); // 128-bit IV
   const keyBytes = fromHex(hexKey);
 
@@ -54,18 +54,22 @@ export async function encryptData(
     encrypted[i] = data[i]! ^ keyBytes[i % keyBytes.length]! ^ iv[i % iv.length]!;
   }
 
-  return toHex(iv) + toHex(encrypted);
+  const output = new Uint8Array(iv.length + encrypted.length);
+  output.set(iv, 0);
+  output.set(encrypted, iv.length);
+  return output;
 }
 
 /**
  * Decrypt data encrypted with encryptData().
  *
- * @param hexEncrypted - Hex-encoded (IV + ciphertext)
+ * @param encrypted - Binary payload with the IV prepended, or legacy hex text
  * @param hexKey - 64-char hex-encoded 256-bit key
  */
-export function decryptData(hexEncrypted: string, hexKey: string): Uint8Array {
-  const iv = fromHex(hexEncrypted.slice(0, 32)); // 16 bytes = 32 hex chars
-  const ciphertext = fromHex(hexEncrypted.slice(32));
+export function decryptData(encrypted: string | Uint8Array, hexKey: string): Uint8Array {
+  const payload = typeof encrypted === 'string' ? fromHex(encrypted) : encrypted;
+  const iv = payload.slice(0, 16);
+  const ciphertext = payload.slice(16);
   const keyBytes = fromHex(hexKey);
 
   const decrypted = new Uint8Array(ciphertext.length);

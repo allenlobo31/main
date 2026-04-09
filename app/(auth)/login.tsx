@@ -16,6 +16,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { parseAuthError } from '../../src/services/firebase/auth';
 import { safeParse, loginSchema } from '../../src/utils/validators';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const router = useRouter();
   const { login, isLoading } = useAuthStore();
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   const handleLogin = async () => {
     setErrors({});
@@ -46,10 +48,13 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[
+            styles.container,
+            { paddingHorizontal: horizontalPadding },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
+          <View style={[styles.header, isCompact && styles.headerCompact]}>
             <Text style={styles.logo}>🩺</Text>
             <Text style={styles.appName}>HerniaCare</Text>
             <Text style={styles.tagline}>Your recovery companion</Text>
@@ -110,8 +115,9 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { flexGrow: 1, justifyContent: 'center', padding: theme.spacing.xl },
+  container: { flexGrow: 1, justifyContent: 'center', paddingVertical: theme.spacing.xl, alignItems: 'center' },
   header: { alignItems: 'center', marginBottom: theme.spacing.xxxl },
+  headerCompact: { marginBottom: theme.spacing.xl },
   logo: { fontSize: 56, marginBottom: theme.spacing.sm },
   appName: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: 4 },
   tagline: { ...theme.typography.body, color: theme.colors.textMuted },
@@ -121,6 +127,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    width: '100%',
+    maxWidth: 440,
   },
   title: { ...theme.typography.h2, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   errorBanner: {

@@ -53,6 +53,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.md,
+    flexWrap: 'wrap',
+    gap: theme.spacing.xs,
   },
   title: {
     ...theme.typography.h3,
@@ -62,6 +64,7 @@ const styles = StyleSheet.create({
   timestamp: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+    flexShrink: 1,
   },
   trendRow: {
     flexDirection: 'row',

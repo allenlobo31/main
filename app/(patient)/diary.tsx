@@ -15,6 +15,7 @@ import { DiaryEntry } from '../../src/components/diary/DiaryEntry';
 import { MoodPicker } from '../../src/components/diary/MoodPicker';
 import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { MoodType } from '../../src/types';
 
 export default function DiaryScreen() {
@@ -23,6 +24,7 @@ export default function DiaryScreen() {
   const [text, setText] = useState('');
   const [mood, setMood] = useState<MoodType | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   useEffect(() => {
     fetchEntries(true);
@@ -56,7 +58,7 @@ export default function DiaryScreen() {
         <FlatList
           data={entries}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <Text style={styles.pageTitle}>Recovery Diary</Text>
@@ -87,7 +89,7 @@ export default function DiaryScreen() {
         />
 
         {/* Add Entry Button / Form */}
-        <View style={styles.inputArea}>
+        <View style={[styles.inputArea, { paddingHorizontal: horizontalPadding }]}>
           {showForm ? (
             <View style={styles.form}>
               <MoodPicker selected={mood} onSelect={setMood} />
@@ -101,18 +103,18 @@ export default function DiaryScreen() {
                 numberOfLines={4}
                 maxLength={2000}
               />
-              <View style={styles.formBtns}>
+              <View style={[styles.formBtns, isCompact && styles.formBtnsCompact]}>
                 <Button
                   label="Cancel"
                   onPress={() => { setShowForm(false); setText(''); setMood(null); }}
                   variant="ghost"
-                  style={{ flex: 1 }}
+                  style={isCompact ? undefined : { flex: 1 }}
                 />
                 <Button
                   label="Save +15 XP"
                   onPress={handleSubmit}
                   isLoading={isSubmitting}
-                  style={{ flex: 1 }}
+                  style={isCompact ? undefined : { flex: 1 }}
                 />
               </View>
             </View>
@@ -132,11 +134,12 @@ export default function DiaryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   empty: { ...theme.typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: theme.spacing.xxxl, fontStyle: 'italic' },
-  inputArea: { padding: theme.spacing.lg, borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: theme.colors.background },
+  inputArea: { paddingVertical: theme.spacing.lg, borderTopWidth: 1, borderTopColor: theme.colors.border, backgroundColor: theme.colors.background },
   form: { gap: theme.spacing.sm },
   textArea: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, color: theme.colors.textPrimary, ...theme.typography.body, textAlignVertical: 'top', minHeight: 100 },
   formBtns: { flexDirection: 'row', gap: theme.spacing.sm },
+  formBtnsCompact: { flexDirection: 'column' },
 });

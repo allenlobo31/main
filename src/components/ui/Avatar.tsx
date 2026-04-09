@@ -45,11 +45,16 @@ export function Avatar({ uri, name, size = 40 }: AvatarProps) {
 const styles = StyleSheet.create({
   image: {
     resizeMode: 'cover',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   fallback: {
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    overflow: 'hidden',
   },
   initials: {
     color: theme.colors.textPrimary,

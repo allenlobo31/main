@@ -2,11 +2,13 @@ import {
   getStorage,
   ref,
   uploadBytesResumable,
+  uploadString,
   UploadTask,
   StorageReference,
 } from 'firebase/storage';
 import { app } from './config';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { uint8ToBase64 } from '../../utils/encryption';
 
 const storage = getStorage(app);
 const functions = getFunctions(app);
@@ -22,12 +24,13 @@ export interface UploadResult {
 
 export function uploadFile(params: {
   path: string;
-  data: Uint8Array | Blob;
+  data: Uint8Array | string;
   contentType: string;
 }): UploadResult {
   const { path, data, contentType } = params;
   const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, data, { contentType });
+  const payload = typeof data === 'string' ? data : uint8ToBase64(data);
+  const uploadTask = uploadString(storageRef, payload, 'base64', { contentType });
   return { uploadTask, storageRef };
 }
 

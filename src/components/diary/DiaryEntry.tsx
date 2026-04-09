@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   dateText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
   moodEmoji: { fontSize: 18 },

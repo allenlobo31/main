@@ -16,6 +16,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DoctorProfile, User, SymptomEntry } from '../../src/types';
 import { getDoc } from 'firebase/firestore';
 
@@ -28,6 +29,7 @@ interface PatientSummary {
 export default function PatientListScreen() {
   const { user } = useAuthStore();
   const router = useRouter();
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -92,9 +94,9 @@ export default function PatientListScreen() {
         <FlatList
           data={patients}
           keyExtractor={(item) => item.user.uid}
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
           ListHeaderComponent={
-            <View style={styles.header}>
+            <View style={[styles.header, isCompact && styles.headerCompact]}>
               <Text style={styles.pageTitle}>My Patients</Text>
               <Button label="Logout" onPress={() => logout()} variant="ghost" />
             </View>
@@ -137,15 +139,16 @@ export default function PatientListScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg },
+  headerCompact: { flexDirection: 'column', alignItems: 'flex-start', gap: theme.spacing.sm },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, marginBottom: theme.spacing.sm, borderWidth: 1, borderColor: theme.colors.border, gap: theme.spacing.md },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, marginBottom: theme.spacing.sm, borderWidth: 1, borderColor: theme.colors.border, gap: theme.spacing.md, flexWrap: 'wrap' },
   cardFlagged: { borderColor: theme.colors.danger, backgroundColor: `${theme.colors.danger}11` },
-  info: { flex: 1 },
+  info: { flex: 1, minWidth: 0 },
   name: { ...theme.typography.body, color: theme.colors.textPrimary, fontWeight: '700' },
   email: { ...theme.typography.caption, color: theme.colors.textMuted },
   meta: { ...theme.typography.caption, color: theme.colors.textSecondary, marginTop: 2 },
-  arrow: { fontSize: 22, color: theme.colors.textMuted },
+  arrow: { fontSize: 22, color: theme.colors.textMuted, marginLeft: 'auto' },
   empty: { ...theme.typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: theme.spacing.xxxl, fontStyle: 'italic' },
 });

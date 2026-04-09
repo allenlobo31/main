@@ -26,6 +26,7 @@ import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Badge } from '../../src/components/ui/Badge';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { User, SymptomEntry, Report, GamificationProfile, AIInsight } from '../../src/types';
 import { aiInsightDoc } from '../../src/services/firebase/firestore';
 import { todayDateString, formatDate } from '../../src/utils/dateHelpers';
@@ -38,6 +39,7 @@ export default function PatientDetailScreen() {
   const [gamification, setGamification] = useState<GamificationProfile | null>(null);
   const [aiInsight, setAiInsight] = useState<AIInsight | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   useEffect(() => {
     if (uid) loadData(uid);
@@ -97,16 +99,19 @@ export default function PatientDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Patient Header */}
         <Card style={styles.profileCard}>
-          <View style={styles.profileRow}>
+          <View style={[styles.profileRow, isCompact && styles.profileRowCompact]}>
             <Avatar uri={patient.avatarUrl} name={patient.name} size={56} />
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{patient.name}</Text>
               <Text style={styles.email}>{patient.email}</Text>
               {gamification && (
-                <View style={styles.gamRow}>
+                <View style={[styles.gamRow, isCompact && styles.gamRowCompact]}>
                   <Badge label={`Lv ${gamification.level}`} variant="primary" />
                   <Badge label={`${gamification.xp} XP`} variant="muted" />
                   <Badge label={gamification.phase} variant="success" />
@@ -168,15 +173,17 @@ export default function PatientDetailScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   loading: { flex: 1, backgroundColor: theme.colors.background, alignItems: 'center', justifyContent: 'center' },
   errorText: { ...theme.typography.body, color: theme.colors.textMuted },
   profileCard: { marginBottom: theme.spacing.lg },
-  profileRow: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' },
+  profileRow: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center', flexWrap: 'wrap' },
+  profileRowCompact: { alignItems: 'flex-start' },
   profileInfo: { flex: 1, gap: 4 },
   name: { ...theme.typography.h2, color: theme.colors.textPrimary },
   email: { ...theme.typography.caption, color: theme.colors.textMuted },
-  gamRow: { flexDirection: 'row', gap: theme.spacing.xs, marginTop: 4 },
+  gamRow: { flexDirection: 'row', gap: theme.spacing.xs, marginTop: 4, flexWrap: 'wrap' },
+  gamRowCompact: { rowGap: theme.spacing.xs },
   flagWarning: { backgroundColor: `${theme.colors.danger}22`, borderRadius: theme.borderRadius.sm, padding: theme.spacing.sm, marginTop: theme.spacing.md },
   flagWarningText: { ...theme.typography.body, color: theme.colors.dangerLight, fontWeight: '700' },
   sectionTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.sm, marginTop: theme.spacing.md },

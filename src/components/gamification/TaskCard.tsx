@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.sm,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    flexWrap: 'wrap',
+    rowGap: theme.spacing.sm,
   },
   completed: {
     opacity: 0.55,
@@ -73,6 +75,7 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.textPrimary,
     flex: 1,
+    minWidth: 0,
   },
   labelDone: { color: theme.colors.textMuted, textDecorationLine: 'line-through' },
   xpChip: {
@@ -80,6 +83,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 3,
     borderRadius: theme.borderRadius.full,
+    marginLeft: 'auto',
   },
   xpText: {
     ...theme.typography.caption,

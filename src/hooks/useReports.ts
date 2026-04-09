@@ -21,7 +21,6 @@ import { callGetSignedUrl } from '../services/firebase/functions';
 import {
   generateEncryptionKey,
   encryptData,
-  uint8ToBase64,
 } from '../utils/encryption';
 import { XP_VALUES } from '../constants/gamification';
 
@@ -85,8 +84,7 @@ export function useReports() {
       try {
         // Generate and encrypt
         const key = await generateEncryptionKey();
-        const encrypted = await encryptData(params.fileData, key);
-        const encryptedBytes = new TextEncoder().encode(encrypted);
+        const encryptedBytes = await encryptData(params.fileData, key);
 
         const reportId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const path = `reports/${user.uid}/${reportId}/${params.filename}`;

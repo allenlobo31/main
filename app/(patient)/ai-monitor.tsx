@@ -18,6 +18,7 @@ import { PainChart } from '../../src/components/ai/PainChart';
 import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { SwellingLevel } from '../../src/types';
 
 export default function AIMonitorScreen() {
@@ -31,6 +32,7 @@ export default function AIMonitorScreen() {
   const [woundCondition, setWoundCondition] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   useEffect(() => {
     refreshInsight();
@@ -66,7 +68,10 @@ export default function AIMonitorScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.pageTitle}>AI Health Monitor</Text>
 
         {/* Flag Alert */}
@@ -100,11 +105,15 @@ export default function AIMonitorScreen() {
 
           {/* Swelling */}
           <Text style={styles.fieldLabel}>Swelling</Text>
-          <View style={styles.optionRow}>
+          <View style={[styles.optionRow, isCompact && styles.optionRowCompact]}>
             {SWELLING_OPTIONS.map((opt) => (
               <TouchableOpacity
                 key={opt}
-                style={[styles.optBtn, swelling === opt && styles.optBtnActive]}
+                style={[
+                  styles.optBtn,
+                  isCompact && styles.optBtnCompact,
+                  swelling === opt && styles.optBtnActive,
+                ]}
                 onPress={() => setSwelling(opt)}
               >
                 <Text style={[styles.optText, swelling === opt && styles.optTextActive]}>
@@ -173,7 +182,7 @@ export default function AIMonitorScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   formCard: { marginTop: theme.spacing.md },
   formTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.md },
@@ -183,8 +192,10 @@ const styles = StyleSheet.create({
   painBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
   painBtnText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '700' },
   painBtnTextActive: { color: '#fff' },
-  optionRow: { flexDirection: 'row', gap: theme.spacing.xs, marginBottom: theme.spacing.sm },
-  optBtn: { flex: 1, paddingVertical: theme.spacing.xs, borderRadius: theme.borderRadius.sm, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', backgroundColor: theme.colors.surfaceAlt },
+  optionRow: { flexDirection: 'row', gap: theme.spacing.xs, marginBottom: theme.spacing.sm, flexWrap: 'wrap' },
+  optionRowCompact: { rowGap: theme.spacing.xs },
+  optBtn: { flex: 1, paddingVertical: theme.spacing.xs, borderRadius: theme.borderRadius.sm, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', backgroundColor: theme.colors.surfaceAlt, minWidth: 88 },
+  optBtnCompact: { flexBasis: '48%' },
   optBtnActive: { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}22` },
   optText: { ...theme.typography.caption, color: theme.colors.textMuted },
   optTextActive: { color: theme.colors.primaryLight, fontWeight: '700' },

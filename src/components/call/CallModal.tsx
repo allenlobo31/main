@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   Animated,
   Modal,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import Constants from 'expo-constants';
 import { CallTimer } from './CallTimer';
@@ -22,8 +22,6 @@ interface CallModalProps {
   onEndCall: () => void;
 }
 
-const { width, height } = Dimensions.get('window');
-
 export function CallModal({
   visible,
   callState,
@@ -31,6 +29,7 @@ export function CallModal({
   remoteUid,
   onEndCall,
 }: CallModalProps) {
+  const { width, height } = useWindowDimensions();
   const isExpoGo = Constants.appOwnership === 'expo';
   const agora = !isExpoGo ? (require('react-native-agora') as typeof import('react-native-agora')) : null;
   const RtcSurface = agora?.RtcSurfaceView as React.ComponentType<any> | undefined;
@@ -73,7 +72,7 @@ export function CallModal({
         {/* Remote video (large) */}
         {callState === 'connected' && remoteUid && canRenderAgoraVideo ? (
           <RtcSurface
-            style={styles.remoteVideo}
+            style={[styles.remoteVideo, { width, height }]}
             canvas={{ uid: remoteUid, sourceType: VideoSourceType.VideoSourceRemote }}
           />
         ) : (
@@ -94,7 +93,15 @@ export function CallModal({
 
         {/* Local video PIP */}
         {callState === 'connected' && canRenderAgoraVideo && (
-          <View style={styles.pipContainer}>
+          <View
+            style={[
+              styles.pipContainer,
+              {
+                width: Math.max(92, Math.min(width * 0.28, 132)),
+                height: Math.max(128, Math.min(height * 0.22, 180)),
+              },
+            ]}
+          >
             <RtcSurface
               style={styles.pipVideo}
               canvas={{ uid: localUid, sourceType: VideoSourceType.VideoSourceCamera }}
@@ -136,8 +143,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   remoteVideo: {
-    width,
-    height,
     position: 'absolute',
   },
   connectingOverlay: {
@@ -159,10 +164,8 @@ const styles = StyleSheet.create({
   },
   pipContainer: {
     position: 'absolute',
-    top: 60,
-    right: 16,
-    width: 100,
-    height: 140,
+    top: 56,
+    right: 14,
     borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
     borderWidth: 2,
@@ -171,23 +174,23 @@ const styles = StyleSheet.create({
   pipVideo: { width: '100%', height: '100%' },
   header: {
     position: 'absolute',
-    top: 50,
-    left: 16,
+    top: 48,
+    left: 14,
   },
   controls: {
     position: 'absolute',
-    bottom: 60,
+    bottom: 44,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.xl,
+    gap: theme.spacing.lg,
   },
   ctrlBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: `${theme.colors.surface}cc`,
     alignItems: 'center',
     justifyContent: 'center',
@@ -197,9 +200,9 @@ const styles = StyleSheet.create({
   },
   ctrlIcon: { fontSize: 26 },
   endBtn: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     backgroundColor: theme.colors.danger,
     alignItems: 'center',
     justifyContent: 'center',

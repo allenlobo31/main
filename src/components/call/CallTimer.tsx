@@ -43,6 +43,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.full,
+    alignSelf: 'flex-start',
   },
   dot: {
     width: 8,

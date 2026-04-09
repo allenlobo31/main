@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { theme } from '../../constants/theme';
 import { SymptomEntry } from '../../types';
@@ -9,10 +9,10 @@ interface PainChartProps {
   entries: SymptomEntry[];
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-
 export function PainChart({ entries }: PainChartProps) {
+  const { width } = useWindowDimensions();
   const last7 = entries.slice(0, 7).reverse();
+  const chartWidth = Math.max(width - 32, 280);
 
   if (last7.length === 0) {
     return (
@@ -33,7 +33,7 @@ export function PainChart({ entries }: PainChartProps) {
           labels,
           datasets: [{ data, color: () => theme.colors.primary }],
         }}
-        width={SCREEN_WIDTH - 48}
+        width={chartWidth}
         height={160}
         yAxisSuffix=""
         yAxisInterval={1}
@@ -59,14 +59,14 @@ export function PainChart({ entries }: PainChartProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: theme.spacing.md },
+  container: { marginBottom: theme.spacing.md, alignItems: 'center' },
   title: {
     ...theme.typography.body,
     color: theme.colors.textSecondary,
     fontWeight: '600',
     marginBottom: theme.spacing.sm,
   },
-  chart: { borderRadius: theme.borderRadius.md },
+  chart: { borderRadius: theme.borderRadius.md, alignSelf: 'center' },
   empty: {
     height: 100,
     alignItems: 'center',

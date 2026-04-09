@@ -2,21 +2,21 @@ import { AppTheme } from '../types';
 
 export const theme: AppTheme = {
   colors: {
-    background: '#0f0f1a',
-    surface: '#1e1e38',
-    surfaceAlt: '#13132a',
-    primary: '#7c6ef7',
-    primaryLight: '#a78bfa',
-    accent: '#5b8dd9',
-    success: '#3a7050',
-    successLight: '#5a9070',
-    danger: '#d45a7c',
-    dangerLight: '#f07090',
-    warning: '#e0a040',
+    background: '#0b1020',
+    surface: '#151b2f',
+    surfaceAlt: '#10182a',
+    primary: '#6f86ff',
+    primaryLight: '#9bb0ff',
+    accent: '#66a6ff',
+    success: '#2e6f57',
+    successLight: '#69a68a',
+    danger: '#d45f78',
+    dangerLight: '#f07f99',
+    warning: '#e0a64a',
     textPrimary: '#ffffff',
-    textSecondary: '#aaaacc',
-    textMuted: '#666688',
-    border: '#333355',
+    textSecondary: '#c1c8e8',
+    textMuted: '#7c86ab',
+    border: '#24304d',
   },
   typography: {
     h1: { fontSize: 24, fontWeight: '700' },
@@ -44,11 +44,11 @@ export const theme: AppTheme = {
 };
 
 export const lightThemeOverrides: Partial<AppTheme['colors']> = {
-  background: '#f0f0f8',
+  background: '#f5f7fc',
   surface: '#ffffff',
-  surfaceAlt: '#e8e8f0',
+  surfaceAlt: '#edf1f9',
   textPrimary: '#0f0f1a',
   textSecondary: '#444466',
   textMuted: '#888899',
-  border: '#ccccdd',
+  border: '#d7def0',
 };

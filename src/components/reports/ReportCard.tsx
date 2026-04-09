@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     gap: theme.spacing.md,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   iconBox: {
     width: 44,
@@ -76,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: { fontSize: 22 },
-  info: { flex: 1, gap: 2 },
+  info: { flex: 1, gap: 2, minWidth: 0 },
   title: {
     ...theme.typography.body,
     color: theme.colors.textPrimary,
@@ -84,12 +85,14 @@ const styles = StyleSheet.create({
   },
   meta: { ...theme.typography.caption, color: theme.colors.textMuted },
   aiChip: { ...theme.typography.caption, color: theme.colors.primaryLight, marginTop: 2 },
-  actions: { gap: theme.spacing.xs },
+  actions: { gap: theme.spacing.xs, marginLeft: 'auto' },
   viewBtn: {
     backgroundColor: theme.colors.primary,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.sm,
+    minWidth: 72,
+    alignItems: 'center',
   },
   viewText: { ...theme.typography.caption, color: '#fff', fontWeight: '700' },
   deleteBtn: {

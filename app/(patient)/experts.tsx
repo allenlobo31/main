@@ -12,6 +12,7 @@ import { ExpertCard } from '../../src/components/call/ExpertCard';
 import { CallModal } from '../../src/components/call/CallModal';
 import { useCall } from '../../src/hooks/useCall';
 import { theme } from '../../src/constants/theme';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { Expert } from '../../src/types';
 
 export default function ExpertsScreen() {
@@ -19,6 +20,7 @@ export default function ExpertsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [callingExpertId, setCallingExpertId] = useState<string | null>(null);
   const [remoteUid, setRemoteUid] = useState<number | null>(null);
+  const { horizontalPadding } = useResponsiveLayout();
 
   const { callState, startCall, endCall, agoraChannelName } = useCall();
 
@@ -57,7 +59,10 @@ export default function ExpertsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.pageTitle}>Expert Connect</Text>
         <Text style={styles.subtitle}>
           {onlineExperts.length} specialist{onlineExperts.length !== 1 ? 's' : ''} online
@@ -111,7 +116,7 @@ export default function ExpertsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { padding: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
+  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: 4 },
   subtitle: { ...theme.typography.body, color: theme.colors.textMuted, marginBottom: theme.spacing.lg },
   sectionLabel: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: theme.spacing.sm, marginTop: theme.spacing.sm },

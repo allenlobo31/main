@@ -17,6 +17,7 @@ import { parseAuthError } from '../../src/services/firebase/auth';
 import { safeParse, registerSchema } from '../../src/utils/validators';
 import { theme } from '../../src/constants/theme';
 import { UserRole } from '../../src/types';
+import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -26,6 +27,7 @@ export default function RegisterScreen() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { register, isLoading } = useAuthStore();
+  const { isCompact, horizontalPadding } = useResponsiveLayout();
 
   const handleRegister = async () => {
     setError(null);
@@ -54,10 +56,13 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
-          contentContainerStyle={styles.container}
+          contentContainerStyle={[
+            styles.container,
+            { paddingHorizontal: horizontalPadding },
+          ]}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.header}>
+          <View style={[styles.header, isCompact && styles.headerCompact]}>
             <Text style={styles.logo}>🩺</Text>
             <Text style={styles.appName}>HerniaCare</Text>
           </View>
@@ -73,11 +78,15 @@ export default function RegisterScreen() {
 
             {/* Role selector */}
             <Text style={styles.roleLabel}>I am a...</Text>
-            <View style={styles.roleRow}>
+            <View style={[styles.roleRow, isCompact && styles.roleRowCompact]}>
               {(['patient', 'doctor'] as UserRole[]).map((r) => (
                 <TouchableOpacity
                   key={r}
-                  style={[styles.roleBtn, role === r && styles.roleBtnActive]}
+                  style={[
+                    styles.roleBtn,
+                    isCompact && styles.roleBtnCompact,
+                    role === r && styles.roleBtnActive,
+                  ]}
                   onPress={() => setRole(r)}
                 >
                   <Text style={styles.roleEmoji}>{r === 'patient' ? '🤕' : '👨‍⚕️'}</Text>
@@ -139,8 +148,9 @@ export default function RegisterScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { flexGrow: 1, justifyContent: 'center', padding: theme.spacing.xl },
+  container: { flexGrow: 1, justifyContent: 'center', paddingVertical: theme.spacing.xl, alignItems: 'center' },
   header: { alignItems: 'center', marginBottom: theme.spacing.xl },
+  headerCompact: { marginBottom: theme.spacing.lg },
   logo: { fontSize: 48, marginBottom: theme.spacing.xs },
   appName: { ...theme.typography.h1, color: theme.colors.textPrimary },
   form: {
@@ -149,6 +159,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xl,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    width: '100%',
+    maxWidth: 440,
   },
   title: { ...theme.typography.h2, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   errorBanner: {
@@ -168,7 +180,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: theme.spacing.sm,
   },
-  roleRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.lg },
+  roleRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.lg, flexWrap: 'wrap' },
+  roleRowCompact: { rowGap: theme.spacing.sm },
   roleBtn: {
     flex: 1,
     alignItems: 'center',
@@ -178,7 +191,9 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     backgroundColor: theme.colors.surfaceAlt,
     gap: 4,
+    minWidth: 120,
   },
+  roleBtnCompact: { flexBasis: '48%' },
   roleBtnActive: {
     borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}22`,

@@ -57,8 +57,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
     gap: theme.spacing.md,
+    flexWrap: 'wrap',
   },
-  info: { flex: 1 },
+  info: { flex: 1, minWidth: 0 },
   name: {
     ...theme.typography.body,
     color: theme.colors.textPrimary,
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginBottom: theme.spacing.xs,
   },
-  meta: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+  meta: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, flexWrap: 'wrap' },
   rating: { ...theme.typography.caption, color: theme.colors.warning },
-  callBtn: { paddingHorizontal: theme.spacing.md, minHeight: 36 },
+  callBtn: { paddingHorizontal: theme.spacing.md, minHeight: 36, minWidth: 96, alignSelf: 'flex-start' },
 });
