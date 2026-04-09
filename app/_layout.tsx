@@ -60,11 +60,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthGuard>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(patient)" />
-            <Stack.Screen name="(doctor)" />
-          </Stack>
+          <Stack screenOptions={{ headerShown: false }} />
         </AuthGuard>
       </SafeAreaProvider>
     </GestureHandlerRootView>

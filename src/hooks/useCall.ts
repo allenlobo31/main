@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+import { Alert } from 'react-native';
+import Constants from 'expo-constants';
 import { useCallStore } from '../store/callStore';
 import { useAuthStore } from '../store/authStore';
 import { useGamificationStore } from '../store/gamificationStore';
@@ -19,6 +21,14 @@ export function useCall() {
   const startCall = useCallback(
     async (expertId: string) => {
       if (!user?.uid) return;
+
+      if (Constants.appOwnership === 'expo') {
+        Alert.alert(
+          'Development Build Required',
+          'Video calling uses native Agora modules and is not available in Expo Go. Build and run a development client to test calls.',
+        );
+        return;
+      }
 
       const hasPermissions = await requestCallPermissions();
       if (!hasPermissions) {

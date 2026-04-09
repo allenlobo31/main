@@ -1,17 +1,33 @@
-import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { db, userDoc, updateDoc } from '../firebase/firestore';
 
-// ─── Configure default behavior ───────────────────────────────────────────────
+let hasConfiguredNotificationHandler = false;
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+function isExpoGo(): boolean {
+  return Constants.appOwnership === 'expo';
+}
+
+async function getNotificationsModule() {
+  if (isExpoGo()) return null;
+  return import('expo-notifications');
+}
+
+async function ensureNotificationHandler(): Promise<void> {
+  if (hasConfiguredNotificationHandler) return;
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
+
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+  hasConfiguredNotificationHandler = true;
+}
 
 
 // ─── Request permissions and register push token ──────────────────────────────
@@ -20,6 +36,14 @@ export async function registerForPushNotifications(
   userId: string,
 ): Promise<string | null> {
   try {
+    if (isExpoGo()) {
+      return null;
+    }
+
+    await ensureNotificationHandler();
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) return null;
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -61,18 +85,37 @@ export async function registerForPushNotifications(
 export function setupNotificationTapHandler(
   onTap: (data: Record<string, string>) => void,
 ): () => void {
-  const subscription = Notifications.addNotificationResponseReceivedListener(
-    (response) => {
-      const data = response.notification.request.content.data as Record<string, string>;
-      onTap(data);
-    },
-  );
-  return () => subscription.remove();
+  if (isExpoGo()) {
+    return () => {};
+  }
+
+  let cleanup = () => {};
+  void (async () => {
+    await ensureNotificationHandler();
+    const Notifications = await getNotificationsModule();
+    if (!Notifications) return;
+
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data as Record<string, string>;
+        onTap(data);
+      },
+    );
+    cleanup = () => subscription.remove();
+  })();
+
+  return () => cleanup();
 }
 
 // ─── Schedule local notifications ────────────────────────────────────────────
 
 export async function scheduleDailyReminder(): Promise<void> {
+  if (isExpoGo()) return;
+
+  await ensureNotificationHandler();
+  const Notifications = await getNotificationsModule();
+  if (!Notifications) return;
+
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const alreadySet = scheduled.some((n) =>
     n.content.title?.includes('Time to log'),

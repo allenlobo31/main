@@ -8,10 +8,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import {
-  RtcSurfaceView,
-  VideoSourceType,
-} from 'react-native-agora';
+import Constants from 'expo-constants';
 import { CallTimer } from './CallTimer';
 import { theme } from '../../constants/theme';
 import { CallState } from '../../types';
@@ -34,6 +31,12 @@ export function CallModal({
   remoteUid,
   onEndCall,
 }: CallModalProps) {
+  const isExpoGo = Constants.appOwnership === 'expo';
+  const agora = !isExpoGo ? (require('react-native-agora') as typeof import('react-native-agora')) : null;
+  const RtcSurface = agora?.RtcSurfaceView as React.ComponentType<any> | undefined;
+  const VideoSourceType = agora?.VideoSourceType;
+  const canRenderAgoraVideo = !!RtcSurface && !!VideoSourceType;
+
   const [isMuted, setIsMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
   const pulseAnim = useRef(new Animated.Value(0.8)).current;
@@ -68,8 +71,8 @@ export function CallModal({
     <Modal visible={visible} animationType="slide" statusBarTranslucent>
       <View style={styles.container}>
         {/* Remote video (large) */}
-        {callState === 'connected' && remoteUid ? (
-          <RtcSurfaceView
+        {callState === 'connected' && remoteUid && canRenderAgoraVideo ? (
+          <RtcSurface
             style={styles.remoteVideo}
             canvas={{ uid: remoteUid, sourceType: VideoSourceType.VideoSourceRemote }}
           />
@@ -81,13 +84,18 @@ export function CallModal({
             <Text style={styles.connectingText}>
               {callState === 'connecting' ? 'Connecting...' : 'Call Ended'}
             </Text>
+            {isExpoGo && (
+              <Text style={styles.expoGoHint}>
+                Video calling requires a development build.
+              </Text>
+            )}
           </View>
         )}
 
         {/* Local video PIP */}
-        {callState === 'connected' && (
+        {callState === 'connected' && canRenderAgoraVideo && (
           <View style={styles.pipContainer}>
-            <RtcSurfaceView
+            <RtcSurface
               style={styles.pipVideo}
               canvas={{ uid: localUid, sourceType: VideoSourceType.VideoSourceCamera }}
             />
@@ -143,6 +151,11 @@ const styles = StyleSheet.create({
   connectingText: {
     ...theme.typography.h2,
     color: theme.colors.textSecondary,
+  },
+  expoGoHint: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    marginTop: theme.spacing.sm,
   },
   pipContainer: {
     position: 'absolute',

@@ -1,18 +1,34 @@
-import {
-  createAgoraRtcEngine,
-  IRtcEngine,
-  ChannelProfileType,
-  ClientRoleType,
-  RtcConnection,
-} from 'react-native-agora';
+import type { IRtcEngine } from 'react-native-agora';
 import { Platform, PermissionsAndroid } from 'react-native';
 import Constants from 'expo-constants';
 import { Linking, Alert } from 'react-native';
 
 let engine: IRtcEngine | null = null;
+let cachedAgoraModule: (typeof import('react-native-agora')) | null | undefined;
 
 const AGORA_APP_ID: string =
   (Constants.expoConfig?.extra?.agoraAppId as string) ?? '';
+
+function isExpoGo(): boolean {
+  return Constants.appOwnership === 'expo';
+}
+
+function getAgoraModule(): typeof import('react-native-agora') | null {
+  if (cachedAgoraModule !== undefined) return cachedAgoraModule;
+
+  if (isExpoGo()) {
+    cachedAgoraModule = null;
+    return cachedAgoraModule;
+  }
+
+  try {
+    cachedAgoraModule = require('react-native-agora') as typeof import('react-native-agora');
+  } catch {
+    cachedAgoraModule = null;
+  }
+
+  return cachedAgoraModule;
+}
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 
@@ -53,10 +69,22 @@ export function showPermissionDeniedAlert(): void {
 
 export async function initAgoraEngine(): Promise<IRtcEngine> {
   if (engine) return engine;
-  engine = createAgoraRtcEngine();
+
+  const agora = getAgoraModule();
+  if (!agora) {
+    throw new Error(
+      'react-native-agora is unavailable. Use a development build instead of Expo Go for video calling.',
+    );
+  }
+
+  if (!AGORA_APP_ID) {
+    throw new Error('Missing AGORA_APP_ID. Add it to your app config extra values.');
+  }
+
+  engine = agora.createAgoraRtcEngine();
   engine.initialize({
     appId: AGORA_APP_ID,
-    channelProfile: ChannelProfileType.ChannelProfileCommunication,
+    channelProfile: agora.ChannelProfileType.ChannelProfileCommunication,
   });
   engine.enableVideo();
   return engine;
@@ -80,7 +108,7 @@ export async function joinChannel(params: {
   const { token, channelName, uid } = params;
   const rtcEngine = await initAgoraEngine();
   rtcEngine.joinChannel(token, channelName, uid, {
-    clientRoleType: ClientRoleType.ClientRoleBroadcaster,
+    clientRoleType: getAgoraModule()!.ClientRoleType.ClientRoleBroadcaster,
     publishCameraTrack: true,
     publishMicrophoneTrack: true,
   });
