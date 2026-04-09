@@ -1,0 +1,47 @@
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  UploadTask,
+  StorageReference,
+} from 'firebase/storage';
+import { app } from './config';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+const storage = getStorage(app);
+const functions = getFunctions(app);
+
+export { storage };
+
+// ─── Upload with progress ─────────────────────────────────────────────────────
+
+export interface UploadResult {
+  uploadTask: UploadTask;
+  storageRef: StorageReference;
+}
+
+export function uploadFile(params: {
+  path: string;
+  data: Uint8Array | Blob;
+  contentType: string;
+}): UploadResult {
+  const { path, data, contentType } = params;
+  const storageRef = ref(storage, path);
+  const uploadTask = uploadBytesResumable(storageRef, data, { contentType });
+  return { uploadTask, storageRef };
+}
+
+// ─── Get signed download URL (via Cloud Function for security) ────────────────
+
+interface SignedUrlResponse {
+  url: string;
+}
+
+export async function getSignedDownloadUrl(filePath: string): Promise<string> {
+  const getUrl = httpsCallable<{ filePath: string }, SignedUrlResponse>(
+    functions,
+    'getSignedUrl',
+  );
+  const result = await getUrl({ filePath });
+  return result.data.url;
+}

@@ -1,0 +1,39 @@
+﻿app/(doctor)/patient-detail.tsx(56,56): error TS2698: Spread types may only be created from object types.
+app/(doctor)/patient-detail.tsx(61,55): error TS2698: Spread types may only be created from object types.
+app/(doctor)/patient-list.tsx(61,42): error TS2698: Spread types may only be created from object types.
+app/(patient)/ai-monitor.tsx(22,20): error TS2307: Cannot find module '@react-native-community/slider' or its corresponding type declarations.
+app/(patient)/experts.tsx(34,54): error TS2698: Spread types may only be created from object types.
+app/(patient)/reports.tsx(20,29): error TS2307: Cannot find module 'expo-file-system' or its corresponding type declarations.
+functions/src/api/callWebhook.ts(1,28): error TS2307: Cannot find module 'firebase-functions/v2' or its corresponding type declarations.
+functions/src/api/callWebhook.ts(2,24): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+functions/src/api/callWebhook.ts(15,10): error TS7006: Parameter 'req' implicitly has an 'any' type.
+functions/src/api/callWebhook.ts(15,15): error TS7006: Parameter 'res' implicitly has an 'any' type.
+functions/src/scheduled/dailyAIReview.ts(1,28): error TS2307: Cannot find module 'firebase-functions/v2' or its corresponding type declarations.
+functions/src/scheduled/dailyAIReview.ts(2,24): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+functions/src/scheduled/dailyAIReview.ts(3,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+functions/src/scheduled/dailyAIReview.ts(54,49): error TS7006: Parameter 'd' implicitly has an 'any' type.
+functions/src/triggers/onDiaryEntry.ts(1,28): error TS2307: Cannot find module 'firebase-functions/v2' or its corresponding type declarations.
+functions/src/triggers/onDiaryEntry.ts(2,24): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+functions/src/triggers/onDiaryEntry.ts(3,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+functions/src/triggers/onDiaryEntry.ts(18,10): error TS7006: Parameter 'event' implicitly has an 'any' type.
+functions/src/triggers/onDiaryEntry.ts(41,45): error TS7006: Parameter 'd' implicitly has an 'any' type.
+functions/src/triggers/onReportUpload.ts(1,28): error TS2307: Cannot find module 'firebase-functions/v2' or its corresponding type declarations.
+functions/src/triggers/onReportUpload.ts(2,24): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+functions/src/triggers/onReportUpload.ts(3,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+functions/src/triggers/onReportUpload.ts(19,10): error TS7006: Parameter 'event' implicitly has an 'any' type.
+functions/src/triggers/onSymptomLog.ts(1,28): error TS2307: Cannot find module 'firebase-functions/v2' or its corresponding type declarations.
+functions/src/triggers/onSymptomLog.ts(2,24): error TS2307: Cannot find module 'firebase-admin' or its corresponding type declarations.
+functions/src/triggers/onSymptomLog.ts(3,23): error TS2307: Cannot find module '@anthropic-ai/sdk' or its corresponding type declarations.
+functions/src/triggers/onSymptomLog.ts(25,10): error TS7006: Parameter 'event' implicitly has an 'any' type.
+functions/src/triggers/onSymptomLog.ts(48,48): error TS7006: Parameter 'd' implicitly has an 'any' type.
+src/hooks/useDiary.ts(55,31): error TS2698: Spread types may only be created from object types.
+src/hooks/useReports.ts(59,57): error TS2698: Spread types may only be created from object types.
+src/services/firebase/config.ts(7,3): error TS2305: Module '"firebase/auth"' has no exported member 'getReactNativePersistence'.
+src/services/firebase/config.ts(9,26): error TS2307: Cannot find module '@react-native-async-storage/async-storage' or its corresponding type declarations.
+src/services/notifications/pushService.ts(8,35): error TS2322: Type 'Promise<{ shouldShowAlert: true; shouldPlaySound: true; shouldSetBadge: true; }>' is not assignable to type 'Promise<NotificationBehavior>'.
+  Type '{ shouldShowAlert: true; shouldPlaySound: true; shouldSetBadge: true; }' is missing the following properties from type 'NotificationBehavior': shouldShowBanner, shouldShowList
+src/services/notifications/pushService.ts(86,5): error TS2322: Type '{ hour: number; minute: number; repeats: true; }' is not assignable to type 'NotificationTriggerInput'.
+  Property 'type' is missing in type '{ hour: number; minute: number; repeats: true; }' but required in type 'CalendarTriggerInput'.
+src/store/authStore.ts(3,26): error TS2307: Cannot find module '@react-native-async-storage/async-storage' or its corresponding type declarations.
+src/store/gamificationStore.ts(3,26): error TS2307: Cannot find module '@react-native-async-storage/async-storage' or its corresponding type declarations.
+src/store/symptomStore.ts(107,57): error TS2698: Spread types may only be created from object types.

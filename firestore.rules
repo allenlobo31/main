@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isLinkedDoctor(userId) {
+      return request.auth.uid ==
+        get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isLinkedDoctor(userId);
+      allow write: if isOwner(userId);
+
+      match /symptoms/{entryId} {
+        allow read: if isOwner(userId) || isLinkedDoctor(userId);
+        allow create: if isOwner(userId);
+        allow update: if false;  // only Cloud Functions update aiFlag
+        allow delete: if false;
+      }
+
+      match /diary/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /reports/{reportId} {
+        allow read: if isOwner(userId) || isLinkedDoctor(userId);
+        allow create: if isOwner(userId);
+        allow delete: if isOwner(userId);
+        allow update: if false;  // only Cloud Functions update aiWoundAnalysis
+      }
+
+      match /gamification/{doc} {
+        allow read: if isOwner(userId) || isLinkedDoctor(userId);
+        allow write: if false;  // only Cloud Functions write gamification
+      }
+    }
+
+    match /experts/{expertId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /consultations/{consultationId} {
+      allow read: if request.auth.uid == resource.data.patientId
+                  || request.auth.uid == resource.data.expertId;
+      allow write: if false;  // only Cloud Functions write consultations
+    }
+
+    match /aiInsights/{userId}/daily/{date} {
+      allow read: if isOwner(userId) || isLinkedDoctor(userId);
+      allow write: if false;  // only Cloud Functions write insights
+    }
+
+    match /errors/{errorId} {
+      allow read: if false;
+      allow write: if isAuthenticated();
+    }
+  }
+}
