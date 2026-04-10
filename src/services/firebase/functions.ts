@@ -1,8 +1,49 @@
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { FirebaseError } from 'firebase/app';
+import Constants from 'expo-constants';
 import { app } from './config';
 import { AgoraTokenResponse } from '../../types';
 
-const functions = getFunctions(app);
+const extra = Constants.expoConfig?.extra ?? {};
+const configuredRegion =
+  typeof extra.firebaseFunctionsRegion === 'string' && extra.firebaseFunctionsRegion.trim()
+    ? extra.firebaseFunctionsRegion.trim()
+    : 'us-central1';
+const fallbackRegions = ['us-central1', 'asia-south1', 'europe-west1'].filter(
+  (region, index, all) => region !== configuredRegion && all.indexOf(region) === index,
+);
+
+function getCallable<TReq, TRes>(region: string, name: string) {
+  const regionFns = getFunctions(app, region);
+  return httpsCallable<TReq, TRes>(regionFns, name);
+}
+
+async function callWithRegionFallback<TReq, TRes>(name: string, payload: TReq): Promise<TRes> {
+  const regionsToTry = [configuredRegion, ...fallbackRegions];
+  let lastError: unknown = null;
+
+  for (const region of regionsToTry) {
+    try {
+      const fn = getCallable<TReq, TRes>(region, name);
+      const result = await fn(payload);
+      if (region !== configuredRegion) {
+        console.warn('[functions] callable succeeded in fallback region', {
+          name,
+          configuredRegion,
+          resolvedRegion: region,
+        });
+      }
+      return result.data;
+    } catch (error) {
+      lastError = error;
+      if (!(error instanceof FirebaseError) || error.code !== 'functions/not-found') {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
+}
 
 // ─── Typed callable wrappers ──────────────────────────────────────────────────
 
@@ -53,33 +94,28 @@ interface SendNotificationResponse {
 export async function callGenerateAgoraToken(
   params: AgoraTokenRequest,
 ): Promise<AgoraTokenResponse> {
-  const fn = httpsCallable<AgoraTokenRequest, AgoraTokenResponse>(
-    functions,
+  return callWithRegionFallback<AgoraTokenRequest, AgoraTokenResponse>(
     'generateAgoraToken',
+    params,
   );
-  const result = await fn(params);
-  return result.data;
 }
 
 export async function callGetSignedUrl(filePath: string): Promise<string> {
-  const fn = httpsCallable<SignedUrlRequest, SignedUrlResponse>(
-    functions,
+  const result = await callWithRegionFallback<SignedUrlRequest, SignedUrlResponse>(
     'getSignedUrl',
+    { filePath },
   );
-  const result = await fn({ filePath });
-  return result.data.url;
+  return result.url;
 }
 
 export async function callGetSignedUploadUrl(params: {
   path: string;
   contentType: string;
 }): Promise<SignedUploadUrlResponse> {
-  const fn = httpsCallable<SignedUploadUrlRequest, SignedUploadUrlResponse>(
-    functions,
+  return callWithRegionFallback<SignedUploadUrlRequest, SignedUploadUrlResponse>(
     'getSignedUploadUrl',
+    params,
   );
-  const result = await fn(params);
-  return result.data;
 }
 
 export async function callUploadEncryptedReport(params: {
@@ -87,21 +123,18 @@ export async function callUploadEncryptedReport(params: {
   contentType: string;
   dataBase64: string;
 }): Promise<UploadEncryptedReportResponse> {
-  const fn = httpsCallable<UploadEncryptedReportRequest, UploadEncryptedReportResponse>(
-    functions,
+  return callWithRegionFallback<UploadEncryptedReportRequest, UploadEncryptedReportResponse>(
     'uploadEncryptedReport',
+    params,
   );
-  const result = await fn(params);
-  return result.data;
 }
 
 export async function callSendPushNotification(
   params: SendNotificationRequest,
 ): Promise<boolean> {
-  const fn = httpsCallable<SendNotificationRequest, SendNotificationResponse>(
-    functions,
+  const result = await callWithRegionFallback<SendNotificationRequest, SendNotificationResponse>(
     'sendPushNotification',
+    params,
   );
-  const result = await fn(params);
-  return result.data.success;
+  return result.success;
 }

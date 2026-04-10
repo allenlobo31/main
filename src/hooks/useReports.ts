@@ -4,7 +4,7 @@ import {
   reportsCol,
   getDoc,
   getDocs,
-  addDoc,
+  setDoc,
   deleteDoc,
   query,
   orderBy,
@@ -13,6 +13,7 @@ import {
   serverTimestamp,
 } from '../services/firebase/firestore';
 import { doc } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { Report, ReportType } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { useGamificationStore } from '../store/gamificationStore';
@@ -78,7 +79,27 @@ export function useReports() {
       filename: string;
       contentType: string;
     }): Promise<string | null> => {
-      if (!user?.uid) return null;
+      const uid = user?.uid?.trim();
+      if (!uid) {
+        console.error('[useReports] uploadReport aborted: missing authenticated uid', {
+          hasUser: Boolean(user),
+          uid: user?.uid ?? null,
+        });
+        return null;
+      }
+
+      const title = params.title?.trim();
+      const filename = params.filename?.trim();
+      const contentType = params.contentType?.trim();
+      if (!title || !filename || !contentType || !(params.fileData instanceof Uint8Array) || params.fileData.length === 0) {
+        console.error('[useReports] uploadReport aborted: invalid params', {
+          title,
+          filename,
+          contentType,
+          fileDataLength: params.fileData?.length,
+        });
+        return null;
+      }
 
       setUploadProgress(0);
       try {
@@ -87,39 +108,57 @@ export function useReports() {
         const encryptedBytes = await encryptData(params.fileData, key);
 
         const reportId = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const path = `reports/${user.uid}/${reportId}/${params.filename}`;
+        const safeFilename = filename.replace(/[\\/]/g, '_');
+        const path = `reports/${uid}/${reportId}/${safeFilename}`;
+
+        console.log('[useReports] uploadReport start', {
+          uid,
+          reportId,
+          path,
+          contentType,
+          bytes: encryptedBytes.length,
+        });
 
         await uploadFile({
           path,
           data: encryptedBytes,
-          contentType: params.contentType,
+          contentType,
         });
 
         setUploadProgress(100);
 
         const fileUrl = path;
 
-        // Create Firestore doc
-        const col = reportsCol(user.uid);
-        const docRef = await addDoc(col as never, {
-          title: params.title,
+        // Create Firestore doc with deterministic ID to match storage path segment.
+        const reportDocRef = doc(db, 'users', uid, 'reports', reportId);
+        await setDoc(reportDocRef as never, {
+          id: reportId,
+          title,
           type: params.type,
           fileUrl,
           encryptedKey: key,
           uploadedAt: serverTimestamp(),
-          accessibleTo: [user.uid],
+          accessibleTo: [uid],
           aiWoundAnalysis: null,
         });
 
         // Award XP
-        await gamStore.addXP(user.uid, XP_VALUES.REPORT_UPLOAD);
+        await gamStore.addXP(uid, XP_VALUES.REPORT_UPLOAD);
 
         setUploadProgress(null);
         // Refresh list
         await fetchReports(true);
-        return docRef.id;
+        return reportId;
       } catch (error) {
-        console.error('[useReports] uploadReport error:', error);
+        if (error instanceof FirebaseError) {
+          console.error('[useReports] uploadReport firebase error:', {
+            code: error.code,
+            message: error.message,
+            uid,
+          });
+        } else {
+          console.error('[useReports] uploadReport error:', error);
+        }
         setUploadProgress(null);
         return null;
       }
