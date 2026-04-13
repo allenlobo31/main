@@ -50,7 +50,7 @@ export function Button({
     >
       {isLoading ? (
         <ActivityIndicator
-          color={variant === 'ghost' ? theme.colors.primary : theme.colors.textPrimary}
+          color={variant === 'ghost' || variant === 'secondary' ? theme.colors.primary : '#ffffff'}
           size="small"
         />
       ) : (
@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   primaryText: {
-    color: theme.colors.textPrimary,
+    color: '#ffffff',
   },
   secondaryText: {
     color: theme.colors.textSecondary,
   },
   dangerText: {
-    color: theme.colors.textPrimary,
+    color: '#ffffff',
   },
   ghostText: {
     color: theme.colors.primary,

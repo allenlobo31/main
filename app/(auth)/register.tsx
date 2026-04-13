@@ -23,7 +23,6 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('patient');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { register, isLoading } = useAuthStore();
@@ -31,7 +30,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     setError(null);
-    const result = safeParse(registerSchema, { name, email, password, role });
+    const result = safeParse(registerSchema, { name, email, password, role: 'patient' });
     if (!result.success) {
       setError(result.error);
       return;
@@ -42,7 +41,7 @@ export default function RegisterScreen() {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        role,
+        role: 'patient',
       });
     } catch (err) {
       setError(parseAuthError(err));
@@ -76,35 +75,12 @@ export default function RegisterScreen() {
               </View>
             ) : null}
 
-            {/* Role selector */}
-            <Text style={styles.roleLabel}>I am a...</Text>
-            <View style={[styles.roleRow, isCompact && styles.roleRowCompact]}>
-              {(['patient', 'doctor'] as UserRole[]).map((r) => (
-                <TouchableOpacity
-                  key={r}
-                  style={[
-                    styles.roleBtn,
-                    isCompact && styles.roleBtnCompact,
-                    role === r && styles.roleBtnActive,
-                  ]}
-                  onPress={() => setRole(r)}
-                >
-                  <Text style={styles.roleEmoji}>{r === 'patient' ? '🤕' : '👨‍⚕️'}</Text>
-                  <Text
-                    style={[styles.roleBtnText, role === r && styles.roleBtnTextActive]}
-                  >
-                    {r === 'patient' ? 'Patient' : 'Doctor'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             <Input
               label="Full Name"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
-              placeholder="Dr. Jane Smith"
+              placeholder="Jane Smith"
             />
             <Input
               label="Email"
@@ -172,35 +148,6 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   errorText: { ...theme.typography.body, color: theme.colors.dangerLight },
-  roleLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: theme.spacing.sm,
-  },
-  roleRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.lg, flexWrap: 'wrap' },
-  roleRowCompact: { rowGap: theme.spacing.sm },
-  roleBtn: {
-    flex: 1,
-    alignItems: 'center',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceAlt,
-    gap: 4,
-    minWidth: 120,
-  },
-  roleBtnCompact: { flexBasis: '48%' },
-  roleBtnActive: {
-    borderColor: theme.colors.primary,
-    backgroundColor: `${theme.colors.primary}22`,
-  },
-  roleEmoji: { fontSize: 28 },
-  roleBtnText: { ...theme.typography.body, color: theme.colors.textMuted, fontWeight: '600' },
-  roleBtnTextActive: { color: theme.colors.primaryLight },
   switchLink: { alignItems: 'center', marginTop: theme.spacing.lg },
   switchText: { ...theme.typography.body, color: theme.colors.textMuted },
   switchAction: { color: theme.colors.primary, fontWeight: '700' },
