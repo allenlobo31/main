@@ -2,6 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Task } from '../../types';
+import { Bandage, Pill, Camera, BarChart, Check } from 'lucide-react-native';
+
+const TASK_ICONS: Record<string, any> = {
+  Bandage,
+  Pill,
+  Camera,
+  BarChart,
+};
 
 interface TaskCardProps {
   task: Task;
@@ -18,9 +26,11 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
     >
       <View style={styles.left}>
         <View style={[styles.check, task.completed && styles.checkDone]}>
-          {task.completed && <Text style={styles.checkMark}>✓</Text>}
+          {task.completed && <Check size={14} color="#fff" strokeWidth={3} />}
         </View>
-        <Text style={styles.icon}>{task.icon}</Text>
+        <View style={styles.iconWrap}>
+          {TASK_ICONS[task.icon] ? React.createElement(TASK_ICONS[task.icon], { size: 18, color: theme.colors.textPrimary }) : null}
+        </View>
         <Text style={[styles.label, task.completed && styles.labelDone]}>
           {task.label}
         </Text>
@@ -69,8 +79,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.success,
     borderColor: theme.colors.successLight,
   },
-  checkMark: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  icon: { fontSize: 18 },
+  iconWrap: { width: 24, alignItems: 'center' },
   label: {
     ...theme.typography.body,
     color: theme.colors.textPrimary,

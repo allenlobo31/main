@@ -21,6 +21,11 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
+import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star } from 'lucide-react-native';
+
+const BADGE_ICONS: Record<string, any> = {
+  Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star
+};
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -70,7 +75,10 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.greeting}>Hey, {user?.name?.split(' ')[0] ?? 'there'} 👋</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={styles.greeting}>Hey, {user?.name?.split(' ')[0] ?? 'there'}</Text>
+              <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} />
+            </View>
             <View style={styles.phaseChip}>
               <View style={[styles.phaseDot, { backgroundColor: phaseConfig.color }]} />
               <Text style={[styles.phaseText, { color: phaseConfig.color }]}>
@@ -147,9 +155,12 @@ export default function DashboardScreen() {
           ) : (
             gamification.badges.map((badgeId) => {
               const badge = BADGES[badgeId as BadgeId];
+              const BadgeIcon = BADGE_ICONS[badge.icon];
               return (
                 <View key={badgeId} style={styles.badgeItem}>
-                  <Text style={styles.badgeEmoji}>{badge.icon}</Text>
+                  <View style={styles.badgeEmojiWrap}>
+                    {BadgeIcon ? <BadgeIcon size={32} color={theme.colors.textPrimary} strokeWidth={1.5} /> : null}
+                  </View>
                   <Text style={styles.badgeLabel}>{badge.label}</Text>
                 </View>
               );
@@ -200,8 +211,8 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: theme.spacing.lg,
   },
-  badgeItem: { alignItems: 'center', marginRight: theme.spacing.md, width: 60 },
-  badgeEmoji: { fontSize: 32, marginBottom: 4 },
+  badgeItem: { alignItems: 'center', marginRight: theme.spacing.md, width: 68 },
+  badgeEmojiWrap: { height: 40, justifyContent: 'center', marginBottom: 4 },
   badgeLabel: { ...theme.typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
   noBadges: { ...theme.typography.caption, color: theme.colors.textMuted, fontStyle: 'italic' },
 });

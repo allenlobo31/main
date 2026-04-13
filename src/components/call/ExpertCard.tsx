@@ -5,6 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { theme } from '../../constants/theme';
 import { Expert } from '../../types';
+import { Star } from 'lucide-react-native';
 
 interface ExpertCardProps {
   expert: Expert;
@@ -27,7 +28,10 @@ export function ExpertCard({ expert, onCallPress, isCallLoading = false }: Exper
         <Text style={styles.name}>{expert.name}</Text>
         <Text style={styles.role}>{ROLE_LABELS[expert.role]}</Text>
         <View style={styles.meta}>
-          <Text style={styles.rating}>⭐ {expert.rating.toFixed(1)}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Star size={12} color={theme.colors.warning} fill={theme.colors.warning} />
+            <Text style={styles.rating}>{expert.rating.toFixed(1)}</Text>
+          </View>
           <Badge
             label={expert.isOnline ? 'Online' : 'Offline'}
             variant={expert.isOnline ? 'success' : 'muted'}

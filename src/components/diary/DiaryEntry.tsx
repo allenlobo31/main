@@ -3,14 +3,17 @@ import { View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../constants/theme';
 import { DiaryEntry as DiaryEntryType, MoodType } from '../../types';
 import { formatDate } from '../../utils/dateHelpers';
+import { Laugh, Smile, Meh, Frown, Annoyed, Bot } from 'lucide-react-native';
 
-const MOOD_CONFIG: Record<MoodType, { emoji: string; color: string }> = {
-  great: { emoji: '😄', color: theme.colors.successLight },
-  good: { emoji: '🙂', color: theme.colors.accent },
-  okay: { emoji: '😐', color: theme.colors.textMuted },
-  bad: { emoji: '😟', color: theme.colors.warning },
-  terrible: { emoji: '😣', color: theme.colors.dangerLight },
+const MOOD_CONFIG: Record<MoodType, { iconName: string; color: string }> = {
+  great: { iconName: 'Laugh', color: theme.colors.successLight },
+  good: { iconName: 'Smile', color: theme.colors.accent },
+  okay: { iconName: 'Meh', color: theme.colors.textMuted },
+  bad: { iconName: 'Frown', color: theme.colors.warning },
+  terrible: { iconName: 'Annoyed', color: theme.colors.dangerLight },
 };
+
+const ICONS: Record<string, any> = { Laugh, Smile, Meh, Frown, Annoyed };
 
 interface DiaryEntryProps {
   entry: DiaryEntryType;
@@ -18,6 +21,7 @@ interface DiaryEntryProps {
 
 export function DiaryEntry({ entry }: DiaryEntryProps) {
   const moodCfg = MOOD_CONFIG[entry.mood];
+  const Icon = ICONS[moodCfg.iconName];
 
   return (
     <View style={styles.container}>
@@ -25,11 +29,14 @@ export function DiaryEntry({ entry }: DiaryEntryProps) {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.dateText}>{formatDate(entry.date)}</Text>
-          <Text style={styles.moodEmoji}>{moodCfg.emoji}</Text>
+          {Icon && <Icon size={20} color={moodCfg.color} strokeWidth={2} />}
         </View>
         <Text style={styles.text}>{entry.text}</Text>
         {entry.aiSummary ? (
-          <Text style={styles.aiSummary}>🤖 {entry.aiSummary}</Text>
+          <View style={styles.aiSummaryRow}>
+            <Bot size={14} color={theme.colors.primaryLight} strokeWidth={1.5} style={{ marginTop: 2 }} />
+            <Text style={styles.aiSummary}>{entry.aiSummary}</Text>
+          </View>
         ) : null}
       </View>
     </View>
@@ -56,12 +63,12 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   dateText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
-  moodEmoji: { fontSize: 18 },
   text: { ...theme.typography.body, color: theme.colors.textSecondary, lineHeight: 20 },
+  aiSummaryRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: theme.spacing.sm },
   aiSummary: {
     ...theme.typography.caption,
     color: theme.colors.primaryLight,
-    marginTop: theme.spacing.sm,
     fontStyle: 'italic',
+    flex: 1,
   },
 });

@@ -1,24 +1,24 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, Animated } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Report } from '../../types';
 import { formatDate } from '../../utils/dateHelpers';
-import { Badge } from '../ui/Badge';
+import { FileText, Camera, Activity, Paperclip, Image as ImageIcon, Zap, Eye, Trash2 } from 'lucide-react-native';
 
-const TYPE_LABELS: Record<Report['type'], string> = {
-  scan: 'Scan',
-  discharge: 'Discharge',
-  wound_photo: 'Wound Photo',
-  lab: 'Lab Result',
-  other: 'Other',
+const TYPE_ICONS: Record<Report['type'], any> = {
+  scan: ImageIcon,
+  discharge: FileText,
+  wound_photo: Camera,
+  lab: Activity,
+  other: Paperclip,
 };
 
-const TYPE_EMOJI: Record<Report['type'], string> = {
-  scan: '🖼️',
-  discharge: '📄',
-  wound_photo: '📸',
-  lab: '🧪',
-  other: '📎',
+const TYPE_LABELS: Record<Report['type'], string> = {
+  scan: 'SCAN',
+  discharge: 'DISCHARGE',
+  wound_photo: 'WOUND PHOTO',
+  lab: 'LAB RESULT',
+  other: 'OTHER',
 };
 
 interface ReportCardProps {
@@ -28,30 +28,57 @@ interface ReportCardProps {
 }
 
 export function ReportCard({ report, onView, onDelete }: ReportCardProps) {
+  const [scaleValue] = useState(new Animated.Value(1));
+
+  const onPressIn = () => {
+    Animated.spring(scaleValue, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const onPressOut = () => {
+    Animated.spring(scaleValue, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const Icon = TYPE_ICONS[report.type];
+
   return (
-    <View style={styles.container}>
-      <View style={styles.iconBox}>
-        <Text style={styles.icon}>{TYPE_EMOJI[report.type]}</Text>
-      </View>
-      <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={1}>{report.title}</Text>
-        <Text style={styles.meta}>{formatDate(report.uploadedAt)}</Text>
-        <Badge label={TYPE_LABELS[report.type]} variant="muted" />
-        {report.aiWoundAnalysis && (
-          <Text style={styles.aiChip}>🤖 AI Analyzed</Text>
-        )}
-      </View>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.viewBtn} onPress={onView}>
-          <Text style={styles.viewText}>View</Text>
-        </TouchableOpacity>
-        {onDelete && (
-          <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-            <Text style={styles.deleteText}>✕</Text>
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onView}>
+      <Animated.View style={[styles.container, { transform: [{ scale: scaleValue }] }]}>
+        <View style={styles.iconBox}>
+          <Icon size={24} color="#000000" strokeWidth={1.5} />
+        </View>
+        <View style={styles.info}>
+          <Text style={styles.title} numberOfLines={1}>{report.title}</Text>
+          <Text style={styles.meta}>{formatDate(report.uploadedAt).toUpperCase()}</Text>
+          <View style={styles.tagsContainer}>
+            <Text style={styles.typeLabel}>{TYPE_LABELS[report.type]}</Text>
+            {report.aiWoundAnalysis && (
+              <View style={styles.aiTag}>
+                <Zap size={12} color="#000000" fill="#000000" style={{ marginRight: 4 }} />
+                <Text style={styles.aiChip}>AI ANALYZED</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={styles.actions}>
+          <TouchableOpacity style={styles.viewBtn} onPress={onView} activeOpacity={0.7}>
+            <Eye size={14} color="#ffffff" style={{ marginRight: 6 }} strokeWidth={2} />
+            <Text style={styles.viewText}>VIEW</Text>
           </TouchableOpacity>
-        )}
-      </View>
-    </View>
+          {onDelete && (
+            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} activeOpacity={0.6}>
+              <Trash2 size={14} color="#000000" style={{ marginRight: 6 }} strokeWidth={2} />
+              <Text style={styles.deleteText}>REMOVE</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -59,46 +86,78 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    gap: theme.spacing.md,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     alignItems: 'center',
-    flexWrap: 'wrap',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 8,
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
+    marginRight: theme.spacing.md,
     justifyContent: 'center',
+    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#000000',
+    backgroundColor: '#ffffff',
   },
-  icon: { fontSize: 22 },
-  info: { flex: 1, gap: 2, minWidth: 0 },
+  info: { flex: 1, gap: 4, minWidth: 0, paddingRight: theme.spacing.md },
   title: {
-    ...theme.typography.body,
-    color: theme.colors.textPrimary,
-    fontWeight: '600',
+    ...theme.typography.h3,
+    color: '#000000',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  meta: { ...theme.typography.caption, color: theme.colors.textMuted },
-  aiChip: { ...theme.typography.caption, color: theme.colors.primaryLight, marginTop: 2 },
-  actions: { gap: theme.spacing.xs, marginLeft: 'auto' },
-  viewBtn: {
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.borderRadius.sm,
-    minWidth: 72,
+  meta: {
+    ...theme.typography.caption,
+    color: '#333333',
+    letterSpacing: 1,
+    fontSize: 10,
+    marginBottom: 4,
+  },
+  tagsContainer: { flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center', flexWrap: 'wrap' },
+  typeLabel: {
+    ...theme.typography.caption,
+    fontSize: 10,
+    color: '#404040',
+    letterSpacing: 1,
+  },
+  aiTag: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  viewText: { ...theme.typography.caption, color: '#fff', fontWeight: '700' },
+  aiChip: {
+    ...theme.typography.caption,
+    fontSize: 10,
+    color: '#000000',
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  actions: { alignItems: 'flex-end', gap: theme.spacing.sm },
+  viewBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#000000',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 8,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewText: { ...theme.typography.caption, color: '#ffffff', fontWeight: '700', letterSpacing: 1 },
   deleteBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: theme.spacing.xs,
   },
-  deleteText: { color: theme.colors.danger, fontWeight: '700' },
+  deleteText: {
+    ...theme.typography.caption,
+    color: '#000000',
+    fontWeight: '700',
+    letterSpacing: 1,
+    textDecorationLine: 'underline',
+  },
 });

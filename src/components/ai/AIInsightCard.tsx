@@ -5,29 +5,36 @@ import { Badge } from '../ui/Badge';
 import { theme } from '../../constants/theme';
 import { AIInsight, PainTrend } from '../../types';
 import { formatRelative } from '../../utils/dateHelpers';
+import { Bot, TrendingUp, Minus, TrendingDown } from 'lucide-react-native';
 
 interface AIInsightCardProps {
   insight: AIInsight;
 }
 
-const TREND_CONFIG: Record<PainTrend, { label: string; color: string; emoji: string }> = {
-  improving: { label: 'Improving', color: theme.colors.successLight, emoji: '📈' },
-  stable: { label: 'Stable', color: theme.colors.textSecondary, emoji: '📊' },
-  worsening: { label: 'Worsening', color: theme.colors.dangerLight, emoji: '📉' },
+const TREND_CONFIG: Record<PainTrend, { label: string; color: string; iconName: string }> = {
+  improving: { label: 'Improving', color: theme.colors.successLight, iconName: 'TrendingUp' },
+  stable: { label: 'Stable', color: theme.colors.textSecondary, iconName: 'Minus' },
+  worsening: { label: 'Worsening', color: theme.colors.dangerLight, iconName: 'TrendingDown' },
 };
+
+const ICONS: Record<string, any> = { TrendingUp, Minus, TrendingDown };
 
 export function AIInsightCard({ insight }: AIInsightCardProps) {
   const trendConfig = TREND_CONFIG[insight.painTrend];
+  const TrendIcon = ICONS[trendConfig.iconName];
 
   return (
     <Card style={styles.card} bordered>
       <View style={styles.header}>
-        <Text style={styles.title}>🤖 AI Health Monitor</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Bot size={20} color={theme.colors.textPrimary} strokeWidth={2} />
+          <Text style={styles.title}>AI Health Monitor</Text>
+        </View>
         <Text style={styles.timestamp}>{formatRelative(insight.generatedAt)}</Text>
       </View>
 
       <View style={styles.trendRow}>
-        <Text style={styles.trendEmoji}>{trendConfig.emoji}</Text>
+        {TrendIcon && <TrendIcon size={18} color={trendConfig.color} strokeWidth={2} />}
         <Text style={[styles.trendLabel, { color: trendConfig.color }]}>
           Pain trend: {trendConfig.label}
         </Text>
@@ -72,7 +79,6 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.sm,
   },
-  trendEmoji: { fontSize: 18 },
   trendLabel: {
     ...theme.typography.body,
     fontWeight: '600',

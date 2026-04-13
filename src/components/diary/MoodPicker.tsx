@@ -3,13 +3,17 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
 import { MoodType } from '../../types';
 
-const MOODS: Array<{ value: MoodType; emoji: string; label: string }> = [
-  { value: 'great', emoji: '😄', label: 'Great' },
-  { value: 'good', emoji: '🙂', label: 'Good' },
-  { value: 'okay', emoji: '😐', label: 'Okay' },
-  { value: 'bad', emoji: '😟', label: 'Bad' },
-  { value: 'terrible', emoji: '😣', label: 'Terrible' },
+import { Laugh, Smile, Meh, Frown, Annoyed } from 'lucide-react-native';
+
+const MOODS: Array<{ value: MoodType; iconName: string; label: string }> = [
+  { value: 'great', iconName: 'Laugh', label: 'Great' },
+  { value: 'good', iconName: 'Smile', label: 'Good' },
+  { value: 'okay', iconName: 'Meh', label: 'Okay' },
+  { value: 'bad', iconName: 'Frown', label: 'Bad' },
+  { value: 'terrible', iconName: 'Annoyed', label: 'Terrible' },
 ];
+
+const ICONS: Record<string, any> = { Laugh, Smile, Meh, Frown, Annoyed };
 
 interface MoodPickerProps {
   selected: MoodType | null;
@@ -28,7 +32,7 @@ export function MoodPicker({ selected, onSelect }: MoodPickerProps) {
             onPress={() => onSelect(m.value)}
             activeOpacity={0.7}
           >
-            <Text style={styles.emoji}>{m.emoji}</Text>
+            {ICONS[m.iconName] && React.createElement(ICONS[m.iconName], { size: 24, strokeWidth: 1.5, color: selected === m.value ? theme.colors.primaryLight : theme.colors.textMuted, style: { marginBottom: 4 } })}
             <Text style={[styles.optLabel, selected === m.value && styles.optLabelSelected]}>
               {m.label}
             </Text>
@@ -65,7 +69,6 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: `${theme.colors.primary}22`,
   },
-  emoji: { fontSize: 22, marginBottom: 2 },
   optLabel: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,

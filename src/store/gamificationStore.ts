@@ -104,7 +104,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           let snap = await getDoc(ref);
 
           if (!snap.exists()) {
-            await setDoc(ref as never, buildDefaultProfile() as never);
+            await setDoc(ref as never, buildDefaultProfile() as never, { merge: true } as never);
             snap = await getDoc(ref);
           }
 
@@ -208,6 +208,7 @@ export const useGamificationStore = create<GamificationState & GamificationActio
                   lastTaskResetDate: today,
                   badges: ['first_checkin'],
                 } as never,
+                { merge: true } as never,
               );
               return;
             }
