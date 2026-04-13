@@ -29,7 +29,6 @@ async function ensureNotificationHandler(): Promise<void> {
   hasConfiguredNotificationHandler = true;
 }
 
-
 // ─── Request permissions and register push token ──────────────────────────────
 
 export async function registerForPushNotifications(
@@ -133,7 +132,6 @@ export async function scheduleDailyReminder(): Promise<void> {
       hour: 8,
       minute: 0,
       repeats: true,
-    } as Notifications.CalendarTriggerInput,
-
+    },
   });
 }

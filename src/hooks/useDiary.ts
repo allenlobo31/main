@@ -9,6 +9,7 @@ import {
   limit,
   startAfter,
   serverTimestamp,
+  Timestamp,
 } from '../services/firebase/firestore';
 import { DiaryEntry, MoodType } from '../types';
 import { useAuthStore } from '../store/authStore';
@@ -85,7 +86,7 @@ export function useDiary() {
           id: docRef.id,
           text,
           mood,
-          date: new (require('firebase/firestore').Timestamp).now(),
+          date: Timestamp.now(),
           aiSummary: null,
         };
 

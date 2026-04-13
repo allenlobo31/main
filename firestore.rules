@@ -2,14 +2,19 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Helper functions ──────────────────────────────────────────────────────
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    // True when the logged-in user IS the document owner.
     function isOwner(userId) {
-      return request.auth.uid == userId;
+      return request.auth != null && request.auth.uid == userId;
     }
 
+    // True when the logged-in user is the patient's linked doctor.
+    // The patient's document contains a "linkedDoctorId" field.
     function isLinkedDoctor(userId) {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(userId))
@@ -17,52 +22,84 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId;
     }
 
-    match /users/{userId} {
-      allow read: if isOwner(userId) || isLinkedDoctor(userId);
-      allow write: if isOwner(userId);
+    // ── User profiles ─────────────────────────────────────────────────────────
+    // Patient: full read + write on own profile.
+    // Doctor : read-only on linked patients.
 
+    match /users/{userId} {
+      allow read:   if isOwner(userId) || isLinkedDoctor(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false;
+
+      // ── Symptoms ──────────────────────────────────────────────────────────
+      // Patient: read + create (no manual update/delete — AI writes via Admin SDK).
+      // Doctor : read-only.
       match /symptoms/{entryId} {
-        allow read: if isOwner(userId) || isLinkedDoctor(userId);
+        allow read:   if isOwner(userId) || isLinkedDoctor(userId);
         allow create: if isOwner(userId);
-        allow update: if false;  // only Cloud Functions update aiFlag
+        allow update: if false;   // Cloud Functions update aiFlag via Admin SDK
         allow delete: if false;
       }
 
+      // ── Diary ─────────────────────────────────────────────────────────────
+      // Patient: full read + write.
+      // Doctor : read-only.
       match /diary/{entryId} {
-        allow read, write: if isOwner(userId);
+        allow read:   if isOwner(userId) || isLinkedDoctor(userId);
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId);
+        allow delete: if isOwner(userId);
       }
 
+      // ── Reports ───────────────────────────────────────────────────────────
+      // Patient: read + create + delete (no update — AI writes via Admin SDK).
+      // Doctor : read-only.
       match /reports/{reportId} {
-        allow read: if isOwner(userId) || isLinkedDoctor(userId);
+        allow read:   if isOwner(userId) || isLinkedDoctor(userId);
         allow create: if isOwner(userId);
         allow delete: if isOwner(userId);
-        allow update: if false;  // only Cloud Functions update aiWoundAnalysis
+        allow update: if false;   // Cloud Functions update aiWoundAnalysis
       }
 
+      // ── Gamification ──────────────────────────────────────────────────────
+      // Patient: full read + write (XP, streaks, badges).
+      // Doctor : read-only.
       match /gamification/{doc} {
-        allow read: if isOwner(userId) || isLinkedDoctor(userId);
-        allow write: if isOwner(userId);
+        allow read:   if isOwner(userId) || isLinkedDoctor(userId);
+        allow write:  if isOwner(userId);
       }
     }
 
+    // ── Experts ───────────────────────────────────────────────────────────────
+    // Any authenticated user can browse the expert directory (read-only).
     match /experts/{expertId} {
-      allow read: if isAuthenticated();
+      allow read:  if isAuthenticated();
       allow write: if false;
     }
 
+    // ── Consultations ────────────────────────────────────────────────────────
+    // Only the patient or expert in the call can read.
+    // Writes are handled by Cloud Functions only.
     match /consultations/{consultationId} {
       allow read: if request.auth.uid == resource.data.patientId
                   || request.auth.uid == resource.data.expertId;
-      allow write: if false;  // only Cloud Functions write consultations
+      allow write: if false;
     }
 
+    // ── AI Insights ──────────────────────────────────────────────────────────
+    // Patient: read their own daily insights.
+    // Doctor : read linked patient's insights.
+    // Writes: Cloud Functions only (via Admin SDK).
     match /aiInsights/{userId}/daily/{date} {
-      allow read: if isOwner(userId) || isLinkedDoctor(userId);
-      allow write: if false;  // only Cloud Functions write insights
+      allow read:  if isOwner(userId) || isLinkedDoctor(userId);
+      allow write: if false;
     }
 
+    // ── Error logs ───────────────────────────────────────────────────────────
+    // Any authenticated user can create error logs; nobody reads them from client.
     match /errors/{errorId} {
-      allow read: if false;
+      allow read:  if false;
       allow write: if isAuthenticated();
     }
   }
