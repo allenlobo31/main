@@ -16,11 +16,32 @@ import { FirebaseError } from 'firebase/app';
 import { Report, ReportType } from '../types';
 import { useAuthStore } from '../store/authStore';
 import { useGamificationStore } from '../store/gamificationStore';
-import { deleteStorageFile, uploadFile, getFileDownloadUrl } from '../services/firebase/storage';
+import { deleteStorageFile } from '../services/firebase/storage';
 import { subscribeToAuthState } from '../services/firebase/auth';
 import { XP_VALUES } from '../constants/gamification';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 const PAGE_SIZE = 10;
+
+function getBackendUrl() {
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const ip = hostUri.split(':')[0];
+    return `http://${ip}:3000`;
+  }
+  return Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+}
+
+const BACKEND_URL = getBackendUrl();
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return globalThis.btoa(binary);
+}
 
 export function useReports() {
   const { user, isInitialized } = useAuthStore();
@@ -116,23 +137,48 @@ export function useReports() {
 
         setUploadProgress(20);
 
-        // Upload directly to Storage using the wrapper that handles React Native binary POST
-        const { downloadToken } = await uploadFile({
-          path,
-          contentType,
-          data: params.fileData,
-        });
+        // Convert Uint8Array to base64
+        const base64Data = uint8ArrayToBase64(params.fileData);
+
+        // Upload to MongoDB via new Express backend
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        
+        let response;
+        try {
+          response = await fetch(`${BACKEND_URL}/api/upload`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              filename: safeFilename,
+              contentType,
+              fileData: base64Data,
+            }),
+            signal: controller.signal as any,
+          });
+        } finally {
+          clearTimeout(timeoutId);
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to upload image to MongoDB backend');
+        }
+
+        const data = await response.json();
+        const mongoImageId = data.imageId;
 
         setUploadProgress(80);
 
-        // Create Firestore document
+        // Create Firestore document with the MongoDB image ID
         const reportDocRef = doc(db, 'users', uid, 'reports', reportId);
         await setDoc(reportDocRef as never, {
           id: reportId,
           title,
           type: params.type,
-          fileUrl: path,
-          downloadToken,
+          fileUrl: mongoImageId, // Store Mongo ID here instead of Storage Path
+          downloadToken: mongoImageId, // Placeholder
           encryptedKey: '',
           uploadedAt: serverTimestamp(),
           accessibleTo: [uid],
@@ -165,8 +211,9 @@ export function useReports() {
   );
 
   const getDownloadUrl = useCallback(
-    async (report: Report & { downloadToken?: string }): Promise<string> => {
-      return getFileDownloadUrl(report.fileUrl, report.downloadToken);
+    async (report: Report): Promise<string> => {
+      // fileUrl holds the MongoDB _id
+      return `${BACKEND_URL}/api/images/${report.fileUrl}`;
     },
     [],
   );
@@ -178,7 +225,13 @@ export function useReports() {
         // Find the report to get the storage path
         const report = reports.find((r) => r.id === reportId);
         if (report?.fileUrl) {
-          await deleteStorageFile(report.fileUrl);
+          try {
+            await fetch(`${BACKEND_URL}/api/images/${report.fileUrl}`, {
+              method: 'DELETE',
+            });
+          } catch (e) {
+            console.error('[useReports] Failed to delete MongoDB image:', e);
+          }
         }
 
         const ref = doc(db, 'users', user.uid, 'reports', reportId);

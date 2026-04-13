@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useReports } from '../../src/hooks/useReports';
 import { ReportCard } from '../../src/components/reports/ReportCard';
@@ -78,41 +77,6 @@ export default function ReportsScreen() {
     }
   };
 
-  const pickDocument = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/*'],
-      copyToCacheDirectory: true,
-    });
-
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
-
-    if ((asset.size ?? 0) > 20 * 1024 * 1024) {
-      Alert.alert('File Too Large', 'Please select a file smaller than 20MB.');
-      return;
-    }
-
-    try {
-      const base64 = await FileSystem.readAsStringAsync(asset.uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-
-      await uploadReport({
-        title: asset.name ?? 'Document',
-        type: 'other',
-        fileData: bytes,
-        filename: asset.name ?? `doc_${Date.now()}.pdf`,
-        contentType: asset.mimeType ?? 'application/pdf',
-      });
-
-      Alert.alert('Uploaded ✅', 'Your document has been securely uploaded.');
-    } catch (error) {
-      console.error('[Reports] pickDocument error:', error);
-      Alert.alert('Upload Failed', 'Could not upload the document. Please try again.');
-    }
-  };
-
   const handleViewReport = async (report: (typeof reports)[0]) => {
     try {
       const url = await getDownloadUrl(report);
@@ -138,7 +102,7 @@ export default function ReportsScreen() {
 
         {/* Upload area */}
         <Card style={styles.uploadCard} bordered>
-          <Text style={styles.uploadTitle}>📤 Upload a report</Text>
+          <Text style={styles.uploadTitle}>📤 Upload a photo</Text>
           {uploadProgress !== null ? (
             <View>
               <View style={styles.progressTrack}>
@@ -148,14 +112,13 @@ export default function ReportsScreen() {
             </View>
           ) : (
             <View style={styles.uploadBtns}>
-              <Button label="📸 Wound Photo" onPress={pickImage} variant="primary" style={styles.uploadBtn} />
-              <Button label="📄 Document" onPress={pickDocument} variant="secondary" style={styles.uploadBtn} />
+              <Button label="📸 Upload Photo" onPress={pickImage} variant="primary" style={styles.uploadBtn} />
             </View>
           )}
         </Card>
 
         {/* Reports list */}
-        <Text style={styles.sectionTitle}>Recent reports</Text>
+        <Text style={styles.sectionTitle}>Recent photos</Text>
         {reports.map((report) => (
           <ReportCard
             key={report.id}
@@ -179,7 +142,7 @@ export default function ReportsScreen() {
           />
         )}
         {reports.length === 0 && !isLoading && (
-          <Text style={styles.empty}>No reports yet. Upload your first one above.</Text>
+          <Text style={styles.empty}>No photos yet. Upload your first one above.</Text>
         )}
       </ScrollView>
     </SafeAreaView>
