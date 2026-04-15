@@ -76,8 +76,8 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={styles.greeting}>Hey, {user?.name?.split(' ')[0] ?? 'there'}</Text>
-              <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} />
+              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] ?? 'there'}</Text>
+              {/* <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} /> */}
             </View>
             <View style={styles.phaseChip}>
               <View style={[styles.phaseDot, { backgroundColor: phaseConfig.color }]} />
@@ -111,7 +111,7 @@ export default function DashboardScreen() {
               <Text style={styles.statLabel}>Total XP</Text>
             </View>
           </Card>
-          <Card style={[styles.statCard, isCompact && styles.statCardFull]}> 
+          <Card style={[styles.statCard, isCompact && styles.statCardFull]}>
             <View style={styles.statCenter}>
               <Text style={styles.statValue}>{gamification.badges.length}</Text>
               <Text style={styles.statLabel}>Badges</Text>
@@ -182,14 +182,14 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
   container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg, marginTop: theme.spacing.lg },
   headerLeft: { gap: 4 },
   greeting: { ...theme.typography.h2, color: theme.colors.textPrimary },
   phaseChip: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs },
   phaseDot: { width: 8, height: 8, borderRadius: 4 },
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
   headerRight: { alignItems: 'center', justifyContent: 'center' },
-  xpCard: { marginBottom: theme.spacing.md },
+  xpCard: { marginBottom: theme.spacing.md, marginTop: theme.spacing.md, paddingTop: theme.spacing.md },
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
   statsRowCompact: { rowGap: theme.spacing.sm },
   statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center', minWidth: 0 },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   statCenter: { alignItems: 'center' },
   statValue: { ...theme.typography.h2, color: theme.colors.textPrimary, fontWeight: '800' },
   statLabel: { ...theme.typography.caption, color: theme.colors.textMuted, marginTop: 2 },
-  sectionTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.sm, marginTop: theme.spacing.sm },
+  sectionTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.sm, marginTop: theme.spacing.lg },
   badgesRow: { marginTop: theme.spacing.xs },
   completeActionWrap: {
     marginTop: -theme.spacing.xs,
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: theme.spacing.lg,
   },
-  badgeItem: { alignItems: 'center', marginRight: theme.spacing.md, width: 68 },
+  badgeItem: { alignItems: 'center', marginRight: theme.spacing.md, width: 68, marginBottom: theme.spacing.sm },
   badgeEmojiWrap: { height: 40, justifyContent: 'center', marginBottom: 4 },
   badgeLabel: { ...theme.typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
   noBadges: { ...theme.typography.caption, color: theme.colors.textMuted, fontStyle: 'italic' },

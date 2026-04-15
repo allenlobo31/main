@@ -54,6 +54,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: theme.spacing.md,
     marginBottom: theme.spacing.xs,
   },
   levelLabel: {
@@ -68,13 +69,15 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 8,
-    backgroundColor: theme.colors.border,
+    backgroundColor: '#FFFFFF',
     borderRadius: theme.borderRadius.full,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   fill: {
     height: '100%',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#ADD8E6',
     borderRadius: theme.borderRadius.full,
   },
   footer: {
