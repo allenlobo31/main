@@ -1,13 +1,24 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '../../src/constants/theme';
+import { Home, TrendingUp, Phone, FileText, BookOpen } from 'lucide-react-native';
 
-function TabEmoji({ symbol, size }: { symbol: string; size: number }) {
-  return <Text style={{ fontSize: size, lineHeight: size + 2 }}>{symbol}</Text>;
+function useResponsiveFooter() {
+  const { height: screenHeight } = useWindowDimensions();
+  
+  // Responsive sizing based on screen height
+  const tabBarHeight = screenHeight > 800 ? 90 : screenHeight > 600 ? 80 : 72;
+  const iconSize = screenHeight > 800 ? 28 : screenHeight > 600 ? 24 : 22;
+  const paddingBottom = screenHeight > 800 ? 12 : screenHeight > 600 ? 10 : 8;
+  const paddingTop = screenHeight > 800 ? 8 : screenHeight > 600 ? 6 : 4;
+
+  return { tabBarHeight, iconSize, paddingBottom, paddingTop };
 }
 
 export default function PatientLayout() {
+  const footer = useResponsiveFooter();
+
   return (
     <Tabs
       screenOptions={{
@@ -16,15 +27,16 @@ export default function PatientLayout() {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
+          height: footer.tabBarHeight,
+          paddingBottom: footer.paddingBottom,
+          paddingTop: footer.paddingTop,
         },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.textMuted,
         tabBarLabelStyle: {
           ...theme.typography.caption,
           fontWeight: '600',
+          fontSize: 11,
         },
       }}
     >
@@ -32,35 +44,35 @@ export default function PatientLayout() {
         name="dashboard"
         options={{
           title: 'Home',
-          tabBarIcon: ({ size }) => <TabEmoji symbol="🏠" size={size} />,
+          tabBarIcon: ({ color }) => <Home size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="ai-monitor"
         options={{
           title: 'AI',
-          tabBarIcon: ({ size }) => <TabEmoji symbol="📈" size={size} />,
+          tabBarIcon: ({ color }) => <TrendingUp size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="experts"
         options={{
           title: 'Experts',
-          tabBarIcon: ({ size }) => <TabEmoji symbol="📞" size={size} />,
+          tabBarIcon: ({ color }) => <Phone size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
           title: 'Reports',
-          tabBarIcon: ({ size }) => <TabEmoji symbol="📁" size={size} />,
+          tabBarIcon: ({ color }) => <FileText size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="diary"
         options={{
           title: 'Diary',
-          tabBarIcon: ({ size }) => <TabEmoji symbol="📓" size={size} />,
+          tabBarIcon: ({ color }) => <BookOpen size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
