@@ -55,6 +55,11 @@ export default function DashboardScreen() {
   const pendingTasks = tasks.filter((task) => !task.completed);
   const completedTasks = tasks.filter((task) => task.completed);
 
+  // Only medication_logged can be manually completed
+  const isManuallyCompletable = (taskId: string): boolean => {
+    return taskId === 'medication_logged';
+  };
+
   const onCompleteTask = async (taskId: string, xpReward: number) => {
     if (!user?.uid) return;
     setCompletingTaskId(taskId);
@@ -126,13 +131,15 @@ export default function DashboardScreen() {
         ) : (
           pendingTasks.map((task) => {
             const isExpanded = expandedTaskId === task.id;
+            const canManualComplete = isManuallyCompletable(task.id);
             return (
               <View key={task.id}>
                 <TaskCard
                   task={task}
-                  onPress={() => setExpandedTaskId((current) => (current === task.id ? null : task.id))}
+                  onPress={() => canManualComplete && setExpandedTaskId((current) => (current === task.id ? null : task.id))}
+                  isManuallyCompletable={canManualComplete}
                 />
-                {isExpanded ? (
+                {isExpanded && canManualComplete ? (
                   <View style={styles.completeActionWrap}>
                     <Button
                       label="Completed"
@@ -172,7 +179,7 @@ export default function DashboardScreen() {
         {completedTasks.length === 0 ? (
           <Text style={styles.noBadges}>No tasks completed yet.</Text>
         ) : (
-          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} />)
+          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
         )}
       </ScrollView>
     </SafeAreaView>

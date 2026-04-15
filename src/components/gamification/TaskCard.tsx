@@ -14,15 +14,16 @@ const TASK_ICONS: Record<string, any> = {
 interface TaskCardProps {
   task: Task;
   onPress?: () => void;
+  isManuallyCompletable?: boolean;
 }
 
-export function TaskCard({ task, onPress }: TaskCardProps) {
+export function TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCardProps) {
   return (
     <TouchableOpacity
       style={[styles.container, task.completed && styles.completed]}
       onPress={onPress}
-      disabled={task.completed}
-      activeOpacity={0.7}
+      disabled={task.completed || !isManuallyCompletable}
+      activeOpacity={isManuallyCompletable ? 0.7 : 1}
     >
       <View style={styles.left}>
         <View style={[styles.check, task.completed && styles.checkDone]}>
@@ -31,9 +32,14 @@ export function TaskCard({ task, onPress }: TaskCardProps) {
         <View style={styles.iconWrap}>
           {TASK_ICONS[task.icon] ? React.createElement(TASK_ICONS[task.icon], { size: 18, color: theme.colors.textPrimary }) : null}
         </View>
-        <Text style={[styles.label, task.completed && styles.labelDone]}>
-          {task.label}
-        </Text>
+        <View style={styles.labelContainer}>
+          <Text style={[styles.label, task.completed && styles.labelDone]}>
+            {task.label}
+          </Text>
+          {!isManuallyCompletable && !task.completed && (
+            <Text style={styles.autoCompleteHint}>Auto-completes when you log data</Text>
+          )}
+        </View>
       </View>
       <View style={styles.xpChip}>
         <Text style={styles.xpText}>+{task.xpReward} XP</Text>
@@ -80,13 +86,21 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.successLight,
   },
   iconWrap: { width: 24, alignItems: 'center' },
-  label: {
-    ...theme.typography.body,
-    color: theme.colors.textPrimary,
+  labelContainer: {
     flex: 1,
     minWidth: 0,
   },
+  label: {
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+  },
   labelDone: { color: theme.colors.textMuted, textDecorationLine: 'line-through' },
+  autoCompleteHint: {
+    ...theme.typography.caption,
+    color: theme.colors.primaryLight,
+    fontStyle: 'italic',
+    marginTop: 2,
+  },
   xpChip: {
     backgroundColor: `${theme.colors.primary}33`,
     paddingHorizontal: theme.spacing.sm,

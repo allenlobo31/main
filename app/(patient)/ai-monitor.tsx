@@ -53,12 +53,19 @@ export default function AIMonitorScreen() {
         woundCondition: woundCondition.trim(),
         additionalNotes: notes.trim(),
       });
+
+      // Auto-complete the symptoms_logging task
+      const taskId = 'symptoms_logging';
+      if (!gamification.tasksCompletedToday.includes(taskId)) {
+        await gamification.completeTask(taskId, 20);
+      }
+
       await gamification.awardXP('SYMPTOM_LOG');
       await gamification.checkDailyStreak();
       setWoundCondition('');
       setNotes('');
       setPainLevel(5);
-      Alert.alert('Logged ✅', 'Your symptoms have been recorded. +20 XP earned!');
+      Alert.alert('Logged ✅', 'Your symptoms have been recorded. +20 XP earned! Task completed.');
     } finally {
       setIsSubmitting(false);
     }

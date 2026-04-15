@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '../../src/constants/theme';
 import { Home, TrendingUp, Phone, FileText, BookOpen } from 'lucide-react-native';
+import { useGamification } from '../../src/hooks/useGamification';
 
 function useResponsiveFooter() {
   const { height: screenHeight } = useWindowDimensions();
@@ -18,6 +19,18 @@ function useResponsiveFooter() {
 
 export default function PatientLayout() {
   const footer = useResponsiveFooter();
+  const gamification = useGamification();
+
+  // Auto-complete daily logging task when app opens
+  useEffect(() => {
+    const completeDailyLogging = async () => {
+      const taskId = 'daily_logging';
+      if (!gamification.tasksCompletedToday.includes(taskId)) {
+        await gamification.completeTask(taskId, 10);
+      }
+    };
+    completeDailyLogging();
+  }, []);
 
   return (
     <Tabs

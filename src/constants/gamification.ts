@@ -116,27 +116,27 @@ export const BADGES: Record<BadgeId, Badge> = {
 
 export const DAILY_TASKS = [
   {
-    id: 'morning_wound_check',
-    label: 'Morning wound check',
-    xpReward: XP_VALUES.SYMPTOM_LOG,
+    id: 'daily_logging',
+    label: 'Every day logging',
+    xpReward: XP_VALUES.DAILY_CHECKIN,
     icon: 'Bandage',
   },
   {
-    id: 'medication_logged',
-    label: 'Medication reminder logged',
-    xpReward: XP_VALUES.DAILY_CHECKIN,
-    icon: 'Pill',
-  },
-  {
     id: 'wound_photo',
-    label: 'Upload wound photo',
+    label: 'Wound photo upload',
     xpReward: XP_VALUES.WOUND_PHOTO,
     icon: 'Camera',
   },
   {
-    id: 'pain_level',
-    label: 'Log pain level (1–10)',
+    id: 'symptoms_logging',
+    label: 'Symptoms logging',
     xpReward: XP_VALUES.SYMPTOM_LOG,
     icon: 'BarChart',
+  },
+  {
+    id: 'medication_logged',
+    label: 'Medication reminder',
+    xpReward: XP_VALUES.DAILY_CHECKIN,
+    icon: 'Pill',
   },
 ] as const;

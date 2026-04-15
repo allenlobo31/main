@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useReports } from '../../src/hooks/useReports';
+import { useGamification } from '../../src/hooks/useGamification';
 import { ReportCard } from '../../src/components/reports/ReportCard';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
@@ -31,6 +32,7 @@ export default function ReportsScreen() {
     getDownloadUrl,
     deleteReport,
   } = useReports();
+  const gamification = useGamification();
 
   React.useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -77,7 +79,13 @@ export default function ReportsScreen() {
         contentType: 'image/jpeg',
       });
 
-      Alert.alert('Uploaded ✅', 'Your wound photo has been securely uploaded.');
+      // Auto-complete the wound_photo task
+      const taskId = 'wound_photo';
+      if (!gamification.tasksCompletedToday.includes(taskId)) {
+        await gamification.completeTask(taskId, 30);
+      }
+
+      Alert.alert('Uploaded ✅', 'Your wound photo has been securely uploaded. Task completed!');
     } catch (error) {
       console.error('[Reports] pickImage error:', error);
       Alert.alert('Upload Failed', 'Could not upload the image. Please try again.');
