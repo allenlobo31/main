@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Tabs } from 'expo-router';
 import { theme } from '../../src/constants/theme';
-import { Home, TrendingUp, Phone, FileText, BookOpen } from 'lucide-react-native';
+import { Home, TrendingUp, Phone, Heart, BookOpen, Activity } from 'lucide-react-native';
 import { useGamification } from '../../src/hooks/useGamification';
 
 function useResponsiveFooter() {
@@ -67,6 +67,13 @@ export default function PatientLayout() {
           tabBarIcon: ({ color }) => <TrendingUp size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
+       <Tabs.Screen
+        name="activity"
+        options={{
+          title: 'Activity',
+          tabBarIcon: ({ color }) => <Activity size={footer.iconSize} color={color} strokeWidth={2.5} />,
+        }}
+      />
       <Tabs.Screen
         name="experts"
         options={{
@@ -77,8 +84,8 @@ export default function PatientLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
-          tabBarIcon: ({ color }) => <FileText size={footer.iconSize} color={color} strokeWidth={2.5} />,
+          title: 'Wound Health',
+          tabBarIcon: ({ color }) => <Heart size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
@@ -88,6 +95,7 @@ export default function PatientLayout() {
           tabBarIcon: ({ color }) => <BookOpen size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />
+     
       <Tabs.Screen
         name="profile"
         options={{
