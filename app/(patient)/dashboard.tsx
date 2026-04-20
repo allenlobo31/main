@@ -21,7 +21,8 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
-import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star } from 'lucide-react-native';
+import { surgeryCountdownLabel } from '../../src/utils/dateHelpers';
+import { CalendarClock, Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star } from 'lucide-react-native';
 
 const BADGE_ICONS: Record<string, any> = {
   Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star
@@ -36,12 +37,35 @@ export default function DashboardScreen() {
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    gamification.refresh();
-    gamification.checkDailyStreak();
+    let isMounted = true;
+
+    const initializeGamification = async () => {
+      await gamification.refresh();
+      if (!isMounted) return;
+      await gamification.checkDailyStreak();
+    };
+
+    void initializeGamification();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const phase = gamification.phase;
   const phaseConfig = PHASE_CONFIGS[phase];
+  const surgeryStageChip = useMemo(() => {
+    const isPostOp = user?.surgeryStatus === 'completed';
+    const config = PHASE_CONFIGS[isPostOp ? 'post-op' : 'pre-op'];
+    return {
+      label: config.label,
+      color: config.color,
+    };
+  }, [user?.surgeryStatus]);
+  const surgeryReminder = useMemo(() => {
+    if (user?.surgeryStatus !== 'scheduled') return null;
+    return surgeryCountdownLabel(user?.scheduledSurgeryDate);
+  }, [user?.surgeryStatus, user?.scheduledSurgeryDate]);
 
   const tasks = useMemo(
     () =>
@@ -85,9 +109,9 @@ export default function DashboardScreen() {
               {/* <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} /> */}
             </View>
             <View style={styles.phaseChip}>
-              <View style={[styles.phaseDot, { backgroundColor: phaseConfig.color }]} />
-              <Text style={[styles.phaseText, { color: phaseConfig.color }]}>
-                {phaseConfig.label}
+              <View style={[styles.phaseDot, { backgroundColor: surgeryStageChip.color }]} />
+              <Text style={[styles.phaseText, { color: surgeryStageChip.color }]}> 
+                {surgeryStageChip.label}
               </Text>
             </View>
           </View>
@@ -104,6 +128,18 @@ export default function DashboardScreen() {
         <Card style={styles.xpCard}>
           <XPBar xp={gamification.xp} />
         </Card>
+
+        {surgeryReminder ? (
+          <Card style={styles.surgeryReminderCard}>
+            <View style={styles.surgeryReminderRow}>
+              <CalendarClock size={18} color={theme.colors.textPrimary} strokeWidth={2.2} />
+              <View style={styles.surgeryReminderTextWrap}>
+                <Text style={styles.surgeryReminderTitle}>Surgery Reminder</Text>
+                <Text style={styles.surgeryReminderValue}>{surgeryReminder}</Text>
+              </View>
+            </View>
+          </Card>
+        ) : null}
 
         {/* Streak + Stats Row */}
         <View style={[styles.statsRow, isCompact && styles.statsRowCompact]}>
@@ -197,6 +233,33 @@ const styles = StyleSheet.create({
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
   headerRight: { alignItems: 'center', justifyContent: 'center' },
   xpCard: { marginBottom: theme.spacing.md, marginTop: theme.spacing.md, paddingTop: theme.spacing.md },
+  surgeryReminderCard: {
+    marginBottom: theme.spacing.md,
+    backgroundColor: '#f3f8fc',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  surgeryReminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  surgeryReminderTextWrap: {
+    flex: 1,
+  },
+  surgeryReminderTitle: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    fontWeight: '700',
+  },
+  surgeryReminderValue: {
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+    fontWeight: '700',
+    marginTop: 2,
+  },
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
   statsRowCompact: { rowGap: theme.spacing.sm },
   statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center', minWidth: 0 },

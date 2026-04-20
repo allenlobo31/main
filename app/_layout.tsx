@@ -12,7 +12,7 @@ import { setupNotificationTapHandler } from '../src/services/notifications/pushS
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, isInitialized, role } = useAuth();
+  const { isAuthenticated, isInitialized, role, user } = useAuth();
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -20,21 +20,32 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     const inAuth = segments[0] === '(auth)';
     const inPatient = segments[0] === '(patient)';
     const inDoctor = segments[0] === '(doctor)';
+    const inPatientOnboarding = inPatient && segments[1] === 'onboarding';
+    const needsPatientOnboarding =
+      role === 'patient' && isAuthenticated && user?.profileSetupCompleted === false;
 
     if (!isAuthenticated && !inAuth) {
       router.replace('/(auth)/login');
+    } else if (needsPatientOnboarding && !inPatientOnboarding) {
+      router.replace('/(patient)/onboarding');
     } else if (isAuthenticated && inAuth) {
       if (role === 'doctor') {
         router.replace('/(doctor)/patient-list');
+      } else if (needsPatientOnboarding) {
+        router.replace('/(patient)/onboarding');
       } else {
         router.replace('/(patient)/dashboard');
       }
     } else if (isAuthenticated && inPatient && role === 'doctor') {
       router.replace('/(doctor)/patient-list');
     } else if (isAuthenticated && inDoctor && role === 'patient') {
-      router.replace('/(patient)/dashboard');
+      if (needsPatientOnboarding) {
+        router.replace('/(patient)/onboarding');
+      } else {
+        router.replace('/(patient)/dashboard');
+      }
     }
-  }, [isAuthenticated, isInitialized, role, segments]);
+  }, [isAuthenticated, isInitialized, role, segments, user?.profileSetupCompleted]);
 
   if (!isInitialized) {
     return (

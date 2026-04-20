@@ -4,12 +4,25 @@ import { Timestamp } from 'firebase/firestore';
 
 export type UserRole = 'patient' | 'doctor';
 
+export type Gender = 'male' | 'female' | 'other';
+export type HerniaType = 'inguinal' | 'femoral' | 'umbilical' | 'incisional';
+export type OperationStage = 'pre-operation' | 'post-operation';
+export type SurgeryStatus = 'not-done' | 'scheduled' | 'completed';
+export type SurgeryType = 'open' | 'laparoscopic';
+
 export interface User {
   uid: string;
   role: UserRole;
   name: string;
   email: string;
   avatarUrl: string;
+  gender?: Gender | null;
+  herniaType?: HerniaType | null;
+  operationStage?: OperationStage | null;
+  surgeryStatus?: SurgeryStatus | null;
+  surgeryType?: SurgeryType | null;
+  scheduledSurgeryDate?: string | null;
+  profileSetupCompleted?: boolean;
   place?: string;
   phoneNumber?: string;
   address?: string;

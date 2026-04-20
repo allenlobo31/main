@@ -4,9 +4,11 @@ import {
   isToday,
   isYesterday,
   differenceInDays,
+  differenceInCalendarDays,
   startOfDay,
   parseISO,
   isSameDay,
+  isValid,
 } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
 
@@ -94,6 +96,27 @@ export function isSurgeryToday(surgeryDate: Timestamp | null): boolean {
 
 export function parseDateString(dateStr: string): Date {
   return parseISO(dateStr);
+}
+
+export function parseISODateOnly(dateStr: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
+  const parsed = parseISO(dateStr);
+  return isValid(parsed) ? parsed : null;
+}
+
+export function surgeryCountdownLabel(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const target = parseISODateOnly(dateStr);
+  if (!target) return null;
+
+  const today = startOfDay(new Date());
+  const surgeryDate = startOfDay(target);
+  const days = differenceInCalendarDays(surgeryDate, today);
+
+  if (days > 1) return `${days} days remaining`;
+  if (days === 1) return '1 day remaining';
+  if (days === 0) return 'Surgery is today';
+  return 'Surgery date has passed';
 }
 
 export function isOlderThan(ts: Timestamp | null, minutes: number): boolean {

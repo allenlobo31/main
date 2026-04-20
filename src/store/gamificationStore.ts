@@ -36,7 +36,12 @@ function getErrorMessage(error: unknown): string {
 function isNonFatalFirestoreIssue(error: unknown): boolean {
   const code = getFirebaseCode(error);
   const msg = getErrorMessage(error);
-  if (code === 'unavailable' || code === 'failed-precondition' || code === 'unimplemented') {
+  if (
+    code === 'unavailable'
+    || code === 'failed-precondition'
+    || code === 'unimplemented'
+    || code === 'already-exists'
+  ) {
     return true;
   }
   return (
@@ -141,7 +146,19 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const ref = gamificationDoc(userId);
           await runTransaction(db, async (tx) => {
             const snap = await tx.get(ref as never);
-            if (!snap.exists()) return;
+            if (!snap.exists()) {
+              const newXP = amount;
+              tx.set(
+                ref as never,
+                {
+                  ...buildDefaultProfile(),
+                  xp: newXP,
+                  level: getLevelForXP(newXP).level,
+                } as never,
+                { merge: true } as never,
+              );
+              return;
+            }
             const current = snap.data() as GamificationProfile;
             const newXP = (current.xp ?? 0) + amount;
             const newLevel = getLevelForXP(newXP).level;
@@ -163,7 +180,10 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const ref = gamificationDoc(userId);
           await runTransaction(db, async (tx) => {
             const snap = await tx.get(ref as never);
-            if (!snap.exists()) return;
+            if (!snap.exists()) {
+              tx.set(ref as never, buildDefaultProfile() as never, { merge: true } as never);
+              return;
+            }
             const current = snap.data() as GamificationProfile;
             const status = getStreakStatus(current.lastCheckIn);
 
@@ -252,7 +272,17 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const ref = gamificationDoc(userId);
           await runTransaction(db, async (tx) => {
             const snap = await tx.get(ref as never);
-            if (!snap.exists()) return;
+            if (!snap.exists()) {
+              tx.set(
+                ref as never,
+                {
+                  ...buildDefaultProfile(),
+                  badges: [badgeId],
+                } as never,
+                { merge: true } as never,
+              );
+              return;
+            }
             const data = snap.data() as GamificationProfile;
             if (data.badges.includes(badgeId)) return; // double-check in transaction
             tx.update(ref as never, {
@@ -272,7 +302,17 @@ export const useGamificationStore = create<GamificationState & GamificationActio
           const ref = gamificationDoc(userId);
           await runTransaction(db, async (tx) => {
             const snap = await tx.get(ref as never);
-            if (!snap.exists()) return;
+            if (!snap.exists()) {
+              tx.set(
+                ref as never,
+                {
+                  ...buildDefaultProfile(),
+                  phase: nextPhase,
+                } as never,
+                { merge: true } as never,
+              );
+              return;
+            }
             tx.update(ref as never, { phase: nextPhase });
           });
           const updated = await getDoc(ref);
