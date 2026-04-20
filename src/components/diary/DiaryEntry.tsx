@@ -22,11 +22,18 @@ interface DiaryEntryProps {
 export function DiaryEntry({ entry }: DiaryEntryProps) {
   const moodCfg = MOOD_CONFIG[entry.mood];
   const Icon = ICONS[moodCfg.iconName];
+  const isHealthMonitorEntry = entry.text.startsWith('Health Monitor Report');
 
   return (
     <View style={styles.container}>
       <View style={[styles.moodBar, { backgroundColor: moodCfg.color }]} />
       <View style={styles.content}>
+        {isHealthMonitorEntry ? (
+          <View style={styles.sourceTag}>
+            <Bot size={12} color={theme.colors.primaryLight} strokeWidth={1.8} />
+            <Text style={styles.sourceTagText}>Health Monitor</Text>
+          </View>
+        ) : null}
         <View style={styles.header}>
           <Text style={styles.dateText}>{formatDate(entry.date)}</Text>
           {Icon && <Icon size={20} color={moodCfg.color} strokeWidth={2} />}
@@ -55,6 +62,25 @@ const styles = StyleSheet.create({
   },
   moodBar: { width: 4 },
   content: { flex: 1, padding: theme.spacing.md },
+  sourceTag: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: `${theme.colors.primary}44`,
+    backgroundColor: `${theme.colors.primary}1f`,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: theme.spacing.xs,
+  },
+  sourceTagText: {
+    ...theme.typography.caption,
+    color: theme.colors.primaryLight,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AppState,
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Switch,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,18 +19,43 @@ import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
-import { SwellingLevel } from '../../src/types';
+import { useAuthStore } from '../../src/store/authStore';
+import { addDoc, diaryCol, serverTimestamp } from '../../src/services/firebase/firestore';
+import { MoodType } from '../../src/types';
+import {
+  Droplets,
+  Flame,
+  Frown,
+  Meh,
+  Siren,
+  Smile,
+  Thermometer,
+  TriangleAlert,
+} from 'lucide-react-native';
+
+type AlertLevel = 'safe' | 'warning' | 'danger';
+
+const PAIN_OPTIONS = [
+  { value: 2, label: 'Low', emoji: '🙂', Icon: Smile },
+  { value: 4, label: 'Mild', emoji: '😐', Icon: Meh },
+  { value: 7, label: 'Medium', emoji: '😣', Icon: Meh },
+  { value: 9, label: 'High', emoji: '😭', Icon: Frown },
+] as const;
 
 export default function AIMonitorScreen() {
   const { entries, aiInsight, isLoading, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
   const gamification = useGamification();
+  const { user } = useAuthStore();
 
-  const [painLevel, setPainLevel] = useState(5);
-  const [swelling, setSwelling] = useState<SwellingLevel>('none');
+  const [painLevel, setPainLevel] = useState<number>(PAIN_OPTIONS[1].value);
   const [fever, setFever] = useState(false);
-  const [nausea, setNausea] = useState(false);
-  const [woundCondition, setWoundCondition] = useState('');
-  const [notes, setNotes] = useState('');
+  const [swelling, setSwelling] = useState(false);
+  const [vomiting, setVomiting] = useState(false);
+  const [redness, setRedness] = useState(false);
+  const [bleeding, setBleeding] = useState(false);
+  const [difficultUrination, setDifficultUrination] = useState(false);
+  const [painDescription, setPainDescription] = useState('');
+  const [submittedAlertLevel, setSubmittedAlertLevel] = useState<AlertLevel | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
 
@@ -38,21 +63,81 @@ export default function AIMonitorScreen() {
     refreshInsight();
   }, []);
 
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') {
+        setSubmittedAlertLevel(null);
+      }
+    });
+
+    return () => sub.remove();
+  }, []);
+
+  const alertLevel: AlertLevel = useMemo(() => {
+    if (redness || bleeding) return 'danger';
+    if (swelling || vomiting) return 'warning';
+    return 'safe';
+  }, [redness, bleeding, swelling, vomiting]);
+
+  const symptomSummary = useMemo(() => {
+    const selected: string[] = [];
+    if (fever) selected.push('Fever');
+    if (swelling) selected.push('Swelling');
+    if (vomiting) selected.push('Vomiting');
+    if (redness) selected.push('Redness');
+    if (bleeding) selected.push('Bleeding');
+    if (difficultUrination) selected.push('Difficult urination');
+    return selected.length > 0 ? selected.join(', ') : 'No critical symptom selected';
+  }, [fever, swelling, vomiting, redness, bleeding, difficultUrination]);
+
   const handleSubmit = async () => {
-    if (!woundCondition.trim()) {
-      Alert.alert('Required', 'Please describe the wound condition.');
-      return;
-    }
     setIsSubmitting(true);
     try {
+      const selectedPain = PAIN_OPTIONS.find((option) => option.value === painLevel) ?? PAIN_OPTIONS[1];
+      const loggedAt = new Date();
+
       await logSymptom({
         painLevel,
-        swelling,
+        swelling: swelling ? 'mild' : 'none',
         fever,
-        nausea,
-        woundCondition: woundCondition.trim(),
-        additionalNotes: notes.trim(),
+        nausea: vomiting,
+        woundCondition: symptomSummary,
+        additionalNotes: '',
       });
+
+      if (user?.uid) {
+        const diaryMood: MoodType =
+          alertLevel === 'danger'
+            ? 'terrible'
+            : alertLevel === 'warning'
+              ? 'bad'
+              : painLevel >= 7
+                ? 'bad'
+                : painLevel >= 4
+                  ? 'okay'
+                  : 'good';
+
+        const miniReport = [
+          'Health Monitor Report',
+          `Logged at: ${loggedAt.toLocaleDateString()} ${loggedAt.toLocaleTimeString()}`,
+          `Pain: ${selectedPain.label} ${selectedPain.emoji} (${painLevel}/10)`,
+          `Fever: ${fever ? 'Yes' : 'No'}`,
+          `Swelling: ${swelling ? 'Yes' : 'No'}`,
+          `Vomiting: ${vomiting ? 'Yes' : 'No'}`,
+          `Redness: ${redness ? 'Yes' : 'No'}`,
+          `Bleeding: ${bleeding ? 'Yes' : 'No'}`,
+          `Difficult urination: ${difficultUrination ? 'Yes' : 'No'}`,
+          `Symptoms selected: ${symptomSummary}`,
+          `Pain note: ${painDescription.trim() || 'None'}`,
+        ].join('\n');
+
+        await addDoc(diaryCol(user.uid) as never, {
+          text: miniReport,
+          mood: diaryMood,
+          date: serverTimestamp(),
+          aiSummary: null,
+        });
+      }
 
       // Auto-complete the symptoms_logging task
       const taskId = 'symptoms_logging';
@@ -62,16 +147,34 @@ export default function AIMonitorScreen() {
 
       await gamification.awardXP('SYMPTOM_LOG');
       await gamification.checkDailyStreak();
-      setWoundCondition('');
-      setNotes('');
-      setPainLevel(5);
+      setSubmittedAlertLevel(alertLevel);
+      setPainLevel(PAIN_OPTIONS[1].value);
+      setFever(false);
+      setSwelling(false);
+      setVomiting(false);
+      setRedness(false);
+      setBleeding(false);
+      setDifficultUrination(false);
+      setPainDescription('');
       Alert.alert('Logged ✅', 'Your symptoms have been recorded. +20 XP earned! Task completed.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const SWELLING_OPTIONS: SwellingLevel[] = ['none', 'mild', 'moderate', 'severe'];
+  const submittedStatusStyle =
+    submittedAlertLevel === 'danger'
+      ? styles.statusDanger
+      : submittedAlertLevel === 'warning'
+        ? styles.statusWarning
+        : styles.statusSafe;
+
+  const submittedStatusText =
+    submittedAlertLevel === 'danger'
+      ? 'Please visit your doctor promptly for in-person evaluation.'
+      : submittedAlertLevel === 'warning'
+        ? 'Please contact your doctor for medical advice.'
+        : 'Your current symptoms appear stable. Continue routine monitoring.';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -79,7 +182,7 @@ export default function AIMonitorScreen() {
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>AI Health Monitor</Text>
+        <Text style={styles.pageTitle}>Health Monitor</Text>
 
         {/* Flag Alert */}
         {hasFlaggedEntries && latestFlag && (
@@ -92,86 +195,83 @@ export default function AIMonitorScreen() {
         {/* Chart */}
         <PainChart entries={entries} />
 
+        {submittedAlertLevel && (
+          <View style={[styles.submittedStatusCard, submittedStatusStyle]}>
+            <Text style={styles.submittedStatusText}>{submittedStatusText}</Text>
+          </View>
+        )}
+
         {/* Symptom Log Form */}
         <Card style={styles.formCard} bordered>
           <Text style={styles.formTitle}>Log Symptoms</Text>
 
-          {/* Pain Level */}
-          <Text style={styles.fieldLabel}>Pain Level: {painLevel}/10</Text>
-          <View style={styles.painSlider}>
-            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+          <Text style={styles.fieldLabel}>Pain</Text>
+          <View style={styles.painRow}>
+            {PAIN_OPTIONS.map((item) => {
+              const Icon = item.Icon;
+              const isActive = painLevel === item.value;
+              return (
               <TouchableOpacity
-                key={n}
-                style={[styles.painBtn, painLevel === n && styles.painBtnActive]}
-                onPress={() => setPainLevel(n)}
+                key={item.value}
+                style={[styles.painChip, isActive && styles.painChipActive]}
+                onPress={() => setPainLevel(item.value)}
               >
-                <Text style={[styles.painBtnText, painLevel === n && styles.painBtnTextActive]}>{n}</Text>
+                <Icon
+                  size={14}
+                  color={isActive ? theme.colors.primary : theme.colors.textMuted}
+                  strokeWidth={2}
+                />
+                <Text style={styles.painEmoji}>{item.emoji}</Text>
+                <Text style={[styles.painChipText, isActive && styles.painChipTextActive]}>{item.label}</Text>
               </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
 
-          {/* Swelling */}
-          <Text style={styles.fieldLabel}>Swelling</Text>
+          <Text style={styles.fieldLabel}>Symptoms</Text>
           <View style={[styles.optionRow, isCompact && styles.optionRowCompact]}>
-            {SWELLING_OPTIONS.map((opt) => (
+            {[
+              { key: 'fever', label: 'Fever', value: fever, onToggle: setFever, Icon: Thermometer },
+              { key: 'swelling', label: 'Swelling', value: swelling, onToggle: setSwelling, Icon: Droplets },
+              { key: 'vomiting', label: 'Vomiting', value: vomiting, onToggle: setVomiting, Icon: Flame },
+              { key: 'redness', label: 'Redness', value: redness, onToggle: setRedness, Icon: TriangleAlert },
+              { key: 'bleeding', label: 'Bleeding', value: bleeding, onToggle: setBleeding, Icon: Siren },
+              {
+                key: 'urination',
+                label: 'Difficult urination',
+                value: difficultUrination,
+                onToggle: setDifficultUrination,
+                Icon: Droplets,
+              },
+            ].map((item) => {
+              const Icon = item.Icon;
+              return (
               <TouchableOpacity
-                key={opt}
+                key={item.key}
                 style={[
                   styles.optBtn,
                   isCompact && styles.optBtnCompact,
-                  swelling === opt && styles.optBtnActive,
+                  item.value && styles.optBtnActive,
                 ]}
-                onPress={() => setSwelling(opt)}
+                onPress={() => item.onToggle(!item.value)}
               >
-                <Text style={[styles.optText, swelling === opt && styles.optTextActive]}>
-                  {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                </Text>
+                <Icon size={14} color={item.value ? theme.colors.primary : theme.colors.textMuted} strokeWidth={2} />
+                <Text style={[styles.optText, item.value && styles.optTextActive]}>{item.label}</Text>
               </TouchableOpacity>
-            ))}
+              );
+            })}
           </View>
 
-          {/* Toggles */}
-          <View style={styles.toggleRow}>
-            <Text style={styles.fieldLabel}>Fever</Text>
-            <Switch
-              value={fever}
-              onValueChange={setFever}
-              trackColor={{ true: theme.colors.danger, false: theme.colors.border }}
-              thumbColor={fever ? theme.colors.dangerLight : theme.colors.textMuted}
-            />
-          </View>
-          <View style={styles.toggleRow}>
-            <Text style={styles.fieldLabel}>Nausea</Text>
-            <Switch
-              value={nausea}
-              onValueChange={setNausea}
-              trackColor={{ true: theme.colors.warning, false: theme.colors.border }}
-              thumbColor={nausea ? theme.colors.warning : theme.colors.textMuted}
-            />
-          </View>
-
-          {/* Wound Condition */}
-          <Text style={styles.fieldLabel}>Wound Condition *</Text>
+          <Text style={styles.fieldLabel}>Pain Description (Optional)</Text>
           <TextInput
             style={styles.textArea}
-            value={woundCondition}
-            onChangeText={setWoundCondition}
-            placeholder="Describe the wound appearance..."
+            value={painDescription}
+            onChangeText={setPainDescription}
+            placeholder="Briefly describe your pain..."
             placeholderTextColor={theme.colors.textMuted}
             multiline
             numberOfLines={3}
-          />
-
-          {/* Notes */}
-          <Text style={styles.fieldLabel}>Additional Notes</Text>
-          <TextInput
-            style={styles.textArea}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Any other symptoms or concerns..."
-            placeholderTextColor={theme.colors.textMuted}
-            multiline
-            numberOfLines={2}
+            maxLength={400}
           />
 
           <Button
@@ -191,21 +291,84 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
   container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
-  formCard: { marginTop: theme.spacing.md },
+  formCard: {
+    marginTop: theme.spacing.md,
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+  },
+  submittedStatusCard: {
+    marginTop: theme.spacing.md,
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+  },
+  statusSafe: {
+    borderColor: '#bbf7d0',
+    backgroundColor: '#f0fdf4',
+  },
+  statusWarning: {
+    backgroundColor: '#fefce8',
+    borderColor: '#fde68a',
+  },
+  statusDanger: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  submittedStatusText: {
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   formTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.md },
   fieldLabel: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
-  painSlider: { flexDirection: 'row', gap: 4, flexWrap: 'wrap', marginBottom: theme.spacing.sm },
-  painBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: theme.colors.surfaceAlt, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', justifyContent: 'center' },
-  painBtnActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
-  painBtnText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '700' },
-  painBtnTextActive: { color: '#fff' },
+  painRow: { flexDirection: 'row', gap: theme.spacing.xs, flexWrap: 'wrap', marginBottom: theme.spacing.sm },
+  painChip: {
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceAlt,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  painChipActive: { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}22` },
+  painEmoji: { fontSize: 14 },
+  painChipText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
+  painChipTextActive: { color: theme.colors.primaryLight, fontWeight: '700' },
   optionRow: { flexDirection: 'row', gap: theme.spacing.xs, marginBottom: theme.spacing.sm, flexWrap: 'wrap' },
   optionRowCompact: { rowGap: theme.spacing.xs },
-  optBtn: { flex: 1, paddingVertical: theme.spacing.xs, borderRadius: theme.borderRadius.sm, borderWidth: 1, borderColor: theme.colors.border, alignItems: 'center', backgroundColor: theme.colors.surfaceAlt, minWidth: 88 },
+  optBtn: {
+    flex: 1,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceAlt,
+    minWidth: 110,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: theme.spacing.xs,
+  },
   optBtnCompact: { flexBasis: '48%' },
   optBtnActive: { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}22` },
-  optText: { ...theme.typography.caption, color: theme.colors.textMuted },
+  optText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
   optTextActive: { color: theme.colors.primaryLight, fontWeight: '700' },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: theme.spacing.xs },
-  textArea: { backgroundColor: theme.colors.surfaceAlt, borderWidth: 1, borderColor: theme.colors.border, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, color: theme.colors.textPrimary, ...theme.typography.body, textAlignVertical: 'top', minHeight: 80, marginBottom: theme.spacing.xs },
+  textArea: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    color: theme.colors.textPrimary,
+    ...theme.typography.body,
+    textAlignVertical: 'top',
+    minHeight: 86,
+    marginBottom: theme.spacing.xs,
+  },
 });

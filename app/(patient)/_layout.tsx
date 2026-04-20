@@ -63,7 +63,7 @@ export default function PatientLayout() {
       <Tabs.Screen
         name="ai-monitor"
         options={{
-          title: 'AI',
+          title: 'Health Monitor',
           tabBarIcon: ({ color }) => <TrendingUp size={footer.iconSize} color={color} strokeWidth={2.5} />,
         }}
       />

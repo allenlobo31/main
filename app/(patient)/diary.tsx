@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useDiary } from '../../src/hooks/useDiary';
 import { DiaryEntry } from '../../src/components/diary/DiaryEntry';
 import { MoodPicker } from '../../src/components/diary/MoodPicker';
@@ -29,6 +30,12 @@ export default function DiaryScreen() {
   useEffect(() => {
     fetchEntries(true);
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEntries(true);
+    }, [fetchEntries]),
+  );
 
   const handleSubmit = async () => {
     if (!mood) {
