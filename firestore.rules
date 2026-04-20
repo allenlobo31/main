@@ -78,6 +78,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── Doctor Contacts ─────────────────────────────────────────────────────
+    // Any authenticated user can read quick-call doctor contacts.
+    match /doctorContacts/{contactId} {
+      allow read:  if isAuthenticated();
+      allow write: if false;
+    }
+
     // ── Consultations ────────────────────────────────────────────────────────
     // Only the patient or expert in the call can read.
     // Writes are handled by Cloud Functions only.

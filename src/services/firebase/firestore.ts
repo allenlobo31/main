@@ -34,6 +34,7 @@ import {
   DiaryEntry,
   Report,
   Expert,
+  DoctorContact,
   Consultation,
   AIInsight,
 } from '../../types';
@@ -67,6 +68,7 @@ export const converters = {
   diary: makeConverter<DiaryEntry>(),
   report: makeConverter<Report>(),
   expert: makeConverter<Expert>(),
+  doctorContact: makeConverter<DoctorContact>(),
   consultation: makeConverter<Consultation>(),
   aiInsight: makeConverter<AIInsight>(),
 };
@@ -84,6 +86,8 @@ export const diaryCol = (uid: string) =>
 export const reportsCol = (uid: string) =>
   collection(db, 'users', uid, 'reports').withConverter(converters.report);
 export const expertsCol = () => collection(db, 'experts').withConverter(converters.expert);
+export const doctorContactsCol = () =>
+  collection(db, 'doctorContacts').withConverter(converters.doctorContact);
 export const consultationsCol = () =>
   collection(db, 'consultations').withConverter(converters.consultation);
 export const aiInsightDoc = (uid: string, date: string) =>

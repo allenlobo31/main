@@ -180,6 +180,13 @@ export interface Expert {
   totalCalls: number;
 }
 
+export interface DoctorContact {
+  id: string;
+  name: string;
+  phoneNumber: string;
+  isActive: boolean;
+}
+
 export interface Consultation {
   id: string;
   patientId: string;
