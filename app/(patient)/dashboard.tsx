@@ -190,8 +190,18 @@ export default function DashboardScreen() {
           })
         )}
 
+        
+
+        <Text style={styles.sectionTitle}>Tasks completed today</Text>
+        {completedTasks.length === 0 ? (
+          <Text style={styles.noBadges}>No tasks completed yet.</Text>
+        ) : (
+          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
+        )}
+
+
         {/* Badges */}
-        <Text style={styles.sectionTitle}>Badges earned</Text>
+        {/* <Text style={styles.sectionTitle}>Badges earned</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesRow}>
           {gamification.badges.length === 0 ? (
             <Text style={styles.noBadges}>Complete tasks to earn your first badge!</Text>
@@ -209,15 +219,20 @@ export default function DashboardScreen() {
               );
             })
           )}
-        </ScrollView>
+        </ScrollView> */}
 
-        <Text style={styles.sectionTitle}>Tasks completed today</Text>
-        {completedTasks.length === 0 ? (
-          <Text style={styles.noBadges}>No tasks completed yet.</Text>
-        ) : (
-          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
-        )}
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.contactNowFab}
+        activeOpacity={0.9}
+        onPress={() => router.push('/(patient)/experts')}
+      >
+        <View style={styles.contactNowRow}>
+          <Phone size={18} color={theme.colors.textPrimary} strokeWidth={2.2} />
+          <Text style={styles.contactNowText}>Contact Now</Text>
+        </View>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -285,4 +300,33 @@ const styles = StyleSheet.create({
   badgeEmojiWrap: { height: 40, justifyContent: 'center', marginBottom: 4 },
   badgeLabel: { ...theme.typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
   noBadges: { ...theme.typography.caption, color: theme.colors.textMuted, fontStyle: 'italic' },
+  contactNowFab: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: 92,
+    backgroundColor: '#f3f8fc',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    minHeight: 54,
+    minWidth: 170,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+    elevation: 4,
+  },
+  contactNowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+  },
+  contactNowText: {
+    ...theme.typography.h3,
+    color: theme.colors.textPrimary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
 });
