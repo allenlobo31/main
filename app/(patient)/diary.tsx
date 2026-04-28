@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -26,10 +26,6 @@ export default function DiaryScreen() {
   const [mood, setMood] = useState<MoodType | null>(null);
   const [showForm, setShowForm] = useState(false);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
-
-  useEffect(() => {
-    fetchEntries(true);
-  }, []);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -64,7 +60,7 @@ export default function DiaryScreen() {
       >
         <FlatList
           data={entries}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={

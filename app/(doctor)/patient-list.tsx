@@ -10,81 +10,142 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { db, userDoc, getDocs, symptomsCol, query, orderBy, limit } from '../../src/services/firebase/firestore';
-import { collection, where } from 'firebase/firestore';
+import { 
+  userDoc, 
+  getDocs, 
+  symptomsCol, 
+  query, 
+  orderBy, 
+  limit, 
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  onSnapshot,
+} from '../../src/services/firebase/firestore';
 import { useAuthStore } from '../../src/store/authStore';
 import { Avatar } from '../../src/components/ui/Avatar';
-import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
-import { DoctorProfile, User, SymptomEntry } from '../../src/types';
-import { getDoc } from 'firebase/firestore';
+import { User, SymptomEntry } from '../../src/types';
+import { Building2, Check } from 'lucide-react-native';
 
 interface PatientSummary {
   user: User;
   latestSymptom: SymptomEntry | null;
   hasFlag: boolean;
+  isPending: boolean;
 }
 
 export default function PatientListScreen() {
-  const { user } = useAuthStore();
+  const { user, updateProfile } = useAuthStore();
   const router = useRouter();
   const { isCompact, horizontalPadding } = useResponsiveLayout();
   const [patients, setPatients] = useState<PatientSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPatients();
-  }, []);
-
-  const loadPatients = async () => {
     if (!user?.uid) return;
-    setIsLoading(true);
+    
+    // Subscribe to doctor document for real-time list updates
+    const unsubscribe = onSnapshot(userDoc(user.uid), async (docSnap) => {
+      if (!docSnap.exists()) return;
+      const doctorData = docSnap.data() as User;
+      
+      const pendingIds = doctorData.pendingPatientIds ?? [];
+      const linkedIds = doctorData.linkedPatientIds ?? [];
+      const allTargetIds = Array.from(new Set([...pendingIds, ...linkedIds]));
+
+      if (allTargetIds.length === 0) {
+        setPatients([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const summaries = await Promise.all(
+          allTargetIds.map(async (patientId) => {
+            const snap = await getDoc(userDoc(patientId));
+            if (!snap.exists()) return null;
+            const patientUser = snap.data() as User;
+
+            const symQ = query(symptomsCol(patientId) as never, orderBy('date', 'desc'), limit(1));
+            const symSnap = await getDocs(symQ);
+            const latestSymptom = symSnap.docs[0]
+              ? ({ id: symSnap.docs[0].id, ...(symSnap.docs[0].data() as Omit<SymptomEntry, 'id'>) } as SymptomEntry)
+              : null;
+
+            return {
+              user: patientUser,
+              latestSymptom,
+              hasFlag: latestSymptom?.aiFlag ?? false,
+              isPending: pendingIds.includes(patientId),
+            } as PatientSummary;
+          })
+        );
+
+        setPatients(summaries.filter((p): p is PatientSummary => p !== null));
+      } catch (err) {
+        console.error('[PatientList] Subscription error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const onAcceptPatient = async (patientId: string) => {
+    if (!user?.uid) return;
+    setIsProcessing(patientId);
     try {
-      const doctorSnap = await getDoc(userDoc(user.uid));
-      if (!doctorSnap.exists()) return;
-      const doctorData = doctorSnap.data() as DoctorProfile;
-      const patientIds = doctorData.linkedPatientIds ?? [];
+      console.log(`[Accept] Current Doctor: ${user.uid}, Target Patient: ${patientId}`);
+      
+      // 1. Update Doctor's record (Moving patient from pending to linked)
+      await updateDoc(userDoc(user.uid), {
+        pendingPatientIds: arrayRemove(patientId),
+        linkedPatientIds: arrayUnion(patientId)
+      });
+      console.log('[Accept] Doc updated');
 
-      const summaries = await Promise.allSettled(
-        patientIds.map(async (patientId) => {
-          const snap = await getDoc(userDoc(patientId));
-          if (!snap.exists()) return null;
-          const patientUser = snap.data() as User;
+      // 2. Update Patient's record (Moving doctor from pending to linked)
+      await updateDoc(userDoc(patientId), {
+        pendingDoctorIds: arrayRemove(user.uid),
+        linkedDoctorIds: arrayUnion(user.uid)
+      });
+      console.log('[Accept] Patient updated');
 
-          // Get latest symptom
-          const symQ = query(
-            symptomsCol(patientId) as never,
-            orderBy('date', 'desc'),
-            limit(1),
-          );
-          const symSnap = await getDocs(symQ);
-          const latestSymptom = symSnap.docs[0]
-            ? ({ id: symSnap.docs[0].id, ...(symSnap.docs[0].data() as Omit<SymptomEntry, 'id'>) } as SymptomEntry)
-            : null;
-
-          return {
-            user: patientUser,
-            latestSymptom,
-            hasFlag: latestSymptom?.aiFlag ?? false,
-          } as PatientSummary;
-        }),
-      );
-
-      const accessiblePatients = summaries
-        .filter((result): result is PromiseFulfilledResult<PatientSummary | null> => result.status === 'fulfilled')
-        .map((result) => result.value)
-        .filter(Boolean) as PatientSummary[];
-
-      setPatients(accessiblePatients);
-    } catch (error) {
-      console.error('[PatientList] loadPatients error:', error);
+      Alert.alert('Success', 'Patient application accepted.');
+    } catch (error: any) {
+      console.error('[Accept] Error details:', error);
+      Alert.alert('Error', `Could not accept patient: ${error.message || 'Unknown error'}`);
     } finally {
-      setIsLoading(false);
+      setIsProcessing(null);
     }
   };
 
-  const { logout } = useAuthStore();
+  const onToggleActive = async () => {
+    if (!user?.uid) return;
+    const newState = !user.isActive;
+    try {
+      await updateDoc(userDoc(user.uid), { isActive: newState });
+      updateProfile({ isActive: newState });
+    } catch (error) {
+      Alert.alert('Error', 'Could not update status');
+    }
+  };
+
+  const onToggleHospital = async () => {
+    if (!user?.uid) return;
+    const newState = !user.availableAtHospital;
+    try {
+      await updateDoc(userDoc(user.uid), { availableAtHospital: newState });
+      updateProfile({ availableAtHospital: newState });
+    } catch (error) {
+      Alert.alert('Error', 'Could not update status');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -96,15 +157,56 @@ export default function PatientListScreen() {
           keyExtractor={(item) => item.user.uid}
           contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
           ListHeaderComponent={
-            <View style={[styles.header, isCompact && styles.headerCompact]}>
-              <Text style={styles.pageTitle}>My Patients</Text>
-              <Button label="Logout" onPress={() => logout()} variant="ghost" />
+            <View>
+              <View style={[styles.header, isCompact && styles.headerCompact]}>
+                <View>
+                  <Text style={styles.welcome}>Welcome, Dr. {user?.name?.split(' ').pop()}</Text>
+                  <Text style={styles.pageTitle}>Dashboard</Text>
+                </View>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity 
+                    onPress={() => router.push('/(doctor)/profile')}
+                    style={styles.profileCircle}
+                  >
+                    <Avatar name={user?.name} size={40} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.statusCardsRow}>
+                <TouchableOpacity 
+                  style={[styles.statusCard, user?.isActive && styles.statusCardActive]}
+                  onPress={onToggleActive}
+                >
+                  <View style={[styles.statusIconWrap, user?.isActive && styles.statusIconWrapActive]}>
+                    <View style={[styles.dot, user?.isActive && styles.dotActive]} />
+                  </View>
+                  <Text style={styles.statusLabel}>Active For Calls</Text>
+                  <Text style={styles.statusValue}>{user?.isActive ? 'Online' : 'Offline'}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.statusCard, user?.availableAtHospital && styles.statusCardActive]}
+                  onPress={onToggleHospital}
+                >
+                  <View style={[styles.statusIconWrap, user?.availableAtHospital && styles.statusIconWrapActive]}>
+                    <Building2 size={20} color={user?.availableAtHospital ? '#059669' : '#64748b'} />
+                  </View>
+                  <Text style={styles.statusLabel}>Hospital Visitable</Text>
+                  <Text style={styles.statusValue}>{user?.availableAtHospital ? 'Yes' : 'No'}</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.sectionTitle}>Inquiries & Appointments</Text>
             </View>
           }
           ListEmptyComponent={
-            <Text style={styles.empty}>
-              No linked patients yet. Patients can link to you from their profile.
-            </Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>No pending applications</Text>
+              <Text style={styles.empty}>
+                Patients will appear here once they request a consultation or link their profile.
+              </Text>
+            </View>
           }
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -114,21 +216,40 @@ export default function PatientListScreen() {
               }
               activeOpacity={0.7}
             >
-              <Avatar uri={item.user.avatarUrl} name={item.user.name} size={44} />
+              <Avatar uri={item.user.avatarUrl} name={item.user.name} size={50} />
               <View style={styles.info}>
                 <Text style={styles.name}>{item.user.name}</Text>
                 <Text style={styles.email}>{item.user.email}</Text>
-                {item.latestSymptom ? (
-                  <Text style={styles.meta}>
-                    Last log: Pain {item.latestSymptom.painLevel}/10 ·{' '}
-                    {item.latestSymptom.swelling} swelling
-                    {item.hasFlag ? ' ⚠️' : ''}
-                  </Text>
+                <View style={styles.statusRow}>
+                  {item.latestSymptom ? (
+                    <Text style={styles.meta}>
+                      Pain: {item.latestSymptom.painLevel}/10 ·{' '}
+                      {item.hasFlag ? '⚠️ Urgent Review' : 'Stable'}
+                    </Text>
+                  ) : (
+                    <Text style={styles.meta}>Requested Connection</Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.cardActions}>
+                {item.isPending ? (
+                  <TouchableOpacity 
+                    style={styles.acceptBtn} 
+                    onPress={() => onAcceptPatient(item.user.uid)}
+                    disabled={isProcessing === item.user.uid}
+                  >
+                    {isProcessing === item.user.uid ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.acceptText}>Accept</Text>
+                    )}
+                  </TouchableOpacity>
                 ) : (
-                  <Text style={styles.meta}>No symptoms logged yet</Text>
+                  <View style={styles.linkedBadge}>
+                    <Check size={16} color="#059669" />
+                  </View>
                 )}
               </View>
-              <Text style={styles.arrow}>›</Text>
             </TouchableOpacity>
           )}
         />
@@ -140,15 +261,123 @@ export default function PatientListScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
   container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: theme.spacing.lg },
-  headerCompact: { flexDirection: 'column', alignItems: 'flex-start', gap: theme.spacing.sm },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: theme.spacing.lg,
+  },
+  headerCompact: { flexDirection: 'row', alignItems: 'center' },
+  welcome: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, borderRadius: theme.borderRadius.md, padding: theme.spacing.md, marginBottom: theme.spacing.sm, borderWidth: 1, borderColor: theme.colors.border, gap: theme.spacing.md, flexWrap: 'wrap' },
-  cardFlagged: { borderColor: theme.colors.danger, backgroundColor: `${theme.colors.danger}11` },
+  headerActions: { flexDirection: 'row', gap: theme.spacing.md },
+  profileCircle: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+  },
+  statusCardsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statusCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statusCardActive: {
+    borderColor: '#10b981',
+    backgroundColor: '#f0fdf4',
+  },
+  statusIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  statusIconWrapActive: {
+    backgroundColor: '#d1fae5',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#94a3b8',
+  },
+  dotActive: {
+    backgroundColor: '#10b981',
+  },
+  statusLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  statusValue: {
+    ...theme.typography.body,
+    fontWeight: '700',
+    color: theme.colors.textPrimary,
+  },
+  sectionTitle: {
+    ...theme.typography.h3,
+    marginBottom: 12,
+    color: theme.colors.textPrimary,
+  },
+  card: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: theme.colors.surfaceAlt, 
+    borderRadius: 16, 
+    padding: 16, 
+    marginBottom: 12, 
+    borderWidth: 1, 
+    borderColor: '#e2e8f0', 
+    gap: 16,
+  },
+  cardFlagged: { borderColor: '#fee2e2', backgroundColor: '#fffbfb' },
   info: { flex: 1, minWidth: 0 },
-  name: { ...theme.typography.body, color: theme.colors.textPrimary, fontWeight: '700' },
+  name: { ...theme.typography.body, color: theme.colors.textPrimary, fontWeight: '700', fontSize: 16 },
   email: { ...theme.typography.caption, color: theme.colors.textMuted },
-  meta: { ...theme.typography.caption, color: theme.colors.textSecondary, marginTop: 2 },
-  arrow: { fontSize: 22, color: theme.colors.textMuted, marginLeft: 'auto' },
-  empty: { ...theme.typography.body, color: theme.colors.textMuted, textAlign: 'center', marginTop: theme.spacing.xxxl, fontStyle: 'italic' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  meta: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '500' },
+  cardActions: {
+    justifyContent: 'center',
+  },
+  acceptBtn: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  acceptText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  linkedBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#d1fae5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyContainer: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
+  emptyTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: 8 },
+  empty: { ...theme.typography.body, color: theme.colors.textMuted, textAlign: 'center', fontStyle: 'italic' },
 });

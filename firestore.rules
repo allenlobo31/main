@@ -14,12 +14,17 @@ service cloud.firestore {
     }
 
     // True when the logged-in user is the patient's linked doctor.
-    // The patient's document contains a "linkedDoctorId" field.
     function isLinkedDoctor(userId) {
       return request.auth != null
         && exists(/databases/$(database)/documents/users/$(userId))
-        && request.auth.uid ==
-          get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId;
+        && (
+          (get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId != null && 
+           request.auth.uid == get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorId) ||
+          (get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorIds != null && 
+           request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.linkedDoctorIds) ||
+          (get(/databases/$(database)/documents/users/$(userId)).data.pendingDoctorIds != null && 
+           request.auth.uid in get(/databases/$(database)/documents/users/$(userId)).data.pendingDoctorIds)
+        );
     }
 
     // ── User profiles ─────────────────────────────────────────────────────────
@@ -27,10 +32,20 @@ service cloud.firestore {
     // Doctor : read-only on linked patients.
 
     match /users/{userId} {
-      allow read:   if isOwner(userId) || isLinkedDoctor(userId);
+      // Allow reading patient profiles if logged in (for doctor selection)
+      // Allow reading doctor profiles for patients
+      allow read:   if isAuthenticated(); 
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingPatientIds', 'pendingDoctorIds', 'linkedPatientIds', 'linkedDoctorIds']));
       allow delete: if false;
+
+      // Allow direct access to certain fields for linked/pending users
+      // This is needed for atomic updates (arrayUnion/arrayRemove) when the other user updates their side
+      // specifically when using `updateDoc` on a document the user doesn't own.
+      // But actually in Firestore security rules, `update` is checked against the whole document.
+      // Let's refine the update rule to allow specific array operations from authenticated users.
+      // Reference: "could not accept patient" often happens because one side fails.
+
 
       // ── Symptoms ──────────────────────────────────────────────────────────
       // Patient: read + create (no manual update/delete — AI writes via Admin SDK).

@@ -82,6 +82,13 @@ export const BADGES: Record<BadgeId, Badge> = {
     icon: 'Book',
     xpReward: 0,
   },
+  dairy: {
+    id: 'dairy',
+    label: 'Dairy',
+    description: 'Added a dairy entry to your recovery log.',
+    icon: 'Book',
+    xpReward: 0,
+  },
   call_made: {
     id: 'call_made',
     label: 'First Call',

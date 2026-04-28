@@ -18,6 +18,19 @@ import { XP_VALUES } from '../constants/gamification';
 
 const PAGE_SIZE = 15;
 
+function dedupeById(items: DiaryEntry[]): DiaryEntry[] {
+  const seen = new Set<string>();
+  const unique: DiaryEntry[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    unique.push(item);
+  }
+
+  return unique;
+}
+
 export function useDiary() {
   const { user } = useAuthStore();
   const gamStore = useGamificationStore();
@@ -57,7 +70,13 @@ export function useDiary() {
         );
         const last = snap.docs[snap.docs.length - 1] ?? null;
 
-        setEntries((prev) => (refresh ? items : [...prev, ...items]));
+        if (refresh) {
+          // On refresh, replace entries completely with a unique set.
+          setEntries(dedupeById(items));
+        } else {
+          // On load more, append and dedupe in a single pass.
+          setEntries((prev) => dedupeById([...prev, ...items]));
+        }
         setHasMore(items.length === PAGE_SIZE);
         setLastDoc(last);
       } catch (error) {
@@ -90,10 +109,11 @@ export function useDiary() {
           aiSummary: null,
         };
 
-        setEntries((prev) => [newEntry, ...prev]);
+        setEntries((prev) => dedupeById([newEntry, ...prev]));
 
         // Award XP
         await gamStore.addXP(user.uid, XP_VALUES.DIARY_ENTRY);
+        await gamStore.unlockBadge(user.uid, 'dairy');
 
         return true;
       } catch (error) {

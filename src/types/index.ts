@@ -52,6 +52,7 @@ export type BadgeId =
   | 'streak_30'
   | 'photo_uploader'
   | 'diary_starter'
+  | 'dairy'
   | 'call_made'
   | 'week_warrior'
   | 'pain_free'

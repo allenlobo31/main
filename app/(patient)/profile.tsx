@@ -137,6 +137,7 @@ type DetailField = {
   value?: string;
   tone: FieldTone;
   icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  action?: string;
 };
 
 export default function PatientProfileScreen() {
@@ -191,6 +192,18 @@ export default function PatientProfileScreen() {
         icon: Users,
       },
       {
+        label: 'Phone Number',
+        value: user?.phoneNumber,
+        tone: 'mint',
+        icon: Phone,
+      },
+      {
+        label: 'Address',
+        value: user?.address,
+        tone: 'sky',
+        icon: House,
+      },
+      {
         label: 'Hernia Type',
         value: formatHerniaType(user?.herniaType),
         tone: 'peach',
@@ -209,6 +222,12 @@ export default function PatientProfileScreen() {
         icon: Wrench,
       },
       {
+        label: 'Surgery Type', // Added second surgery type as per image
+        value: formatSurgeryType(user?.surgeryType),
+        tone: 'mint',
+        icon: Wrench,
+      },
+      {
         label: 'Surgery Reminder',
         value: reminderText ?? undefined,
         tone: 'sky',
@@ -221,18 +240,6 @@ export default function PatientProfileScreen() {
         icon: ClipboardList,
       },
       {
-        label: 'Phone Number',
-        value: user?.phoneNumber,
-        tone: 'mint',
-        icon: Phone,
-      },
-      {
-        label: 'Address',
-        value: user?.address,
-        tone: 'sky',
-        icon: House,
-      },
-      {
         label: 'Emergency Family Contact Number',
         value: user?.emergencyContactNumber,
         tone: 'peach',
@@ -242,13 +249,13 @@ export default function PatientProfileScreen() {
     [
       user?.place,
       user?.gender,
+      user?.phoneNumber,
+      user?.address,
       user?.herniaType,
       user?.surgeryStatus,
       user?.surgeryType,
       reminderText,
       user?.operationStage,
-      user?.phoneNumber,
-      user?.address,
       user?.emergencyContactNumber,
     ],
   );
@@ -366,10 +373,10 @@ export default function PatientProfileScreen() {
 
           <Card style={styles.profileCard}>
             <View style={styles.avatarRow}>
-              <Avatar name={form.name} size={64} />
+              <Avatar name={form.name} size={90} />
               <View style={styles.identityBlock}>
-                <Text style={styles.name}>{form.name || 'Your name'}</Text>
-                <Text style={styles.email}>{user?.email ?? ''}</Text>
+                <Text style={styles.name} numberOfLines={1}>{form.name || 'Your name'}</Text>
+                <Text style={styles.email} numberOfLines={1}>{user?.email ?? ''}</Text>
               </View>
             </View>
 
@@ -489,15 +496,52 @@ export default function PatientProfileScreen() {
               </>
             ) : (
               <>
-                {detailFields.map((field) => (
-                  <ProfileRow
-                    key={field.label}
-                    label={field.label}
-                    value={field.value}
-                    tone={field.tone}
-                    Icon={field.icon}
-                  />
-                ))}
+                <View style={styles.fieldsContainer}>
+                  {detailFields.slice(0, 4).map((field, idx) => (
+                    <ProfileRow
+                      key={`${field.label}-${idx}`}
+                      label={field.label}
+                      value={field.value}
+                      tone={field.tone}
+                      Icon={field.icon}
+                    />
+                  ))}
+                  
+                  <Text style={styles.sectionTitle}>Surgical Plan</Text>
+                  
+                  <View style={styles.gridContainer}>
+                    {detailFields.slice(4, 8).map((field, idx) => (
+                      <ProfileRow
+                        key={`${field.label}-${idx}`}
+                        label={field.label}
+                        value={field.value}
+                        tone={field.tone}
+                        Icon={field.icon}
+                        isHalf
+                      />
+                    ))}
+                  </View>
+
+                  {detailFields.slice(8, 10).map((field, idx) => (
+                    <ProfileRow
+                      key={`${field.label}-${idx}`}
+                      label={field.label}
+                      value={field.value}
+                      tone={field.tone}
+                      Icon={field.icon}
+                    />
+                  ))}
+
+                  {detailFields.slice(10).map((field, idx) => (
+                    <ProfileRow
+                      key={`${field.label}-${idx}`}
+                      label={field.label}
+                      value={field.value}
+                      tone={field.tone}
+                      Icon={field.icon}
+                    />
+                  ))}
+                </View>
                 <Button
                   label="Edit Profile"
                   onPress={onStartEdit}
@@ -507,13 +551,13 @@ export default function PatientProfileScreen() {
               </>
             )}
 
-            <Button
-              label="Logout"
-              variant="danger"
+            <TouchableOpacity
+              style={styles.logoutBtn}
               onPress={onLogout}
-              isLoading={isLoggingOut}
-              fullWidth
-            />
+              disabled={isLoggingOut}
+            >
+              <Text style={styles.logoutText}>{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
+            </TouchableOpacity>
           </Card>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -526,20 +570,37 @@ function ProfileRow({
   value,
   tone,
   Icon,
+  isHalf,
 }: {
   label: string;
   value?: string;
   tone: FieldTone;
   Icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  isHalf?: boolean;
 }) {
+  const displayValue = value?.trim() ? value : 'Not added';
+  const isSurgeryReminder = label === 'Surgery Reminder';
+
   return (
-    <View style={[styles.rowBlock, styles[`${tone}Row`]]}>
+    <View style={[styles.rowBlock, styles[`${tone}Row`], isHalf && styles.halfWidth]}>
       <View style={[styles.rowIconWrap, styles[`${tone}IconWrap`]]}>
         <Icon size={18} color={theme.colors.textPrimary} strokeWidth={2.25} />
       </View>
       <View style={styles.rowContent}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        <Text style={styles.rowValue}>{value?.trim() ? value : 'Not added'}</Text>
+        <View style={styles.rowTopLine}>
+          <Text style={styles.rowLabel} numberOfLines={1}>{label}</Text>
+        </View>
+        <View style={styles.rowValueContainer}>
+          <Text 
+            style={[styles.rowValue, isSurgeryReminder && styles.reminderValue]}
+            numberOfLines={isHalf ? 1 : 2}
+          >
+            {displayValue}
+          </Text>
+          {isSurgeryReminder && (
+            <View style={styles.progressCircleStub} />
+          )}
+        </View>
       </View>
     </View>
   );
@@ -642,60 +703,71 @@ const styles = StyleSheet.create({
   },
   rowBlock: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    borderColor: 'transparent',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
   rowContent: {
     flex: 1,
   },
   rowIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rowLabel: {
     ...theme.typography.caption,
-    color: theme.colors.textSecondary,
-    fontWeight: '600',
-    marginBottom: 4,
+    color: '#333333',
+    fontWeight: '700',
+    marginBottom: 2,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+    fontSize: 10, // Slightly smaller for better fit
   },
   rowValue: {
     ...theme.typography.body,
-    color: theme.colors.textPrimary,
+    color: '#000000',
+    fontSize: 15, // Adjusted for better space management
+    fontWeight: '500',
+    flexShrink: 1, // Allow text to shrink if needed
   },
   mintRow: {
-    backgroundColor: '#f4faf7',
+    backgroundColor: '#eff9f3',
   },
   skyRow: {
-    backgroundColor: '#f3f8fc',
+    backgroundColor: '#edf5fd',
   },
   peachRow: {
-    backgroundColor: '#fdf6f1',
+    backgroundColor: '#fff1f1',
+    borderColor: '#ff4d4d', // Red border for emergency section
+    borderWidth: 1.5,
   },
   lilacRow: {
-    backgroundColor: '#f8f4fc',
+    backgroundColor: '#f6f1fd',
   },
   mintIconWrap: {
-    backgroundColor: '#d9f1e6',
+    backgroundColor: '#d7f2e3',
   },
   skyIconWrap: {
-    backgroundColor: '#dbe9f7',
+    backgroundColor: '#d6e8fa',
   },
   peachIconWrap: {
-    backgroundColor: '#f7e4d7',
+    backgroundColor: '#ffdbdb',
   },
   lilacIconWrap: {
-    backgroundColor: '#ebdef8',
+    backgroundColor: '#ead9fa',
   },
   selectWrap: {
     marginBottom: theme.spacing.md,
@@ -753,5 +825,68 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontWeight: '700',
     marginTop: 2,
+  },
+  memberSince: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+  },
+  fieldsContainer: {
+    marginTop: theme.spacing.md,
+  },
+  rowTopLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  actionText: {
+    ...theme.typography.caption,
+    color: '#000000',
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    ...theme.typography.h3,
+    color: theme.colors.textPrimary,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', // Matching the screenshot's serif font
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  halfWidth: {
+    width: '48%',
+  },
+  rowValueContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reminderValue: {
+    fontWeight: '700',
+    color: '#1e3a8a', // Darker blue for emphasis
+  },
+  progressCircleStub: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#e2e8f0',
+    borderRightColor: '#0d9488', // Teal progress color
+    transform: [{ rotate: '-45deg' }],
+  },
+  logoutBtn: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+  },
+  logoutText: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
+    fontWeight: '600',
   },
 });

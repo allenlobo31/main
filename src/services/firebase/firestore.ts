@@ -24,6 +24,7 @@ import {
   FieldValue,
   increment,
   arrayUnion,
+  arrayRemove,
   Timestamp,
 } from 'firebase/firestore';
 import { app } from './config';
@@ -113,5 +114,6 @@ export {
   FieldValue,
   increment,
   arrayUnion,
+  arrayRemove,
   Timestamp,
 };

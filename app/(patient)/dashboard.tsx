@@ -21,8 +21,7 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
-import { surgeryCountdownLabel } from '../../src/utils/dateHelpers';
-import { CalendarClock, Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star } from 'lucide-react-native';
+import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star } from 'lucide-react-native';
 
 const BADGE_ICONS: Record<string, any> = {
   Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star
@@ -54,18 +53,6 @@ export default function DashboardScreen() {
 
   const phase = gamification.phase;
   const phaseConfig = PHASE_CONFIGS[phase];
-  const surgeryStageChip = useMemo(() => {
-    const isPostOp = user?.surgeryStatus === 'completed';
-    const config = PHASE_CONFIGS[isPostOp ? 'post-op' : 'pre-op'];
-    return {
-      label: config.label,
-      color: config.color,
-    };
-  }, [user?.surgeryStatus]);
-  const surgeryReminder = useMemo(() => {
-    if (user?.surgeryStatus !== 'scheduled') return null;
-    return surgeryCountdownLabel(user?.scheduledSurgeryDate);
-  }, [user?.surgeryStatus, user?.scheduledSurgeryDate]);
 
   const tasks = useMemo(
     () =>
@@ -109,9 +96,9 @@ export default function DashboardScreen() {
               {/* <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} /> */}
             </View>
             <View style={styles.phaseChip}>
-              <View style={[styles.phaseDot, { backgroundColor: surgeryStageChip.color }]} />
-              <Text style={[styles.phaseText, { color: surgeryStageChip.color }]}> 
-                {surgeryStageChip.label}
+              <View style={[styles.phaseDot, { backgroundColor: phaseConfig.color }]} />
+              <Text style={[styles.phaseText, { color: phaseConfig.color }]}>
+                {phaseConfig.label}
               </Text>
             </View>
           </View>
@@ -128,18 +115,6 @@ export default function DashboardScreen() {
         <Card style={styles.xpCard}>
           <XPBar xp={gamification.xp} />
         </Card>
-
-        {surgeryReminder ? (
-          <Card style={styles.surgeryReminderCard}>
-            <View style={styles.surgeryReminderRow}>
-              <CalendarClock size={18} color={theme.colors.textPrimary} strokeWidth={2.2} />
-              <View style={styles.surgeryReminderTextWrap}>
-                <Text style={styles.surgeryReminderTitle}>Surgery Reminder</Text>
-                <Text style={styles.surgeryReminderValue}>{surgeryReminder}</Text>
-              </View>
-            </View>
-          </Card>
-        ) : null}
 
         {/* Streak + Stats Row */}
         <View style={[styles.statsRow, isCompact && styles.statsRowCompact]}>
@@ -190,18 +165,8 @@ export default function DashboardScreen() {
           })
         )}
 
-        
-
-        <Text style={styles.sectionTitle}>Tasks completed today</Text>
-        {completedTasks.length === 0 ? (
-          <Text style={styles.noBadges}>No tasks completed yet.</Text>
-        ) : (
-          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
-        )}
-
-
         {/* Badges */}
-        {/* <Text style={styles.sectionTitle}>Badges earned</Text>
+        <Text style={styles.sectionTitle}>Badges earned</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesRow}>
           {gamification.badges.length === 0 ? (
             <Text style={styles.noBadges}>Complete tasks to earn your first badge!</Text>
@@ -219,20 +184,15 @@ export default function DashboardScreen() {
               );
             })
           )}
-        </ScrollView> */}
+        </ScrollView>
 
+        <Text style={styles.sectionTitle}>Tasks completed today</Text>
+        {completedTasks.length === 0 ? (
+          <Text style={styles.noBadges}>No tasks completed yet.</Text>
+        ) : (
+          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
+        )}
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.contactNowFab}
-        activeOpacity={0.9}
-        onPress={() => router.push('/(patient)/experts')}
-      >
-        <View style={styles.contactNowRow}>
-          <Phone size={18} color={theme.colors.textPrimary} strokeWidth={2.2} />
-          <Text style={styles.contactNowText}>Contact Now</Text>
-        </View>
-      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -248,33 +208,6 @@ const styles = StyleSheet.create({
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
   headerRight: { alignItems: 'center', justifyContent: 'center' },
   xpCard: { marginBottom: theme.spacing.md, marginTop: theme.spacing.md, paddingTop: theme.spacing.md },
-  surgeryReminderCard: {
-    marginBottom: theme.spacing.md,
-    backgroundColor: '#f3f8fc',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  surgeryReminderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  surgeryReminderTextWrap: {
-    flex: 1,
-  },
-  surgeryReminderTitle: {
-    ...theme.typography.caption,
-    color: theme.colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    fontWeight: '700',
-  },
-  surgeryReminderValue: {
-    ...theme.typography.body,
-    color: theme.colors.textPrimary,
-    fontWeight: '700',
-    marginTop: 2,
-  },
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
   statsRowCompact: { rowGap: theme.spacing.sm },
   statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center', minWidth: 0 },
@@ -300,33 +233,4 @@ const styles = StyleSheet.create({
   badgeEmojiWrap: { height: 40, justifyContent: 'center', marginBottom: 4 },
   badgeLabel: { ...theme.typography.caption, color: theme.colors.textMuted, textAlign: 'center' },
   noBadges: { ...theme.typography.caption, color: theme.colors.textMuted, fontStyle: 'italic' },
-  contactNowFab: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: 92,
-    backgroundColor: '#f3f8fc',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.borderRadius.lg,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-    minHeight: 54,
-    minWidth: 170,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-    elevation: 4,
-  },
-  contactNowRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-  },
-  contactNowText: {
-    ...theme.typography.h3,
-    color: theme.colors.textPrimary,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
 });

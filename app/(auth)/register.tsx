@@ -23,6 +23,8 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('patient');
+  const [doctorCode, setDoctorCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const { register, isLoading } = useAuthStore();
@@ -30,7 +32,13 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     setError(null);
-    const result = safeParse(registerSchema, { name, email, password, role: 'patient' });
+
+    if (role === 'doctor' && doctorCode !== '2026') {
+      setError('Invalid developer code for doctor registration.');
+      return;
+    }
+
+    const result = safeParse(registerSchema, { name, email, password, role });
     if (!result.success) {
       setError(result.error);
       return;
@@ -41,8 +49,9 @@ export default function RegisterScreen() {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password,
-        role: 'patient',
+        role,
       });
+      // Navigation is handled by layout observer or store change
     } catch (err) {
       setError(parseAuthError(err));
     }
@@ -75,12 +84,31 @@ export default function RegisterScreen() {
               </View>
             ) : null}
 
+            <View style={styles.roleToggle}>
+              <TouchableOpacity
+                onPress={() => setRole('patient')}
+                style={[styles.roleBtn, role === 'patient' && styles.roleBtnActive]}
+              >
+                <Text style={[styles.roleBtnText, role === 'patient' && styles.roleBtnTextActive]}>
+                  Patient
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setRole('doctor')}
+                style={[styles.roleBtn, role === 'doctor' && styles.roleBtnActive]}
+              >
+                <Text style={[styles.roleBtnText, role === 'doctor' && styles.roleBtnTextActive]}>
+                  Doctor
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <Input
               label="Full Name"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
-              placeholder="Jane Smith"
+              placeholder={role === 'doctor' ? 'Dr. Jane Smith' : 'Jane Smith'}
             />
             <Input
               label="Email"
@@ -98,8 +126,19 @@ export default function RegisterScreen() {
               placeholder="Min. 6 characters"
             />
 
+            {role === 'doctor' && (
+              <Input
+                label="Developer Code (Required for Doctors)"
+                value={doctorCode}
+                onChangeText={setDoctorCode}
+                keyboardType="numeric"
+                placeholder="Enter 4-digit code"
+                secureTextEntry
+              />
+            )}
+
             <Button
-              label="Create Account"
+              label={role === 'doctor' ? 'Register as Doctor' : 'Create Account'}
               onPress={handleRegister}
               isLoading={isLoading}
               fullWidth
@@ -151,4 +190,33 @@ const styles = StyleSheet.create({
   switchLink: { alignItems: 'center', marginTop: theme.spacing.lg },
   switchText: { ...theme.typography.body, color: theme.colors.textMuted },
   switchAction: { color: theme.colors.primary, fontWeight: '700' },
+  roleToggle: {
+    flexDirection: 'row',
+    marginBottom: theme.spacing.lg,
+    backgroundColor: '#f0f0f0',
+    borderRadius: theme.borderRadius.md,
+    padding: 4,
+  },
+  roleBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: theme.borderRadius.sm,
+  },
+  roleBtnActive: {
+    backgroundColor: '#ffffff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  roleBtnText: {
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
+    fontWeight: '600',
+  },
+  roleBtnTextActive: {
+    color: theme.colors.primary,
+  },
 });
