@@ -1,7 +1,0 @@
-﻿app/(patient)/reports.tsx(67,30): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
-app/(patient)/reports.tsx(102,30): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
-src/hooks/useReports.ts(160,22): error TS2352: Conversion of type 'Report' to type 'Record<string, unknown>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
-  Index signature for type 'string' is missing in type 'Report'.
-src/services/firebase/storage.ts(45,33): error TS2339: Property 'cacheDirectory' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
-src/services/firebase/storage.ts(47,26): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
-src/services/firebase/storage.ts(61,30): error TS2339: Property 'FileSystemUploadType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.

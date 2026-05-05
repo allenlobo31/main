@@ -1,8 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config();
 
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 const Image = require('./models/Image');
 
 const app = express();
@@ -20,6 +22,9 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 // Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
 app.post('/api/upload', async (req, res) => {
   try {
     const { fileData, contentType, filename } = req.body;
@@ -78,6 +83,39 @@ app.delete('/api/images/:id', async (req, res) => {
   }
 });
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${port} (accessible across local network)`);
+// AI & Error Stubs (to prevent 404s)
+app.post('/api/errors', (req, res) => {
+  console.log('⚠️ Client Error Logged:', req.body);
+  res.json({ success: true });
+});
+
+app.post('/api/ai/:action', (req, res) => {
+  const { action } = req.params;
+  console.log(`🤖 AI Request [${action}]`);
+  res.json({ message: 'AI stub response. AI features not yet implemented on backend.' });
+});
+
+app.post('/api/call/initiate', (req, res) => {
+  console.log('📞 Call Initiated:', req.body);
+  res.json({ 
+    success: true, 
+    consultation: { id: 'stub_' + Date.now() },
+    agoraToken: 'stub_token',
+    channelName: 'stub_channel'
+  });
+});
+
+app.put('/api/call/:id/end', (req, res) => {
+  console.log(`📞 Call Ended: ${req.params.id}`);
+  res.json({ success: true });
+});
+
+// 404 Logger
+app.use((req, res, next) => {
+  console.log(`❓ 404 Not Found: ${req.method} ${req.url}`);
+  res.status(404).json({ error: 'Route not found' });
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });

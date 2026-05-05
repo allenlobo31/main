@@ -1,2 +1,0 @@
-﻿src/services/firebase/config.ts(6,3): error TS2305: Module '"firebase/auth"' has no exported member 'getReactNativePersistence'.
-src/services/notifications/pushService.ts(136,10): error TS2503: Cannot find namespace 'Notifications'.

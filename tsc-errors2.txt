@@ -1,2 +1,0 @@
-﻿app/(patient)/reports.tsx(67,28): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
-app/(patient)/reports.tsx(97,28): error TS2339: Property 'EncodingType' does not exist on type 'typeof import("C:/Users/Allen Lobo/React Projects/React Native/herniacare/node_modules/expo-file-system/build/index")'.
