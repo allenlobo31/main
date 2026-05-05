@@ -56,7 +56,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true });
         try {
           const { user, token } = await registerUser({ email, password, name, role });
-          set({ user, role: user.role, token, isLoading: false });
+          set({
+            user: { ...user, profileSetupCompleted: false }, // Ensure profileSetupCompleted is false for new users
+            role: user.role,
+            token,
+            isLoading: false,
+          });
         } finally {
           set({ isLoading: false });
         }

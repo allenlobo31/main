@@ -1,3 +1,4 @@
+import { AuthState, AuthActions } from '../store/authStore';
 import { useEffect, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -6,7 +7,7 @@ import {
 } from '../services/notifications/pushService';
 
 export function useAuth() {
-  const store = useAuthStore();
+  const store: AuthState & AuthActions = useAuthStore();
 
   useEffect(() => {
     if (store.isInitialized && store.user) {
@@ -41,5 +42,6 @@ export function useAuth() {
     isAuthenticated: !!store.user,
     login,
     logout,
+    profileSetupCompleted: store.profileSetupCompleted,
   };
 }
