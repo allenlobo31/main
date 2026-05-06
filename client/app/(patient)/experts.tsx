@@ -79,8 +79,8 @@ export default function ExpertsScreen() {
   const onRemoveDoctor = async (doctorId: string) => {
     Alert.alert('Remove Connection', 'Stop sharing your data with this doctor?', [
       { text: 'Keep', style: 'cancel' },
-      { 
-        text: 'Stop Sharing', 
+      {
+        text: 'Stop Sharing',
         style: 'destructive',
         onPress: async () => {
           try {
@@ -96,14 +96,14 @@ export default function ExpertsScreen() {
 
   const linkedDoctors = appDoctors.filter(d => user?.linkedDoctorIds?.includes(d.uid));
   const pendingDoctorIds = (user as any)?.pendingDoctorIds || [];
-  const otherDoctors = appDoctors.filter(d => 
-    !user?.linkedDoctorIds?.includes(d.uid) && 
+  const otherDoctors = appDoctors.filter(d =>
+    !user?.linkedDoctorIds?.includes(d.uid) &&
     !pendingDoctorIds.includes(d.uid)
   );
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={fetchData} color={theme.colors.primary} />
@@ -144,14 +144,14 @@ export default function ExpertsScreen() {
                       </View>
                     </View>
                     <View style={styles.docActions}>
-                      <TouchableOpacity 
-                        style={styles.iconBtn} 
+                      <TouchableOpacity
+                        style={styles.iconBtn}
                         onPress={() => Linking.openURL(`tel:${doc.phoneNumber || '911'}`)}
                       >
                         <Phone size={20} color={theme.colors.primary} strokeWidth={2.2} />
                       </TouchableOpacity>
-                      <TouchableOpacity 
-                        style={[styles.iconBtn, styles.removeBtn]} 
+                      <TouchableOpacity
+                        style={[styles.iconBtn, styles.removeBtn]}
                         onPress={() => onRemoveDoctor(doc.uid)}
                       >
                         <Trash2 size={20} color={theme.colors.danger} strokeWidth={2.2} />
@@ -174,7 +174,7 @@ export default function ExpertsScreen() {
                       <Text style={styles.docName}>Dr. {doc.name}</Text>
                       <Text style={styles.docHospital}>{doc.hospitalAddress || 'Hernia Specialist'}</Text>
                     </View>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.applyBtn}
                       onPress={() => onApplyToDoctor(doc.uid)}
                       disabled={isApplying === doc.uid}
@@ -230,12 +230,12 @@ const styles = StyleSheet.create({
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: 4 },
   subtitle: { ...theme.typography.body, color: theme.colors.textSecondary },
   loadingArea: { paddingVertical: 100, alignItems: 'center' },
-  
+
   section: { marginBottom: theme.spacing.xl },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: theme.spacing.md },
   sectionTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.sm },
   sectionSubtitle: { ...theme.typography.caption, color: theme.colors.textMuted, marginBottom: theme.spacing.md },
-  
+
   aiBadge: { backgroundColor: `${theme.colors.primary}1f`, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: `${theme.colors.primary}44` },
   aiBadgeText: { ...theme.typography.caption, color: theme.colors.primary, fontWeight: '700', fontSize: 10 },
 
@@ -255,25 +255,25 @@ const styles = StyleSheet.create({
   docName: { ...theme.typography.body, color: theme.colors.textPrimary, fontWeight: '700' },
   docHospital: { ...theme.typography.caption, color: theme.colors.textMuted },
   docPending: { ...theme.typography.caption, color: theme.colors.primary, fontStyle: 'italic' },
-  
+
   docBadges: { flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' },
   statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f5f5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, gap: 4 },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { ...theme.typography.caption, fontSize: 9, color: '#404040', fontWeight: '700' },
 
   docActions: { flexDirection: 'row', gap: theme.spacing.sm },
-  iconBtn: { 
-    width: 40, 
-    height: 40, 
-    borderRadius: 20, 
-    backgroundColor: `${theme.colors.primary}15`, 
-    alignItems: 'center', 
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${theme.colors.primary}15`,
+    alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: `${theme.colors.primary}33`,
   },
   removeBtn: { backgroundColor: `${theme.colors.danger}15`, borderColor: `${theme.colors.danger}33` },
-  
+
   applyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
