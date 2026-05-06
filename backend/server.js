@@ -110,16 +110,21 @@ app.put('/api/call/:id/end', (req, res) => {
   res.json({ success: true });
 });
 
+app.post('/api/data', (req, res) => {
+  res.json({ message: "Data received" });
+});
+
+// Add a root route to handle requests to '/'
+app.get('/', (req, res) => {
+  res.send("HerniaCare API is running!");
+});
+
 // 404 Logger
 app.use((req, res, next) => {
-  console.log(`❓ 404 Not Found: ${req.method} ${req.url}`);
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({ error: "Route not found" });
 });
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-app.get('/', (req, res) => {
-  res.status(200).send('Server is up and running!');
-});
