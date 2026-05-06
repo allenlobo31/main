@@ -1,13 +1,12 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 
 const getApiUrl = () => {
-  if (Platform.OS === 'android') {
-    // 10.0.2.2 is the special alias for localhost on Android Emulators
-    // return 'http://10.0.2.2:3000/api'; 
+  // Use environment variable if set, otherwise default to the deployed Render URL
+  if (process.env.API_URL) {
+    return `${process.env.API_URL}/api`;
   }
-  // This uses your Wifi IP so it works with physical devices and Expo Go
-  return 'http://10.167.57.119:3000/api';
+  // Default: deployed backend on Render
+  return 'https://herniacare.onrender.com/api';
 };
 
 const API_URL = getApiUrl();
