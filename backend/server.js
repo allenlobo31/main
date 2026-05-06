@@ -10,6 +10,13 @@ const Image = require('./models/Image');
 const app = express();
 const port = process.env.PORT || 3000;
 
+const apiClient = axios.create({
+  baseURL: 'https://herniacare.onrender.com/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -128,3 +135,4 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
+axios.post('https://herniacare.onrender.com/api/data', { key: 'value' });
