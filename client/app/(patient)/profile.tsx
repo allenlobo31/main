@@ -272,7 +272,7 @@ export default function PatientProfileScreen() {
 
   const surgicalFields = useMemo<DetailField[]>(
     () => {
-      const fields = [
+      const fields: DetailField[] = [
         {
           label: 'Hernia Type',
           value: formatHerniaType(user?.herniaType),
