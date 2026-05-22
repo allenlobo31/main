@@ -5,9 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../src/store/authStore';
 import { useGamification } from '../../src/hooks/useGamification';
 import { XPBar } from '../../src/components/gamification/XPBar';
@@ -21,7 +23,7 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
-import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock } from 'lucide-react-native';
+import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock, Trophy } from 'lucide-react-native';
 import { surgeryCountdownLabel } from '../../src/utils/dateHelpers';
 
 const BADGE_ICONS: Record<string, any> = {
@@ -44,21 +46,41 @@ export default function DashboardScreen() {
     [user?.surgeryStatus, user?.scheduledSurgeryDate],
   );
 
-  useEffect(() => {
-    let isMounted = true;
+  const [refreshing, setRefreshing] = useState(false);
 
-    const initializeGamification = async () => {
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
       await gamification.refresh();
-      if (!isMounted) return;
       await gamification.checkDailyStreak();
-    };
+    } catch (error) {
+      console.error('[Dashboard] pull to refresh error:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
-    void initializeGamification();
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      const initializeGamification = async () => {
+        try {
+          await gamification.refresh();
+          if (!isMounted) return;
+          await gamification.checkDailyStreak();
+        } catch (error) {
+          console.error('[Dashboard] gamification focus init error:', error);
+        }
+      };
+
+      void initializeGamification();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   const phase = gamification.phase;
   const phaseConfig = PHASE_CONFIGS[phase];
@@ -96,6 +118,13 @@ export default function DashboardScreen() {
       <ScrollView
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+          />
+        }
       >
         {/* Header */}
         <View style={styles.header}>
@@ -159,62 +188,78 @@ export default function DashboardScreen() {
           </Card>
         </View>
 
-        {/* Today's Tasks */}
-        <Text style={styles.sectionTitle}>Today's tasks</Text>
+        {/* Today's Tasks & Completed Tasks conditional view */}
         {pendingTasks.length === 0 ? (
-          <Text style={styles.noBadges}>All daily tasks completed. Great job!</Text>
-        ) : (
-          pendingTasks.map((task) => {
-            const isExpanded = expandedTaskId === task.id;
-            const canManualComplete = isManuallyCompletable(task.id);
-            return (
-              <View key={task.id}>
-                <TaskCard
-                  task={task}
-                  onPress={() => canManualComplete && setExpandedTaskId((current) => (current === task.id ? null : task.id))}
-                  isManuallyCompletable={canManualComplete}
-                />
-                {isExpanded && canManualComplete ? (
-                  <View style={styles.completeActionWrap}>
-                    <Button
-                      label="Completed"
-                      onPress={() => onCompleteTask(task.id, task.xpReward)}
-                      isLoading={completingTaskId === task.id}
-                      style={styles.completeBtn}
-                    />
-                  </View>
-                ) : null}
+          <Card style={styles.allCompletedCard}>
+            <View style={styles.allCompletedRow}>
+              <View style={styles.allCompletedIconWrap}>
+                <Trophy size={28} color="#eab308" strokeWidth={2.5} />
               </View>
-            );
-          })
+              <View style={styles.allCompletedText}>
+                <Text style={styles.allCompletedTitle}>All Daily Tasks Completed!</Text>
+                <Text style={styles.allCompletedSubtitle}>Amazing job! You've earned all XP and completed your daily streak check-in. Keep up the excellent work!</Text>
+              </View>
+            </View>
+          </Card>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>Today's tasks</Text>
+            {pendingTasks.map((task) => {
+              const isExpanded = expandedTaskId === task.id;
+              const canManualComplete = isManuallyCompletable(task.id);
+              return (
+                <View key={task.id}>
+                  <TaskCard
+                    task={task}
+                    onPress={() => canManualComplete && setExpandedTaskId((current) => (current === task.id ? null : task.id))}
+                    isManuallyCompletable={canManualComplete}
+                  />
+                  {isExpanded && canManualComplete ? (
+                    <View style={styles.completeActionWrap}>
+                      <Button
+                        label="Completed"
+                        onPress={() => onCompleteTask(task.id, task.xpReward)}
+                        isLoading={completingTaskId === task.id}
+                        style={styles.completeBtn}
+                      />
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </>
         )}
 
         {/* Badges */}
-        <Text style={styles.sectionTitle}>Badges earned</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesRow}>
-          {gamification.badges.length === 0 ? (
-            <Text style={styles.noBadges}>Complete tasks to earn your first badge!</Text>
-          ) : (
-            gamification.badges.map((badgeId) => {
-              const badge = BADGES[badgeId as BadgeId];
-              const BadgeIcon = BADGE_ICONS[badge.icon];
-              return (
-                <View key={badgeId} style={styles.badgeItem}>
-                  <View style={styles.badgeEmojiWrap}>
-                    {BadgeIcon ? <BadgeIcon size={32} color={theme.colors.textPrimary} strokeWidth={1.5} /> : null}
+        {gamification.badges.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Badges earned</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesRow}>
+              {gamification.badges.map((badgeId) => {
+                const badge = BADGES[badgeId as BadgeId];
+                const BadgeIcon = BADGE_ICONS[badge.icon];
+                return (
+                  <View key={badgeId} style={styles.badgeItem}>
+                    <View style={styles.badgeEmojiWrap}>
+                      {BadgeIcon ? <BadgeIcon size={32} color={theme.colors.textPrimary} strokeWidth={1.5} /> : null}
+                    </View>
+                    <Text style={styles.badgeLabel}>{badge.label}</Text>
                   </View>
-                  <Text style={styles.badgeLabel}>{badge.label}</Text>
-                </View>
-              );
-            })
-          )}
-        </ScrollView>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
 
-        <Text style={styles.sectionTitle}>Tasks completed today</Text>
-        {completedTasks.length === 0 ? (
-          <Text style={styles.noBadges}>No tasks completed yet.</Text>
-        ) : (
-          completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
+        {pendingTasks.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Tasks completed today</Text>
+            {completedTasks.length === 0 ? (
+              <Text style={styles.noBadges}>No tasks completed yet.</Text>
+            ) : (
+              completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
+            )}
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -231,10 +276,21 @@ const styles = StyleSheet.create({
   phaseDot: { width: 8, height: 8, borderRadius: 4 },
   phaseText: { ...theme.typography.caption, fontWeight: '700' },
   headerRight: { alignItems: 'center', justifyContent: 'center' },
-  xpCard: { marginBottom: theme.spacing.md, marginTop: theme.spacing.md, paddingTop: theme.spacing.md },
+  xpCard: { 
+    marginBottom: theme.spacing.md, 
+    marginTop: theme.spacing.md, 
+    paddingTop: theme.spacing.md,
+    backgroundColor: '#e6f9ed',
+  },
   statsRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.xl, flexWrap: 'wrap' },
   statsRowCompact: { rowGap: theme.spacing.sm },
-  statCard: { flex: 1, padding: theme.spacing.md, alignItems: 'center', minWidth: 0 },
+  statCard: { 
+    flex: 1, 
+    padding: theme.spacing.md, 
+    alignItems: 'center', 
+    minWidth: 0,
+    backgroundColor: '#e6f9ed',
+  },
   statCardCompact: { flexBasis: '48%' },
   statCardFull: { flexBasis: '100%' },
   statCenter: { alignItems: 'center' },
@@ -292,9 +348,9 @@ const styles = StyleSheet.create({
   },
   countdownCard: {
     marginBottom: theme.spacing.md,
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
-    borderWidth: 1,
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
   },
   countdownRow: {
     flexDirection: 'row',
@@ -324,5 +380,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: theme.colors.textPrimary,
     fontSize: 16,
+  },
+  allCompletedCard: {
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xl,
+    padding: theme.spacing.lg,
+  },
+  allCompletedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  allCompletedIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: '#fef9c3',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  allCompletedText: {
+    flex: 1,
+  },
+  allCompletedTitle: {
+    ...theme.typography.body,
+    fontWeight: '800',
+    color: '#000000',
+    fontSize: 16,
+  },
+  allCompletedSubtitle: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginTop: 4,
+    lineHeight: 18,
   },
 });

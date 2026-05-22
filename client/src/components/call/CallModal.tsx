@@ -17,16 +17,16 @@ import { muteLocalAudio, muteLocalVideo } from '../../services/call/agoraService
 interface CallModalProps {
   visible: boolean;
   callState: CallState;
-  localUid: number;
-  remoteUid: number | null;
+  localUid?: number;
+  remoteUid?: number | null;
   onEndCall: () => void;
 }
 
 export function CallModal({
   visible,
   callState,
-  localUid,
-  remoteUid,
+  localUid = 0,
+  remoteUid = null,
   onEndCall,
 }: CallModalProps) {
   const { width, height } = useWindowDimensions();

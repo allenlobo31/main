@@ -87,9 +87,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     firebaseMeasurementId: env('FIREBASE_MEASUREMENT_ID'),
     firebaseFunctionsRegion: env('FIREBASE_FUNCTIONS_REGION'),
     agoraAppId: env('AGORA_APP_ID'),
-    easProjectId: env('EAS_PROJECT_ID'),
     eas: {
-      projectId: env('EAS_PROJECT_ID'),
+      projectId: "9726b6cb-c266-4a06-ad4b-f4858696b195"
     },
   },
 });

@@ -3,7 +3,7 @@ import { AppTheme } from '../types';
 export const theme: AppTheme = {
   colors: {
     background: '#ffffff',
-    surface: '#eafaf1', // light green box color
+    surface: '#ffffff', // white box color
     surfaceAlt: '#ffffff',
     primary: '#000000',
     primaryLight: '#333333',

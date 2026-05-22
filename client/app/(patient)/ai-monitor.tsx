@@ -98,7 +98,6 @@ export default function AIMonitorScreen() {
 
       await logSymptom({
         painLevel,
-        intensity: painLevel,
         swelling: swelling ? 'mild' : 'none',
         fever,
         nausea: vomiting,
@@ -158,6 +157,9 @@ export default function AIMonitorScreen() {
       setDifficultUrination(false);
       setPainDescription('');
       Alert.alert('Logged ✅', 'Your symptoms have been recorded. +20 XP earned! Task completed.');
+    } catch (error) {
+      console.error('[AIMonitor] handleSubmit error:', error);
+      Alert.alert('Error', 'Could not save your symptoms. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -294,27 +296,29 @@ const styles = StyleSheet.create({
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   formCard: {
     marginTop: theme.spacing.md,
-    backgroundColor: '#f0fdf4',
-    borderColor: '#bbf7d0',
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
   },
   submittedStatusCard: {
     marginTop: theme.spacing.md,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
     borderRadius: theme.borderRadius.md,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
   },
   statusSafe: {
-    borderColor: '#bbf7d0',
+    borderColor: '#000000',
     backgroundColor: '#f0fdf4',
   },
   statusWarning: {
     backgroundColor: '#fefce8',
-    borderColor: '#fde68a',
+    borderColor: '#000000',
   },
   statusDanger: {
     backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    borderColor: '#000000',
   },
   submittedStatusText: {
     ...theme.typography.body,

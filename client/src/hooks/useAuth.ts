@@ -42,6 +42,6 @@ export function useAuth() {
     isAuthenticated: !!store.user,
     login,
     logout,
-    profileSetupCompleted: store.profileSetupCompleted,
+    profileSetupCompleted: store.user?.profileSetupCompleted ?? false,
   };
 }

@@ -53,18 +53,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#e6f9ed', // Green for today's tasks
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#000000',
     flexWrap: 'wrap',
     rowGap: theme.spacing.sm,
   },
   completed: {
-    borderColor: theme.colors.success,
-    backgroundColor: `${theme.colors.success}1A`,
+    borderColor: '#000000',
+    borderWidth: 2,
+    backgroundColor: '#f3f4f6', // Gray for completed tasks today
   },
   left: {
     flexDirection: 'row',
@@ -77,13 +78,13 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: theme.colors.border,
+    borderColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkDone: {
-    backgroundColor: theme.colors.success,
-    borderColor: theme.colors.successLight,
+    backgroundColor: '#10b981',
+    borderColor: '#000000',
   },
   iconWrap: { width: 24, alignItems: 'center' },
   labelContainer: {

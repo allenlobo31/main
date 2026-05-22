@@ -23,34 +23,62 @@ export const useGamificationStore = create<GamificationState & GamificationActio
       profile: null,
       setProfile: (profile) => set({ profile }),
       fetchProfile: async (userId) => {
-        const response = await apiClient.get('/users/me');
-        set({ profile: response.data });
+        try {
+          const response = await apiClient.get('/users/me');
+          set({ profile: response.data });
+        } catch (error) {
+          console.error('[GamificationStore] fetchProfile error:', error);
+        }
       },
       addXP: async (userId, amount) => {
-        const response = await apiClient.put('/users/profile', { 
-          xp: (get().profile?.xp || 0) + amount 
-        });
-        set({ profile: response.data });
+        try {
+          const response = await apiClient.put('/users/profile', { 
+            xp: (get().profile?.xp || 0) + amount 
+          });
+          set({ profile: response.data });
+        } catch (error) {
+          console.error('[GamificationStore] addXP error:', error);
+        }
       },
       completeDailyTask: async (userId, taskId, xpReward) => {
-        // Implementation for MongoDB backend would go here
-        // For now, updating local profile via API
-        const newXP = (get().profile?.xp || 0) + xpReward;
-        const response = await apiClient.put('/users/profile', { 
-          xp: newXP,
-          $addToSet: { tasksCompletedToday: taskId } 
-        });
-        set({ profile: response.data });
+        try {
+          const newXP = (get().profile?.xp || 0) + xpReward;
+          const response = await apiClient.put('/users/profile', { 
+            xp: newXP,
+            $addToSet: { tasksCompletedToday: taskId } 
+          });
+          set({ profile: response.data });
+        } catch (error) {
+          console.error('[GamificationStore] completeDailyTask error:', error);
+        }
       },
       unlockBadge: async (userId, badgeId) => {
-        const response = await apiClient.put('/users/profile', { 
-          $addToSet: { badges: badgeId } 
-        });
-        set({ profile: response.data });
+        try {
+          const response = await apiClient.put('/users/profile', { 
+            $addToSet: { badges: badgeId } 
+          });
+          set({ profile: response.data });
+        } catch (error) {
+          console.error('[GamificationStore] unlockBadge error:', error);
+        }
       },
       checkStreak: async (userId) => {
-        // Logic to check streak on server
-        await apiClient.post('/users/check-streak');
+        try {
+          const response = await apiClient.post('/users/check-streak');
+          set((state) => {
+            if (state.profile) {
+              return {
+                profile: {
+                  ...state.profile,
+                  streakDays: response.data.streakDays,
+                },
+              };
+            }
+            return state;
+          });
+        } catch (error) {
+          console.error('[GamificationStore] checkStreak error:', error);
+        }
       }
     }),
     {

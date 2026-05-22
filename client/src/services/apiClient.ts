@@ -18,6 +18,23 @@ const apiClient = axios.create({
   },
 });
 
+// Request interceptor to dynamically inject the token from the Zustand store
+apiClient.interceptors.request.use(
+  (config) => {
+    try {
+      const { useAuthStore } = require('../store/authStore');
+      const token = useAuthStore.getState().token;
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
+    } catch (e) {
+      // Ignore lazy require exceptions during initial imports
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export const setAuthToken = (token: string | null | undefined) => {
   if (token) {
     apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;

@@ -68,16 +68,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   track: {
-    height: 8,
-    backgroundColor: '#FFFFFF',
+    height: 10,
+    backgroundColor: '#f3f4f6',
     borderRadius: theme.borderRadius.full,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#000000',
   },
   fill: {
     height: '100%',
-    backgroundColor: '#ADD8E6',
+    backgroundColor: '#10b981',
     borderRadius: theme.borderRadius.full,
   },
   footer: {

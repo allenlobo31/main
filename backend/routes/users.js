@@ -16,8 +16,30 @@ router.get('/doctors', authMiddleware, async (req, res) => {
 // Update user profile
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.user.id, req.body, { new: true }).select('-password');
-    res.json(user);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const userObj = await User.findById(req.user.id);
+    if (!userObj) return res.status(404).json({ message: 'User not found' });
+
+    let update = { ...req.body };
+
+    // Check if it's a new day to reset completed tasks
+    if (userObj.lastTaskResetDate !== todayStr) {
+      if (!update.$set) update.$set = {};
+      update.$set.tasksCompletedToday = [];
+      update.$set.lastTaskResetDate = todayStr;
+
+      // If the incoming update was pushing a completed task, convert it to a set of that single task
+      if (update.$addToSet && update.$addToSet.tasksCompletedToday) {
+        update.$set.tasksCompletedToday = [update.$addToSet.tasksCompletedToday];
+        delete update.$addToSet.tasksCompletedToday;
+        if (Object.keys(update.$addToSet).length === 0) {
+          delete update.$addToSet;
+        }
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
+    res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -87,8 +109,42 @@ router.get('/diary', authMiddleware, async (req, res) => {
 // Gamification / Profile shorthand
 router.get('/me', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    res.json(user);
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Daily task refresh check
+    const todayStr = new Date().toISOString().split('T')[0];
+    let needsSave = false;
+
+    if (user.lastTaskResetDate !== todayStr) {
+      user.tasksCompletedToday = [];
+      user.lastTaskResetDate = todayStr;
+      needsSave = true;
+    }
+
+    // Daily streak reset check (if they missed yesterday, reset streak to 0 until they check in today)
+    if (user.lastCheckIn) {
+      const lastCheckInDate = new Date(user.lastCheckIn);
+      const lastCheckInMidnight = new Date(lastCheckInDate.getFullYear(), lastCheckInDate.getMonth(), lastCheckInDate.getDate());
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const diffTime = today.getTime() - lastCheckInMidnight.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 1 && user.streakDays !== 1) {
+        user.streakDays = 1;
+        needsSave = true;
+      }
+    }
+
+    if (needsSave) {
+      await user.save();
+    }
+
+    const userJson = user.toObject();
+    delete userJson.password;
+    res.json(userJson);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -159,22 +215,33 @@ router.post('/check-streak', authMiddleware, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const now = new Date();
-    const lastCheckIn = user.lastCheckIn ? new Date(user.lastCheckIn) : null;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    if (lastCheckIn) {
-      const diffTime = Math.abs(now.getTime() - lastCheckIn.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (user.lastCheckIn) {
+      const lastCheckInDate = new Date(user.lastCheckIn);
+      const lastCheckInMidnight = new Date(lastCheckInDate.getFullYear(), lastCheckInDate.getMonth(), lastCheckInDate.getDate());
       
-      if (diffDays > 1) {
-        user.streakDays = 1; // Reset to 1 if more than a day passed
-      } else if (diffDays === 1) {
+      const diffTime = today.getTime() - lastCheckInMidnight.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) {
+        // Logged in on consecutive calendar days (yesterday and today)
         user.streakDays += 1;
+        user.lastCheckIn = now;
+      } else if (diffDays > 1) {
+        // Missed a calendar day completely, reset streak to 1
+        user.streakDays = 1;
+        user.lastCheckIn = now;
+      } else {
+        // Checked in today already, leave streak and lastCheckIn untouched (or just keep as is)
+        user.lastCheckIn = now;
       }
     } else {
+      // First check-in
       user.streakDays = 1;
+      user.lastCheckIn = now;
     }
     
-    user.lastCheckIn = now;
     await user.save();
     res.json({ streakDays: user.streakDays });
   } catch (error) {

@@ -106,7 +106,7 @@ export default function ExpertsScreen() {
       <ScrollView
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchData} color={theme.colors.primary} />
+          <RefreshControl refreshing={isLoading} onRefresh={fetchData} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
         }
       >
         <View style={styles.header}>
@@ -215,8 +215,7 @@ export default function ExpertsScreen() {
 
       <CallModal
         visible={callState !== 'idle'}
-        state={callState}
-        remoteName="Expert"
+        callState={callState}
         onEndCall={endCall}
       />
     </SafeAreaView>

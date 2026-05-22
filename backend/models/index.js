@@ -31,6 +31,7 @@ const UserSchema = new Schema({
   badges: [String],
   phase: { type: String, enum: ['pre-op', 'post-op', 'recovery'], default: 'pre-op' },
   tasksCompletedToday: [String],
+  lastTaskResetDate: String,
   reports: [{
     title: String,
     type: { type: String, enum: ['scan', 'discharge', 'wound_photo', 'lab', 'other'] },

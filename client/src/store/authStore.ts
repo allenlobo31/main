@@ -10,7 +10,7 @@ import {
 
 import { setAuthToken } from '../services/apiClient';
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   role: UserRole | null;
   token: string | null;
@@ -18,7 +18,7 @@ interface AuthState {
   isInitialized: boolean;
 }
 
-interface AuthActions {
+export interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   register: (params: {
     email: string;

@@ -26,20 +26,22 @@ export function Card({ children, style, variant = 'default', bordered = false }:
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#ffffff',
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.lg,
+    borderWidth: 2,
+    borderColor: '#000000',
     shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   alt: {
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: '#ffffff',
   },
   bordered: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#000000',
   },
 });
