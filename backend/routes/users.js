@@ -363,6 +363,12 @@ router.post('/remove-doctor/:doctorId', authMiddleware, async (req, res) => {
       }
     });
 
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Book an appointment
 router.post('/appointments', authMiddleware, async (req, res) => {
   try {
