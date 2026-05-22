@@ -28,6 +28,9 @@ import {
   Siren,
   Thermometer,
   TriangleAlert,
+  CheckCircle2,
+  Clock,
+  Sparkles,
 } from 'lucide-react-native';
 
 type AlertLevel = 'safe' | 'warning' | 'danger';
@@ -46,7 +49,14 @@ export default function AIMonitorScreen() {
   const [bleeding, setBleeding] = useState(false);
   const [difficultUrination, setDifficultUrination] = useState(false);
   const [painDescription, setPainDescription] = useState('');
-  const [submittedAlertLevel, setSubmittedAlertLevel] = useState<AlertLevel | null>(null);
+  const [showReport, setShowReport] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{
+    painLevel: number;
+    symptoms: string;
+    painDescription: string;
+    alertLevel: AlertLevel;
+    timestamp: Date;
+  } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
 
@@ -54,21 +64,11 @@ export default function AIMonitorScreen() {
     refreshInsight();
   }, []);
 
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (nextState) => {
-      if (nextState !== 'active') {
-        setSubmittedAlertLevel(null);
-      }
-    });
-
-    return () => sub.remove();
-  }, []);
-
   const alertLevel: AlertLevel = useMemo(() => {
     if (redness || bleeding) return 'danger';
-    if (swelling || vomiting) return 'warning';
+    if (vomiting || difficultUrination) return 'warning';
     return 'safe';
-  }, [redness, bleeding, swelling, vomiting]);
+  }, [redness, bleeding, vomiting, difficultUrination]);
 
   const symptomSummary = useMemo(() => {
     const selected: string[] = [];
@@ -149,7 +149,17 @@ export default function AIMonitorScreen() {
 
       await gamification.awardXP('SYMPTOM_LOG');
       await gamification.checkDailyStreak();
-      setSubmittedAlertLevel(alertLevel);
+
+      // Save data for the report view and open it
+      setSubmittedData({
+        painLevel: calculatedPainLevel,
+        symptoms: symptomSummary,
+        painDescription: painDescription,
+        alertLevel: alertLevel,
+        timestamp: loggedAt,
+      });
+      setShowReport(true);
+
       setFever(false);
       setSwelling(false);
       setVomiting(false);
@@ -157,7 +167,6 @@ export default function AIMonitorScreen() {
       setBleeding(false);
       setDifficultUrination(false);
       setPainDescription('');
-      Alert.alert('Logged ✅', 'Your symptoms have been recorded. +20 XP earned! Task completed.');
     } catch (error) {
       console.error('[AIMonitor] handleSubmit error:', error);
       Alert.alert('Error', 'Could not save your symptoms. Please try again.');
@@ -166,19 +175,112 @@ export default function AIMonitorScreen() {
     }
   };
 
-  const submittedStatusStyle =
-    submittedAlertLevel === 'danger'
-      ? styles.statusDanger
-      : submittedAlertLevel === 'warning'
-        ? styles.statusWarning
-        : styles.statusSafe;
+  if (showReport && submittedData) {
+    const alertLevelInfo = {
+      danger: {
+        bg: '#fee2e2',
+        border: '#ef4444',
+        text: '#991b1b',
+        title: 'High Alert',
+        icon: Siren,
+        msg: 'Please visit your doctor promptly for in-person evaluation.',
+      },
+      warning: {
+        bg: '#fef9c3',
+        border: '#eab308',
+        text: '#854d0e',
+        title: 'Medium Alert',
+        icon: TriangleAlert,
+        msg: 'Please contact your doctor for medical advice.',
+      },
+      safe: {
+        bg: '#dcfce7',
+        border: '#22c55e',
+        text: '#166534',
+        title: 'Stable',
+        icon: CheckCircle2,
+        msg: 'Your current symptoms appear stable. Continue routine monitoring.',
+      },
+    }[submittedData.alertLevel];
 
-  const submittedStatusText =
-    submittedAlertLevel === 'danger'
-      ? 'Please visit your doctor promptly for in-person evaluation.'
-      : submittedAlertLevel === 'warning'
-        ? 'Please contact your doctor for medical advice.'
-        : 'Your current symptoms appear stable. Continue routine monitoring.';
+    const Icon = alertLevelInfo.icon;
+
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.container,
+            { paddingHorizontal: horizontalPadding, flexGrow: 1, justifyContent: 'center' }
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.pageTitle}>Symptom Report</Text>
+
+          {/* Alert Section */}
+          <View style={[styles.reportAlertCard, { backgroundColor: alertLevelInfo.bg }]}>
+            <View style={styles.reportAlertHeader}>
+              <Icon size={28} color={alertLevelInfo.text} strokeWidth={2.5} />
+              <Text style={[styles.reportAlertTitle, { color: alertLevelInfo.text }]}>{alertLevelInfo.title}</Text>
+            </View>
+            <Text style={[styles.reportAlertMsg, { color: alertLevelInfo.text }]}>{alertLevelInfo.msg}</Text>
+          </View>
+
+          {/* Mini Report Card */}
+          <Card style={styles.reportDetailCard} bordered>
+            <Text style={styles.reportCardTitle}>Logged Details</Text>
+
+            {/* Timestamp */}
+            <View style={styles.reportDetailRow}>
+              <Clock size={16} color={theme.colors.textSecondary} />
+              <Text style={styles.reportDetailValue}>
+                {submittedData.timestamp.toLocaleDateString()} at {submittedData.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+
+            {/* Pain Severity Badge */}
+            <View style={styles.reportDetailRow}>
+              <Text style={styles.reportDetailLabel}>Severity Rating:</Text>
+              <View style={[
+                styles.reportPainBadge,
+                submittedData.painLevel === 9 ? styles.painHigh : (submittedData.painLevel === 5 ? styles.painMedium : styles.painMild)
+              ]}>
+                <Text style={styles.reportPainBadgeText}>
+                  {submittedData.painLevel === 9 ? 'High (9/10)' : (submittedData.painLevel === 5 ? 'Medium (5/10)' : 'Mild (1/10)')}
+                </Text>
+              </View>
+            </View>
+
+            {/* Logged Symptoms */}
+            <View style={styles.reportDetailBlock}>
+              <Text style={styles.reportDetailLabel}>Logged Symptoms:</Text>
+              <Text style={styles.reportDetailText}>{submittedData.symptoms}</Text>
+            </View>
+
+            {/* Pain Description */}
+            {submittedData.painDescription.trim().length > 0 && (
+              <View style={styles.reportDetailBlock}>
+                <Text style={styles.reportDetailLabel}>Notes:</Text>
+                <View style={styles.reportNotesBubble}>
+                  <Text style={styles.reportNotesText}>"{submittedData.painDescription.trim()}"</Text>
+                </View>
+              </View>
+            )}
+          </Card>
+
+          {/* Action Button */}
+          <Button
+            label="Done"
+            onPress={() => {
+              setShowReport(false);
+              setSubmittedData(null);
+            }}
+            fullWidth
+            style={{ marginTop: theme.spacing.lg }}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -198,12 +300,6 @@ export default function AIMonitorScreen() {
 
         {/* Chart */}
         <PainChart entries={entries} />
-
-        {submittedAlertLevel && (
-          <View style={[styles.submittedStatusCard, submittedStatusStyle]}>
-            <Text style={styles.submittedStatusText}>{submittedStatusText}</Text>
-          </View>
-        )}
 
         {/* Symptom Log Form */}
         <Card style={styles.formCard} bordered>
@@ -285,31 +381,104 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 4,
   },
-  submittedStatusCard: {
-    marginTop: theme.spacing.md,
+  reportAlertCard: {
     borderWidth: 2,
     borderColor: '#000000',
     borderRadius: theme.borderRadius.md,
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
-  statusSafe: {
+  reportAlertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+  },
+  reportAlertTitle: {
+    ...theme.typography.h3,
+    fontWeight: '800',
+  },
+  reportAlertMsg: {
+    ...theme.typography.body,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  reportDetailCard: {
+    backgroundColor: '#ffffff',
     borderColor: '#000000',
-    backgroundColor: '#f0fdf4',
+    borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
-  statusWarning: {
-    backgroundColor: '#fefce8',
-    borderColor: '#000000',
+  reportCardTitle: {
+    ...theme.typography.h3,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.md,
+    fontWeight: '800',
   },
-  statusDanger: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#000000',
+  reportDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.sm,
   },
-  submittedStatusText: {
+  reportDetailLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  reportDetailValue: {
     ...theme.typography.body,
     color: theme.colors.textPrimary,
-    fontWeight: '700',
-    textAlign: 'center',
+    fontWeight: '600',
+  },
+  reportDetailBlock: {
+    marginBottom: theme.spacing.md,
+  },
+  reportDetailText: {
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  reportPainBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+  },
+  reportPainBadgeText: {
+    ...theme.typography.caption,
+    fontWeight: '800',
+    color: theme.colors.textPrimary,
+  },
+  painHigh: { backgroundColor: '#fee2e2' },
+  painMedium: { backgroundColor: '#fef9c3' },
+  painMild: { backgroundColor: '#dcfce7' },
+  reportNotesBubble: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.sm,
+    marginTop: 6,
+  },
+  reportNotesText: {
+    ...theme.typography.body,
+    color: theme.colors.textPrimary,
+    fontStyle: 'italic',
+    fontWeight: '500',
   },
   formTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.md },
   fieldLabel: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },

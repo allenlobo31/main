@@ -44,15 +44,15 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
   },
   fallback: {
-    backgroundColor: '#DBEAFE', // Light blue background
+    backgroundColor: '#ffffff', // White background
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#22C55E', // Green border
+    borderColor: '#000000', // Black border
     overflow: 'hidden',
   },
   initials: {
-    color: '#1E3A8A', // Dark blue color for the letter
+    color: '#000000', // Black color for the letter
     fontWeight: '700',
   },
 });

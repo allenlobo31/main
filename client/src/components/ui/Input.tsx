@@ -51,9 +51,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: theme.colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
@@ -62,10 +62,16 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   inputFocused: {
-    borderColor: theme.colors.primary,
+    borderColor: '#000000',
+    borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
   },
   inputError: {
     borderColor: theme.colors.danger,
+    borderWidth: 2,
   },
   errorText: {
     ...theme.typography.caption,

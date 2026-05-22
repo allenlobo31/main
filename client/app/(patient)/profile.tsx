@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -166,6 +167,80 @@ export default function PatientProfileScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
+  const [currentCalendarMonth, setCurrentCalendarMonth] = useState(new Date());
+
+  const handleOpenDatePicker = () => {
+    let initialDate = new Date();
+    if (form.scheduledSurgeryDate.trim()) {
+      const parsed = parseISODateOnly(form.scheduledSurgeryDate.trim());
+      if (parsed) {
+        initialDate = parsed;
+      }
+    }
+    setCurrentCalendarMonth(initialDate);
+    setIsDatePickerVisible(true);
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentCalendarMonth(
+      new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() - 1, 1)
+    );
+  };
+
+  const handleNextMonth = () => {
+    setCurrentCalendarMonth(
+      new Date(currentCalendarMonth.getFullYear(), currentCalendarMonth.getMonth() + 1, 1)
+    );
+  };
+
+  const handleSelectDay = (day: number) => {
+    const year = currentCalendarMonth.getFullYear();
+    const month = currentCalendarMonth.getMonth();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dateStr = `${year}-${pad(month + 1)}-${pad(day)}`;
+    onChange('scheduledSurgeryDate', dateStr);
+    setIsDatePickerVisible(false);
+  };
+
+  const getTodayString = () => {
+    const today = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  };
+
+  const calendarDays = useMemo(() => {
+    const year = currentCalendarMonth.getFullYear();
+    const month = currentCalendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startDayOfWeek = firstDay.getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const cells: Array<{ isEmpty: boolean; day?: number; isExpired?: boolean; dateString?: string }> = [];
+
+    for (let i = 0; i < startDayOfWeek; i++) {
+      cells.push({ isEmpty: true });
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const cellDate = new Date(year, month, d);
+      const isExpired = cellDate < today;
+      const dateString = `${year}-${pad(month + 1)}-${pad(d)}`;
+      cells.push({
+        isEmpty: false,
+        day: d,
+        isExpired,
+        dateString,
+      });
+    }
+
+    return cells;
+  }, [currentCalendarMonth, form.scheduledSurgeryDate]);
+
   const derivedStage = deriveOperationStage(form.surgeryStatus);
   const isScheduled = form.surgeryStatus === 'scheduled';
   const isScheduledDateValid = !isScheduled || !!parseISODateOnly(form.scheduledSurgeryDate.trim());
@@ -177,14 +252,8 @@ export default function PatientProfileScreen() {
     [user?.surgeryStatus, user?.scheduledSurgeryDate],
   );
 
-  const detailFields = useMemo<DetailField[]>(
+  const generalFields = useMemo<DetailField[]>(
     () => [
-      {
-        label: 'Place',
-        value: user?.place,
-        tone: 'mint',
-        icon: MapPin,
-      },
       {
         label: 'Gender',
         value: formatGender(user?.gender),
@@ -192,53 +261,54 @@ export default function PatientProfileScreen() {
         icon: Users,
       },
       {
-        label: 'Phone Number',
-        value: user?.phoneNumber,
-        tone: 'mint',
-        icon: Phone,
-      },
-      {
         label: 'Address',
         value: user?.address,
         tone: 'sky',
         icon: House,
       },
-      {
-        label: 'Hernia Type',
-        value: formatHerniaType(user?.herniaType),
-        tone: 'peach',
-        icon: HeartPulse,
-      },
-      {
-        label: 'Surgery Status',
-        value: formatSurgeryStatus(user?.surgeryStatus),
-        tone: 'lilac',
-        icon: CalendarClock,
-      },
-      {
-        label: 'Surgery Type',
-        value: formatSurgeryType(user?.surgeryType),
-        tone: 'mint',
-        icon: Wrench,
-      },
-      {
-        label: 'Surgery Type', // Added second surgery type as per image
-        value: formatSurgeryType(user?.surgeryType),
-        tone: 'mint',
-        icon: Wrench,
-      },
-      {
-        label: 'Surgery Reminder',
-        value: reminderText ?? undefined,
-        tone: 'sky',
-        icon: CalendarClock,
-      },
-      {
-        label: 'Operation Stage',
-        value: formatOperationStage(user?.operationStage ?? deriveOperationStage(user?.surgeryStatus ?? null)),
-        tone: 'lilac',
-        icon: ClipboardList,
-      },
+    ],
+    [user?.gender, user?.address]
+  );
+
+  const surgicalFields = useMemo<DetailField[]>(
+    () => {
+      const fields = [
+        {
+          label: 'Hernia Type',
+          value: formatHerniaType(user?.herniaType),
+          tone: 'peach',
+          icon: HeartPulse,
+        },
+        {
+          label: 'Surgery Status',
+          value: formatSurgeryStatus(user?.surgeryStatus),
+          tone: 'lilac',
+          icon: CalendarClock,
+        },
+        {
+          label: 'Surgery Type',
+          value: formatSurgeryType(user?.surgeryType),
+          tone: 'mint',
+          icon: Wrench,
+        },
+      ];
+
+      if (user?.surgeryStatus !== 'completed') {
+        fields.push({
+          label: 'Surgery Reminder',
+          value: reminderText ?? undefined,
+          tone: 'sky',
+          icon: CalendarClock,
+        });
+      }
+
+      return fields;
+    },
+    [user?.herniaType, user?.surgeryStatus, user?.surgeryType, reminderText]
+  );
+
+  const emergencyFields = useMemo<DetailField[]>(
+    () => [
       {
         label: 'Emergency Family Contact Number',
         value: user?.emergencyContactNumber,
@@ -246,18 +316,7 @@ export default function PatientProfileScreen() {
         icon: ShieldAlert,
       },
     ],
-    [
-      user?.place,
-      user?.gender,
-      user?.phoneNumber,
-      user?.address,
-      user?.herniaType,
-      user?.surgeryStatus,
-      user?.surgeryType,
-      reminderText,
-      user?.operationStage,
-      user?.emergencyContactNumber,
-    ],
+    [user?.emergencyContactNumber]
   );
 
   const onChange = <K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) => {
@@ -377,6 +436,9 @@ export default function PatientProfileScreen() {
               <View style={styles.identityBlock}>
                 <Text style={styles.name} numberOfLines={1}>{form.name || 'Your name'}</Text>
                 <Text style={styles.email} numberOfLines={1}>{user?.email ?? ''}</Text>
+                {user?.phoneNumber ? (
+                  <Text style={styles.phoneText} numberOfLines={1}>{user.phoneNumber}</Text>
+                ) : null}
               </View>
             </View>
 
@@ -387,15 +449,6 @@ export default function PatientProfileScreen() {
                   value={form.name}
                   onChangeText={(text) => onChange('name', text)}
                   placeholder="Enter your full name"
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                />
-
-                <Input
-                  label="Place"
-                  value={form.place}
-                  onChangeText={(text) => onChange('place', text)}
-                  placeholder="City or place"
                   autoCapitalize="words"
                   returnKeyType="next"
                 />
@@ -429,26 +482,17 @@ export default function PatientProfileScreen() {
                 />
 
                 {isScheduled ? (
-                  <Input
-                    label="Scheduled Surgery Date"
-                    value={form.scheduledSurgeryDate}
-                    onChangeText={(text) => onChange('scheduledSurgeryDate', text)}
-                    placeholder="YYYY-MM-DD"
-                    autoCapitalize="none"
-                    error={
-                      form.scheduledSurgeryDate.trim() && !isScheduledDateValid
-                        ? 'Use date format YYYY-MM-DD'
-                        : undefined
-                    }
-                  />
+                  <TouchableOpacity onPress={handleOpenDatePicker} activeOpacity={0.9}>
+                    <View pointerEvents="none">
+                      <Input
+                        label="Scheduled Surgery Date"
+                        value={form.scheduledSurgeryDate}
+                        placeholder="Select surgery date"
+                        editable={false}
+                      />
+                    </View>
+                  </TouchableOpacity>
                 ) : null}
-
-                <View style={styles.derivedStageCard}>
-                  <Text style={styles.derivedStageLabel}>Operation Stage (Auto)</Text>
-                  <Text style={styles.derivedStageValue}>
-                    {derivedStage === 'post-operation' ? 'Post Operation' : 'Pre Operation'}
-                  </Text>
-                </View>
 
                 <Input
                   label="Phone Number"
@@ -482,22 +526,14 @@ export default function PatientProfileScreen() {
                   label="Save Details"
                   onPress={onSave}
                   isLoading={isSaving}
-                  fullWidth
                   style={styles.primaryAction}
-                />
-
-                <Button
-                  label="Cancel"
-                  variant="secondary"
-                  onPress={onCancelEdit}
-                  fullWidth
-                  style={styles.cancelAction}
                 />
               </>
             ) : (
               <>
                 <View style={styles.fieldsContainer}>
-                  {detailFields.slice(0, 4).map((field, idx) => (
+                  {/* General Info */}
+                  {generalFields.map((field, idx) => (
                     <ProfileRow
                       key={`${field.label}-${idx}`}
                       label={field.label}
@@ -509,30 +545,52 @@ export default function PatientProfileScreen() {
                   
                   <Text style={styles.sectionTitle}>Surgical Plan</Text>
                   
-                  <View style={styles.gridContainer}>
-                    {detailFields.slice(4, 8).map((field, idx) => (
-                      <ProfileRow
-                        key={`${field.label}-${idx}`}
-                        label={field.label}
-                        value={field.value}
-                        tone={field.tone}
-                        Icon={field.icon}
-                        isHalf
-                      />
-                    ))}
-                  </View>
+                  {/* Surgical Plan Grid */}
+                  {surgicalFields.length === 3 ? (
+                    <View>
+                      <View style={styles.gridContainer}>
+                        <ProfileRow
+                          label={surgicalFields[0].label}
+                          value={surgicalFields[0].value}
+                          tone={surgicalFields[0].tone}
+                          Icon={surgicalFields[0].icon}
+                          isHalf
+                        />
+                        <ProfileRow
+                          label={surgicalFields[1].label}
+                          value={surgicalFields[1].value}
+                          tone={surgicalFields[1].tone}
+                          Icon={surgicalFields[1].icon}
+                          isHalf
+                        />
+                      </View>
+                      <View style={styles.centeredGridRow}>
+                        <ProfileRow
+                          label={surgicalFields[2].label}
+                          value={surgicalFields[2].value}
+                          tone={surgicalFields[2].tone}
+                          Icon={surgicalFields[2].icon}
+                          isHalf
+                        />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.gridContainer}>
+                      {surgicalFields.map((field, idx) => (
+                        <ProfileRow
+                          key={`${field.label}-${idx}`}
+                          label={field.label}
+                          value={field.value}
+                          tone={field.tone}
+                          Icon={field.icon}
+                          isHalf
+                        />
+                      ))}
+                    </View>
+                  )}
 
-                  {detailFields.slice(8, 10).map((field, idx) => (
-                    <ProfileRow
-                      key={`${field.label}-${idx}`}
-                      label={field.label}
-                      value={field.value}
-                      tone={field.tone}
-                      Icon={field.icon}
-                    />
-                  ))}
-
-                  {detailFields.slice(10).map((field, idx) => (
+                  {/* Emergency Section */}
+                  {emergencyFields.map((field, idx) => (
                     <ProfileRow
                       key={`${field.label}-${idx}`}
                       label={field.label}
@@ -545,7 +603,6 @@ export default function PatientProfileScreen() {
                 <Button
                   label="Edit Profile"
                   onPress={onStartEdit}
-                  fullWidth
                   style={styles.primaryAction}
                 />
               </>
@@ -560,6 +617,85 @@ export default function PatientProfileScreen() {
             </TouchableOpacity>
           </Card>
         </ScrollView>
+
+        <Modal
+          visible={isDatePickerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsDatePickerVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setIsDatePickerVisible(false)}
+          >
+            <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity onPress={handlePrevMonth} style={styles.monthNavBtn}>
+                  <Text style={styles.monthNavText}>◀</Text>
+                </TouchableOpacity>
+                <Text style={styles.monthTitle}>
+                  {currentCalendarMonth.toLocaleString('default', { month: 'long' })}{' '}
+                  {currentCalendarMonth.getFullYear()}
+                </Text>
+                <TouchableOpacity onPress={handleNextMonth} style={styles.monthNavBtn}>
+                  <Text style={styles.monthNavText}>▶</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.weekdaysRow}>
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                  <Text key={day} style={styles.weekdayText}>
+                    {day}
+                  </Text>
+                ))}
+              </View>
+
+              <View style={styles.daysGrid}>
+                {calendarDays.map((item, idx) => {
+                  if (item.isEmpty) {
+                    return <View key={`empty-${idx}`} style={styles.dayCellEmpty} />;
+                  }
+
+                  const isSelected = item.dateString === form.scheduledSurgeryDate;
+                  const isToday = item.dateString === getTodayString();
+
+                  return (
+                    <TouchableOpacity
+                      key={`day-${item.day}`}
+                      disabled={item.isExpired}
+                      style={[
+                        styles.dayCell,
+                        isSelected && styles.dayCellSelected,
+                        item.isExpired && styles.dayCellExpired,
+                      ]}
+                      onPress={() => handleSelectDay(item.day!)}
+                    >
+                      <Text
+                        style={[
+                          styles.dayText,
+                          isSelected && styles.dayTextSelected,
+                          isToday && styles.dayTextToday,
+                          item.isExpired && styles.dayTextExpired,
+                        ]}
+                      >
+                        {item.day}
+                      </Text>
+                      {isToday && !isSelected && <View style={styles.todayDot} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity
+                style={styles.closePickerBtn}
+                onPress={() => setIsDatePickerVisible(false)}
+              >
+                <Text style={styles.closePickerText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -675,6 +811,14 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     padding: theme.spacing.lg,
+    backgroundColor: '#e6f9ed',
+    borderColor: '#000000',
+    borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -694,28 +838,38 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     marginTop: 2,
   },
+  phoneText: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    marginTop: 2,
+  },
   primaryAction: {
-    marginTop: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
+    marginTop: 32,
+    marginBottom: 2,
+    width: '60%',
+    alignSelf: 'center',
   },
   cancelAction: {
-    marginBottom: theme.spacing.sm,
+    marginBottom: 8,
+    width: '60%',
+    alignSelf: 'center',
   },
   rowBlock: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: theme.borderRadius.md,
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   rowContent: {
     flex: 1,
@@ -744,18 +898,18 @@ const styles = StyleSheet.create({
     flexShrink: 1, // Allow text to shrink if needed
   },
   mintRow: {
-    backgroundColor: '#eff9f3',
+    backgroundColor: '#ffffff',
   },
   skyRow: {
-    backgroundColor: '#edf5fd',
+    backgroundColor: '#ffffff',
   },
   peachRow: {
-    backgroundColor: '#fff1f1',
-    borderColor: '#ff4d4d', // Red border for emergency section
-    borderWidth: 1.5,
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
   },
   lilacRow: {
-    backgroundColor: '#f6f1fd',
+    backgroundColor: '#ffffff',
   },
   mintIconWrap: {
     backgroundColor: '#d7f2e3',
@@ -786,15 +940,16 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   option: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#ffffff',
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
   },
   optionActive: {
     backgroundColor: theme.colors.primary,
+    borderColor: '#000000',
   },
   optionText: {
     ...theme.typography.body,
@@ -805,10 +960,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   derivedStageCard: {
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderWidth: 2,
+    borderColor: '#000000',
     borderRadius: theme.borderRadius.md,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: '#ffffff',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     marginBottom: theme.spacing.md,
@@ -858,6 +1013,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
+  centeredGridRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
   halfWidth: {
     width: '48%',
   },
@@ -880,13 +1039,146 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '-45deg' }],
   },
   logoutBtn: {
-    alignItems: 'center',
+    backgroundColor: '#edf5fd', // Light blue background
+    borderColor: '#000000',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.md,
     paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    alignSelf: 'center',
+    marginTop: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   logoutText: {
     ...theme.typography.body,
-    color: theme.colors.textMuted,
+    color: '#1e3a8a', // Darker blue for contrast
+    fontWeight: '800',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    width: 320,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.md,
+  },
+  monthNavBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 6,
+  },
+  monthNavText: {
+    fontWeight: '800',
+    fontSize: 14,
+    color: '#000000',
+  },
+  monthTitle: {
+    ...theme.typography.h3,
+    color: '#000000',
+    fontWeight: '700',
+  },
+  weekdaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
+  },
+  weekdayText: {
+    width: 36,
+    textAlign: 'center',
+    ...theme.typography.caption,
+    fontWeight: '700',
+    color: '#666666',
+    textTransform: 'uppercase',
+  },
+  daysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    justifyContent: 'flex-start',
+  },
+  dayCell: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  dayCellEmpty: {
+    width: 36,
+    height: 36,
+  },
+  dayCellSelected: {
+    backgroundColor: '#e6f9ed',
+    borderColor: '#000000',
+    borderWidth: 2,
+  },
+  dayCellExpired: {
+    backgroundColor: '#f5f5f5',
+    opacity: 0.4,
+  },
+  dayText: {
+    ...theme.typography.body,
     fontWeight: '600',
+    color: '#000000',
+  },
+  dayTextSelected: {
+    fontWeight: '800',
+  },
+  dayTextToday: {
+    color: '#0d9488',
+    fontWeight: '800',
+  },
+  dayTextExpired: {
+    color: '#a3a3a3',
+  },
+  todayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#0d9488',
+    position: 'absolute',
+    bottom: 2,
+  },
+  closePickerBtn: {
+    marginTop: theme.spacing.md,
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  closePickerText: {
+    ...theme.typography.body,
+    fontWeight: '700',
+    color: '#000000',
   },
 });

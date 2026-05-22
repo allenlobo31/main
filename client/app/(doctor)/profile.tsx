@@ -146,15 +146,7 @@ export default function DoctorProfileScreen() {
                   label="Save Changes"
                   onPress={onSave}
                   isLoading={isSaving}
-                  fullWidth
                   style={styles.primaryAction}
-                />
-                <Button
-                  label="Cancel"
-                  variant="secondary"
-                  onPress={() => setIsEditing(false)}
-                  fullWidth
-                  style={styles.cancelAction}
                 />
               </View>
             ) : (
@@ -166,18 +158,18 @@ export default function DoctorProfileScreen() {
                 <Button
                   label="Edit Profile"
                   onPress={() => setIsEditing(true)}
-                  fullWidth
                   style={styles.primaryAction}
                 />
                 
-                <Button
-                  label="Logout"
-                  variant="danger"
+                <TouchableOpacity
+                  style={styles.logoutBtn}
                   onPress={onLogout}
-                  isLoading={isLoggingOut}
-                  fullWidth
-                  style={styles.logoutAction}
-                />
+                  disabled={isLoggingOut}
+                >
+                  <Text style={styles.logoutText}>
+                    {isLoggingOut ? 'Logging out...' : 'Logout'}
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </Card>
@@ -242,6 +234,14 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     padding: theme.spacing.lg,
+    backgroundColor: '#e6f9ed',
+    borderColor: '#000000',
+    borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -273,14 +273,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   primaryAction: {
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    marginTop: 32,
+    marginBottom: 2,
+    width: '60%',
+    alignSelf: 'center',
   },
   cancelAction: {
-    marginBottom: theme.spacing.sm,
-  },
-  logoutAction: {
-    marginTop: theme.spacing.sm,
+    marginBottom: 8,
+    width: '60%',
+    alignSelf: 'center',
   },
   fieldsContainer: {
     marginTop: theme.spacing.md,
@@ -289,20 +290,21 @@ const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   rowBlock: {
-    borderWidth: 1,
-    borderColor: 'transparent',
-    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: theme.borderRadius.md,
     paddingHorizontal: 15,
     paddingVertical: 12,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    backgroundColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   rowContent: {
     flex: 1,
@@ -340,20 +342,32 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flexShrink: 1,
   },
-  mintRow: { backgroundColor: '#eff9f3' },
-  skyRow: { backgroundColor: '#edf5fd' },
-  lilacRow: { backgroundColor: '#f6f1fd' },
+  mintRow: { backgroundColor: '#ffffff' },
+  skyRow: { backgroundColor: '#ffffff' },
+  lilacRow: { backgroundColor: '#ffffff' },
   mintIconWrap: { backgroundColor: '#d7f2e3' },
   skyIconWrap: { backgroundColor: '#d6e8fa' },
   lilacIconWrap: { backgroundColor: '#ead9fa' },
   logoutBtn: {
-    alignItems: 'center',
+    backgroundColor: '#edf5fd', // Light blue background
+    borderColor: '#000000',
+    borderWidth: 2,
+    borderRadius: theme.borderRadius.md,
     paddingVertical: theme.spacing.md,
-    marginTop: theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    alignSelf: 'center',
+    marginTop: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
   logoutText: {
     ...theme.typography.body,
-    color: theme.colors.textMuted,
-    fontWeight: '600',
+    color: '#1e3a8a', // Darker blue for contrast
+    fontWeight: '800',
   },
 });
