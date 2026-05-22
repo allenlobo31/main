@@ -363,7 +363,38 @@ router.post('/remove-doctor/:doctorId', authMiddleware, async (req, res) => {
       }
     });
 
-    res.json({ success: true });
+// Book an appointment
+router.post('/appointments', authMiddleware, async (req, res) => {
+  try {
+    const patientId = req.user.id;
+    const { doctorId, date, time } = req.body;
+
+    if (!doctorId || !date || !time) {
+      return res.status(400).json({ error: 'Missing doctorId, date, or time' });
+    }
+
+    const patient = await User.findById(patientId);
+    const doctor = await User.findById(doctorId);
+
+    if (!patient || !doctor) {
+      return res.status(404).json({ error: 'Patient or Doctor not found' });
+    }
+
+    const appointment = {
+      patientId: patient._id.toString(),
+      patientName: patient.name,
+      doctorId: doctor._id.toString(),
+      doctorName: doctor.name,
+      date,
+      time,
+      createdAt: new Date()
+    };
+
+    // Push to both patient and doctor arrays
+    await User.findByIdAndUpdate(patientId, { $push: { appointments: appointment } });
+    await User.findByIdAndUpdate(doctorId, { $push: { appointments: appointment } });
+
+    res.json({ success: true, appointment });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

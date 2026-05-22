@@ -41,6 +41,17 @@ const UserSchema = new Schema({
   }],
   isActive: { type: Boolean, default: false },
   isOnline: { type: Boolean, default: false },
+  availableAtHospital: { type: Boolean, default: false },
+  experience: { type: String, default: '8 Years' },
+  appointments: [{
+    patientId: { type: String, required: true },
+    patientName: { type: String, required: true },
+    doctorId: { type: String, required: true },
+    doctorName: { type: String, required: true },
+    date: { type: String, required: true },
+    time: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now }
+  }],
 }, { timestamps: true });
 
 const SymptomSchema = new Schema({

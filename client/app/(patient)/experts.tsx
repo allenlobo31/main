@@ -92,9 +92,26 @@ export default function ExpertsScreen() {
 
   const { callState, endCall } = useCall();
 
+  const sidePadding = useMemo(() => {
+    const screenWidth = Dimensions.get('window').width;
+    return (screenWidth / 2) - 30;
+  }, []);
+
+  const getInitialDisplayedDate = () => {
+    const today = new Date();
+    const currentHour = today.getHours();
+    const currentMinute = today.getMinutes();
+    if (currentHour > 16 || (currentHour === 16 && currentMinute > 0)) {
+      const tomorrow = new Date();
+      tomorrow.setDate(today.getDate() + 1);
+      return tomorrow;
+    }
+    return today;
+  };
+
   // Dynamic Booking Schedule States with month-based navigation
   const scrollViewRef = useRef<ScrollView>(null);
-  const [displayedDate, setDisplayedDate] = useState(new Date());
+  const [displayedDate, setDisplayedDate] = useState(getInitialDisplayedDate());
 
   const getHourFromSlot = (slot: string) => {
     const parts = slot.split(' ');
@@ -159,6 +176,14 @@ export default function ExpertsScreen() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   };
 
+  const getInitialScrollOffset = useCallback(() => {
+    const initDate = getInitialSelectedDate();
+    const dayNumber = parseInt(initDate.split('-')[2]);
+    if (isNaN(dayNumber)) return 0;
+    const dayIndex = dayNumber - 1;
+    return Math.max(0, dayIndex * 70);
+  }, []);
+
   const getFirstAvailableTimeSlot = useCallback((dateStr: string) => {
     const slots = [
       '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -221,14 +246,37 @@ export default function ExpertsScreen() {
     const prev = new Date(displayedDate.getFullYear(), displayedDate.getMonth() - 1, 1);
     if (prev >= currentMonthStart) {
       setDisplayedDate(prev);
+      
+      // Auto-select date in the new month
+      const isCurrentMonth = prev.getFullYear() === today.getFullYear() && prev.getMonth() === today.getMonth();
+      let targetDate: Date;
+      if (isCurrentMonth) {
+        targetDate = getInitialDisplayedDate();
+      } else {
+        targetDate = prev; // 1st of the month
+      }
+      const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+      setSelectedDate(dateStr);
     } else {
       Alert.alert('Cannot Go Back', 'You cannot select a past month.');
     }
   };
 
   const handleNextMonth = () => {
+    const today = new Date();
     const next = new Date(displayedDate.getFullYear(), displayedDate.getMonth() + 1, 1);
     setDisplayedDate(next);
+    
+    // Auto-select date in the new month
+    const isCurrentMonth = next.getFullYear() === today.getFullYear() && next.getMonth() === today.getMonth();
+    let targetDate: Date;
+    if (isCurrentMonth) {
+      targetDate = getInitialDisplayedDate();
+    } else {
+      targetDate = next; // 1st of the month
+    }
+    const dateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+    setSelectedDate(dateStr);
   };
 
   const bookingDays = useMemo(() => getDaysOfDisplayedMonth(displayedDate), [displayedDate, getDaysOfDisplayedMonth]);
@@ -246,20 +294,15 @@ export default function ExpertsScreen() {
 
   // Centering auto-scroll logic
   const scrollToSelectedDate = useCallback((dateStr: string) => {
-    const dayNumber = parseInt(dateStr.split('-')[2]);
-    if (isNaN(dayNumber)) return;
-    const dayIndex = dayNumber - 1;
+    const dayIndex = bookingDays.findIndex(d => d.dateString === dateStr);
+    if (dayIndex === -1) return;
     
-    const screenWidth = Dimensions.get('window').width;
-    const cardWidth = 60;
-    const gap = 10;
-    const offset = (dayIndex * (cardWidth + gap)) - (screenWidth / 2) + (cardWidth / 2);
-    const finalOffset = Math.max(0, offset);
+    const offset = dayIndex * 70; // 70 is cardWidth (60) + margin (10)
     
     setTimeout(() => {
-      scrollViewRef.current?.scrollTo({ x: finalOffset, animated: true });
+      scrollViewRef.current?.scrollTo({ x: offset, animated: true });
     }, 300);
-  }, []);
+  }, [bookingDays]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -433,7 +476,7 @@ export default function ExpertsScreen() {
                 <View style={styles.statIconWrap}>
                   <Clock size={18} color="#0d5c75" strokeWidth={2.2} />
                 </View>
-                <Text style={styles.statValue}>8 Years</Text>
+                <Text style={styles.statValue}>{doc.experience || '8 Years'}</Text>
                 <Text style={styles.statLabel}>Experience</Text>
               </View>
 
@@ -469,7 +512,7 @@ export default function ExpertsScreen() {
               {/* Select Date Section */}
               <View style={styles.schedulerSection}>
                 <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.schedulerSectionTitle}>Select Date</Text>
+                  <Text style={styles.schedulerSectionTitle}>Appointment</Text>
                   <View style={styles.monthSelector}>
                     <TouchableOpacity onPress={handlePrevMonth} activeOpacity={0.7} style={styles.monthNavBtn}>
                       <ChevronLeft size={16} color="#64748b" strokeWidth={2.5} />
@@ -481,17 +524,29 @@ export default function ExpertsScreen() {
                   </View>
                 </View>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.daysScroll}>
-                  {bookingDays.map(d => {
+                <ScrollView
+                  ref={scrollViewRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={[styles.daysScroll, { paddingHorizontal: sidePadding }]}
+                  contentOffset={{ x: getInitialScrollOffset(), y: 0 }}
+                >
+                  {bookingDays.map((d, index) => {
                     const isSelected = selectedDate === d.dateString;
                     const expired = isDateExpired(d.rawDate);
+                    const today = new Date();
+                    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                    const isToday = d.dateString === todayStr;
+                    const isLast = index === bookingDays.length - 1;
                     return (
                       <TouchableOpacity
                         key={d.dateString}
                         style={[
                           styles.dayCard,
                           isSelected && styles.dayCardSelected,
-                          expired && styles.dayCardExpired
+                          isToday && styles.dayCardToday,
+                          expired && styles.dayCardExpired,
+                          isLast && { marginRight: 0 }
                         ]}
                         onPress={() => {
                           if (expired) {
@@ -505,11 +560,13 @@ export default function ExpertsScreen() {
                         <Text style={[
                           styles.dayNumber,
                           isSelected && styles.dayTextSelected,
+                          isToday && styles.dayTextToday,
                           expired && styles.dayTextExpired
                         ]}>{d.dayNumber}</Text>
                         <Text style={[
                           styles.dayName,
                           isSelected && styles.dayTextSelected,
+                          isToday && styles.dayTextToday,
                           expired && styles.dayTextExpired
                         ]}>{d.weekday.substring(0, 3)}</Text>
                       </TouchableOpacity>
@@ -524,14 +581,30 @@ export default function ExpertsScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeScroll}>
                   {timeSlots.map(time => {
                     const isSelected = selectedTime === time;
+                    const expired = isTimeSlotExpired(selectedDate, time);
                     return (
                       <TouchableOpacity
                         key={time}
-                        style={[styles.timeSlotBtn, isSelected && styles.timeSlotBtnSelected]}
-                        onPress={() => setSelectedTime(time)}
-                        activeOpacity={0.8}
+                        style={[
+                          styles.timeSlotBtn,
+                          isSelected && styles.timeSlotBtnSelected,
+                          expired && styles.timeSlotBtnExpired
+                        ]}
+                        onPress={() => {
+                          if (expired) {
+                            Alert.alert('Time Slot Expired 🚫', 'This time slot has already passed for today.');
+                            return;
+                          }
+                          setSelectedTime(time);
+                        }}
+                        disabled={expired}
+                        activeOpacity={expired ? 1 : 0.8}
                       >
-                        <Text style={[styles.timeSlotText, isSelected && styles.timeSlotTextSelected]}>{time}</Text>
+                        <Text style={[
+                          styles.timeSlotText,
+                          isSelected && styles.timeSlotTextSelected,
+                          expired && styles.timeSlotTextExpired
+                        ]}>{time}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -547,11 +620,20 @@ export default function ExpertsScreen() {
               {/* Book Button */}
               <TouchableOpacity
                 style={styles.bookBtn}
-                onPress={() => {
-                  Alert.alert(
-                    'Appointment Confirmed! 🎉',
-                    `Your appointment with Dr. ${doc.name} has been successfully booked for ${getFormattedSelectedDate()} at ${selectedTime}.`
-                  );
+                onPress={async () => {
+                  try {
+                    await apiClient.post('/users/appointments', {
+                      doctorId: doc.uid,
+                      date: selectedDate,
+                      time: selectedTime,
+                    });
+                    Alert.alert(
+                      'Appointment Confirmed! 🎉',
+                      `Your appointment with Dr. ${doc.name} has been successfully booked for ${getFormattedSelectedDate()} at ${selectedTime}.`
+                    );
+                  } catch (error) {
+                    Alert.alert('Error', 'Could not book appointment. Please try again.');
+                  }
                 }}
                 activeOpacity={0.9}
               >
@@ -689,7 +771,7 @@ export default function ExpertsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#bfe2f2' },
+  safe: { flex: 1, backgroundColor: '#ffffff' },
   container: { paddingVertical: theme.spacing.xl },
   header: { marginBottom: theme.spacing.xl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: 4 },
@@ -704,7 +786,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#d1fae5',
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 2,
@@ -767,13 +849,13 @@ const styles = StyleSheet.create({
   // Redesigned modern styles
   mainScroll: {
     flex: 1,
-    backgroundColor: '#bfe2f2', // Continuous light blue background
+    backgroundColor: '#ffffff', // Continuous white background
   },
   scrollContent: {
     paddingBottom: theme.spacing.xxxl,
   },
   topBannerContainer: {
-    backgroundColor: '#bfe2f2', // Continuous light blue background
+    backgroundColor: '#ffffff', // Continuous white background
     paddingHorizontal: 20,
     paddingTop: 15,
     paddingBottom: 24,
@@ -912,7 +994,7 @@ const styles = StyleSheet.create({
   miniActionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#d1fae5',
     borderColor: '#000000',
     borderWidth: 2,
     borderRadius: 20,
@@ -984,11 +1066,11 @@ const styles = StyleSheet.create({
   },
   bodyContainer: {
     paddingHorizontal: 20,
-    backgroundColor: '#bfe2f2',
+    backgroundColor: '#ffffff',
   },
   statsCardRow: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#d1fae5',
     borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 10,
@@ -1039,7 +1121,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   schedulerCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#d1fae5',
     borderRadius: 28,
     borderWidth: 2,
     borderColor: '#000000',
@@ -1077,7 +1159,7 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   daysScroll: {
-    gap: 10,
+    flexDirection: 'row',
   },
   dayCard: {
     width: 60,
@@ -1093,9 +1175,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 2,
+    marginRight: 10,
   },
   dayCardSelected: {
-    backgroundColor: '#bfe2f2',
+    backgroundColor: '#000000',
     borderColor: '#000000',
   },
   dayNumber: {
@@ -1110,15 +1193,31 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dayTextSelected: {
-    color: '#0d5c75',
+    color: '#ffffff',
     fontWeight: '800',
   },
   dayCardExpired: {
     backgroundColor: '#f1f5f9',
+    borderColor: '#000000',
+  },
+  dayTextExpired: {
+    color: '#000000',
+    textDecorationLine: 'line-through',
+  },
+  dayCardToday: {
+    backgroundColor: '#facc15',
+    borderColor: '#000000',
+  },
+  dayTextToday: {
+    color: '#000000',
+    fontWeight: '900',
+  },
+  timeSlotBtnExpired: {
+    backgroundColor: '#f1f5f9',
     borderColor: '#cbd5e1',
     opacity: 0.45,
   },
-  dayTextExpired: {
+  timeSlotTextExpired: {
     color: '#94a3b8',
     textDecorationLine: 'line-through',
   },
@@ -1143,7 +1242,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   timeSlotBtnSelected: {
-    backgroundColor: '#bfe2f2',
+    backgroundColor: '#000000',
     borderColor: '#000000',
   },
   timeSlotText: {
@@ -1152,7 +1251,7 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   timeSlotTextSelected: {
-    color: '#0d5c75',
+    color: '#ffffff',
     fontWeight: '800',
   },
   timelineContainer: {
@@ -1175,7 +1274,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0d5c75',
   },
   bookBtn: {
-    backgroundColor: '#0d5c75',
+    backgroundColor: '#000000',
     borderWidth: 2,
     borderColor: '#000000',
     borderRadius: 24,

@@ -14,6 +14,7 @@ export default function DoctorLayout() {
     >
       <Stack.Screen name="patient-list" options={{ title: 'My Patients' }} />
       <Stack.Screen name="patient-detail" options={{ title: 'Patient Detail' }} />
+      <Stack.Screen name="appointments" options={{ title: 'Booked Appointments' }} />
     </Stack>
   );
 }

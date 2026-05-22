@@ -18,6 +18,7 @@ import {
   User as UserIcon,
   Building2,
   ChevronLeft,
+  Clock,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/authStore';
 import { updateProfile as updateRemoteProfile } from '../../src/services/dataService';
@@ -32,6 +33,8 @@ type DoctorProfileForm = {
   name: string;
   phoneNumber: string;
   hospitalAddress: string;
+  experience: string;
+  avatarUrl: string;
 };
 
 export default function DoctorProfileScreen() {
@@ -43,6 +46,8 @@ export default function DoctorProfileScreen() {
     name: user?.name ?? '',
     phoneNumber: user?.phoneNumber ?? '',
     hospitalAddress: user?.hospitalAddress ?? '',
+    experience: (user as any)?.experience ?? '8 Years',
+    avatarUrl: user?.avatarUrl ?? '',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -65,6 +70,8 @@ export default function DoctorProfileScreen() {
         name: form.name.trim(),
         phoneNumber: form.phoneNumber.trim(),
         hospitalAddress: form.hospitalAddress.trim(),
+        experience: form.experience.trim(),
+        avatarUrl: form.avatarUrl.trim(),
       });
       updateProfile(form);
       setIsEditing(false);
@@ -111,7 +118,7 @@ export default function DoctorProfileScreen() {
 
           <Card style={styles.profileCard}>
             <View style={styles.avatarRow}>
-              <Avatar name={form.name} size={90} />
+              <Avatar name={form.name} uri={form.avatarUrl} size={90} />
               <View style={styles.identityBlock}>
                 <Text style={styles.name} numberOfLines={1}>{form.name || 'Your name'}</Text>
                 <Text style={styles.email} numberOfLines={1}>{user?.email ?? ''}</Text>
@@ -139,8 +146,20 @@ export default function DoctorProfileScreen() {
                   value={form.hospitalAddress}
                   onChangeText={(t) => onChange('hospitalAddress', t)}
                   multiline
-                  numberOfLines={3}
+                  numberOfLines={2}
                   placeholder="Main Hospital, Street 123"
+                />
+                <Input
+                  label="Experience (e.g., 8 Years)"
+                  value={form.experience}
+                  onChangeText={(t) => onChange('experience', t)}
+                  placeholder="8 Years"
+                />
+                <Input
+                  label="Profile Photo URL"
+                  value={form.avatarUrl}
+                  onChangeText={(t) => onChange('avatarUrl', t)}
+                  placeholder="https://example.com/photo.jpg"
                 />
                 <Button
                   label="Save Changes"
@@ -154,6 +173,7 @@ export default function DoctorProfileScreen() {
                 <DetailRow icon={UserIcon} label="Name" value={user?.name} tone="mint" />
                 <DetailRow icon={Phone} label="Phone" value={user?.phoneNumber} tone="sky" />
                 <DetailRow icon={Building2} label="Hospital" value={user?.hospitalAddress} tone="lilac" />
+                <DetailRow icon={Clock} label="Experience" value={(user as any)?.experience || '8 Years'} tone="sky" />
                 
                 <Button
                   label="Edit Profile"

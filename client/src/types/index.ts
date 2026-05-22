@@ -32,6 +32,17 @@ export interface User {
   availableAtHospital?: boolean;
   hospitalAddress?: string;
   linkedDoctorIds?: string[];
+  pendingDoctorIds?: string[];
+  experience?: string;
+  appointments?: Array<{
+    patientId: string;
+    patientName: string;
+    doctorId: string;
+    doctorName: string;
+    date: string;
+    time: string;
+    createdAt: string;
+  }>;
 }
 
 export interface PatientProfile extends User {

@@ -16,7 +16,7 @@ import { Avatar } from '../../src/components/ui/Avatar';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { User, SymptomEntry } from '../../src/types';
-import { Building2, Check } from 'lucide-react-native';
+import { Building2, Check, Calendar } from 'lucide-react-native';
 
 interface PatientSummary {
   user: User;
@@ -113,10 +113,18 @@ export default function PatientListScreen() {
                 </View>
                 <View style={styles.headerActions}>
                   <TouchableOpacity 
+                    onPress={() => router.push('/(doctor)/appointments')}
+                    style={[styles.profileCircle, { marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff' }]}
+                    activeOpacity={0.8}
+                  >
+                    <Calendar size={20} color="#0f172a" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
                     onPress={() => router.push('/(doctor)/profile')}
                     style={styles.profileCircle}
+                    activeOpacity={0.8}
                   >
-                    <Avatar name={user?.name} size={40} />
+                    <Avatar name={user?.name} uri={user?.avatarUrl} size={40} />
                   </TouchableOpacity>
                 </View>
               </View>
