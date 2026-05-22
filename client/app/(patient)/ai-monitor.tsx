@@ -25,29 +25,20 @@ import { MoodType } from '../../src/types';
 import {
   Droplets,
   Flame,
-  Frown,
-  Meh,
   Siren,
-  Smile,
   Thermometer,
   TriangleAlert,
 } from 'lucide-react-native';
 
 type AlertLevel = 'safe' | 'warning' | 'danger';
 
-const PAIN_OPTIONS = [
-  { value: 2, label: 'Low', emoji: '🙂', Icon: Smile },
-  { value: 4, label: 'Mild', emoji: '😐', Icon: Meh },
-  { value: 7, label: 'Medium', emoji: '😣', Icon: Meh },
-  { value: 9, label: 'High', emoji: '😭', Icon: Frown },
-] as const;
+
 
 export default function AIMonitorScreen() {
   const { entries, aiInsight, isLoading, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
   const gamification = useGamification();
   const { user } = useAuthStore();
 
-  const [painLevel, setPainLevel] = useState<number>(PAIN_OPTIONS[1].value);
   const [fever, setFever] = useState(false);
   const [swelling, setSwelling] = useState(false);
   const [vomiting, setVomiting] = useState(false);
@@ -93,11 +84,20 @@ export default function AIMonitorScreen() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const selectedPain = PAIN_OPTIONS.find((option) => option.value === painLevel) ?? PAIN_OPTIONS[1];
+      // Calculate dynamic pain level based on active symptoms
+      let calculatedPainLevel = 1;
+      if (redness || bleeding) {
+        calculatedPainLevel = 9;
+      } else if (vomiting || difficultUrination) {
+        calculatedPainLevel = 5;
+      } else if (fever || swelling) {
+        calculatedPainLevel = 1;
+      }
+
       const loggedAt = new Date();
 
       await logSymptom({
-        painLevel,
+        painLevel: calculatedPainLevel,
         swelling: swelling ? 'mild' : 'none',
         fever,
         nausea: vomiting,
@@ -111,16 +111,18 @@ export default function AIMonitorScreen() {
             ? 'terrible'
             : alertLevel === 'warning'
               ? 'bad'
-              : painLevel >= 7
+              : calculatedPainLevel >= 7
                 ? 'bad'
-                : painLevel >= 4
+                : calculatedPainLevel >= 4
                   ? 'okay'
                   : 'good';
+
+        const painLabel = calculatedPainLevel === 9 ? 'High 😭' : (calculatedPainLevel === 5 ? 'Medium 😣' : 'Mild 🙂');
 
         const miniReport = [
           'Health Monitor Report',
           `Logged at: ${loggedAt.toLocaleDateString()} ${loggedAt.toLocaleTimeString()}`,
-          `Pain: ${selectedPain.label} ${selectedPain.emoji} (${painLevel}/10)`,
+          `Pain (Dynamic): ${painLabel} (${calculatedPainLevel}/10)`,
           `Fever: ${fever ? 'Yes' : 'No'}`,
           `Swelling: ${swelling ? 'Yes' : 'No'}`,
           `Vomiting: ${vomiting ? 'Yes' : 'No'}`,
@@ -148,7 +150,6 @@ export default function AIMonitorScreen() {
       await gamification.awardXP('SYMPTOM_LOG');
       await gamification.checkDailyStreak();
       setSubmittedAlertLevel(alertLevel);
-      setPainLevel(PAIN_OPTIONS[1].value);
       setFever(false);
       setSwelling(false);
       setVomiting(false);
@@ -208,28 +209,7 @@ export default function AIMonitorScreen() {
         <Card style={styles.formCard} bordered>
           <Text style={styles.formTitle}>Log Symptoms</Text>
 
-          <Text style={styles.fieldLabel}>Pain</Text>
-          <View style={styles.painRow}>
-            {PAIN_OPTIONS.map((item) => {
-              const Icon = item.Icon;
-              const isActive = painLevel === item.value;
-              return (
-              <TouchableOpacity
-                key={item.value}
-                style={[styles.painChip, isActive && styles.painChipActive]}
-                onPress={() => setPainLevel(item.value)}
-              >
-                <Icon
-                  size={14}
-                  color={isActive ? theme.colors.primary : theme.colors.textMuted}
-                  strokeWidth={2}
-                />
-                <Text style={styles.painEmoji}>{item.emoji}</Text>
-                <Text style={[styles.painChipText, isActive && styles.painChipTextActive]}>{item.label}</Text>
-              </TouchableOpacity>
-              );
-            })}
-          </View>
+
 
           <Text style={styles.fieldLabel}>Symptoms</Text>
           <View style={[styles.optionRow, isCompact && styles.optionRowCompact]}>
@@ -296,9 +276,14 @@ const styles = StyleSheet.create({
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   formCard: {
     marginTop: theme.spacing.md,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#e6f9ed',
     borderColor: '#000000',
     borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
   },
   submittedStatusCard: {
     marginTop: theme.spacing.md,
@@ -328,22 +313,7 @@ const styles = StyleSheet.create({
   },
   formTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.md },
   fieldLabel: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
-  painRow: { flexDirection: 'row', gap: theme.spacing.xs, flexWrap: 'wrap', marginBottom: theme.spacing.sm },
-  painChip: {
-    paddingVertical: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceAlt,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  painChipActive: { borderColor: theme.colors.primary, backgroundColor: `${theme.colors.primary}22` },
-  painEmoji: { fontSize: 14 },
-  painChipText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
-  painChipTextActive: { color: theme.colors.primaryLight, fontWeight: '700' },
+
   optionRow: { flexDirection: 'row', gap: theme.spacing.xs, marginBottom: theme.spacing.sm, flexWrap: 'wrap' },
   optionRowCompact: { rowGap: theme.spacing.xs },
   optBtn: {

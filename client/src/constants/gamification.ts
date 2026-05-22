@@ -124,7 +124,7 @@ export const BADGES: Record<BadgeId, Badge> = {
 export const DAILY_TASKS = [
   {
     id: 'daily_logging',
-    label: 'Every day logging',
+    label: 'Every day login',
     xpReward: XP_VALUES.DAILY_CHECKIN,
     icon: 'Bandage',
   },

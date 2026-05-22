@@ -21,15 +21,15 @@ export default function PatientLayout() {
   const footer = useResponsiveFooter();
   const gamification = useGamification();
 
-  // Auto-complete daily logging task when app opens
+  // Auto-complete daily login task when app opens
   useEffect(() => {
-    const completeDailyLogging = async () => {
+    const completeDailyLogin = async () => {
       const taskId = 'daily_logging';
       if (!gamification.tasksCompletedToday.includes(taskId)) {
         await gamification.completeTask(taskId, 10);
       }
     };
-    completeDailyLogging();
+    completeDailyLogin();
   }, []);
 
   return (

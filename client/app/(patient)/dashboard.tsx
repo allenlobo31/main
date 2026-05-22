@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../src/store/authStore';
 import { useGamification } from '../../src/hooks/useGamification';
+import { useGamificationStore } from '../../src/store/gamificationStore';
 import { XPBar } from '../../src/components/gamification/XPBar';
 import { StreakCounter } from '../../src/components/gamification/StreakCounter';
 import { TaskCard } from '../../src/components/gamification/TaskCard';
@@ -53,6 +54,14 @@ export default function DashboardScreen() {
     try {
       await gamification.refresh();
       await gamification.checkDailyStreak();
+      
+      // Auto-complete "Every day login" task
+      const currentProfile = useGamificationStore.getState().profile;
+      const completedToday = currentProfile?.tasksCompletedToday ?? [];
+      const taskId = 'daily_logging';
+      if (!completedToday.includes(taskId)) {
+        await gamification.completeTask(taskId, 10);
+      }
     } catch (error) {
       console.error('[Dashboard] pull to refresh error:', error);
     } finally {
@@ -69,6 +78,15 @@ export default function DashboardScreen() {
           await gamification.refresh();
           if (!isMounted) return;
           await gamification.checkDailyStreak();
+          if (!isMounted) return;
+
+          // Auto-complete "Every day login" task
+          const currentProfile = useGamificationStore.getState().profile;
+          const completedToday = currentProfile?.tasksCompletedToday ?? [];
+          const taskId = 'daily_logging';
+          if (!completedToday.includes(taskId)) {
+            await gamification.completeTask(taskId, 10);
+          }
         } catch (error) {
           console.error('[Dashboard] gamification focus init error:', error);
         }
