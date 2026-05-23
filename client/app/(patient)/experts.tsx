@@ -33,6 +33,7 @@ import {
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import apiClient from '../../src/services/apiClient';
 import { CallModal } from '../../src/components/call/CallModal';
 import { useCall } from '../../src/hooks/useCall';
@@ -548,15 +549,17 @@ export default function ExpertsScreen() {
       ? pendingDoctors[0] 
       : otherDoctors[0];
 
+  const isFocused = useIsFocused();
+
   // Automatically redirect to doctor profile when active/connected
   useEffect(() => {
-    if (isLinked && doc) {
+    if (isFocused && isLinked && doc) {
       router.replace({
         pathname: '/(patient)/doctor-profile',
         params: { doctorId: doc.uid }
       });
     }
-  }, [isLinked, doc]);
+  }, [isFocused, isLinked, doc]);
 
   // If not connected and not pending, display the clean Connect Placeholder screen only
   if (!isLinked && !isPending) {

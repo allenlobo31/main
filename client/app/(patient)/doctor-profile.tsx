@@ -191,6 +191,8 @@ export default function DoctorProfileScreen() {
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
 
+
+
   const [doctor, setDoctor] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
