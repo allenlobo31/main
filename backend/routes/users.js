@@ -291,14 +291,31 @@ router.post('/patients/:uid/accept', authMiddleware, async (req, res) => {
     const doctorId = req.user.id;
     const { uid: patientId } = req.params;
 
-    // Remove from pending, add to linked for both
+    // 1. Find patient to retrieve other pending requests
+    const patient = await User.findById(patientId);
+    if (!patient) return res.status(404).json({ message: 'Patient not found' });
+
+    const otherPendingDoctorIds = (patient.pendingDoctorIds || []).filter(id => id !== doctorId);
+
+    // 2. Pull patient ID from all other pending doctors' pending lists
+    if (otherPendingDoctorIds.length > 0) {
+      await User.updateMany(
+        { _id: { $in: otherPendingDoctorIds } },
+        { $pull: { pendingPatientIds: patientId } }
+      );
+    }
+
+    // 3. Remove patient from the current accepting doctor's pending list, and add to linked list
     await User.findByIdAndUpdate(doctorId, {
       $pull: { pendingPatientIds: patientId },
       $addToSet: { linkedPatientIds: patientId }
     });
 
+    // 4. Update the patient:
+    // - Add current doctor to linked list
+    // - Clear ALL pending requests (since one has been accepted)
     await User.findByIdAndUpdate(patientId, {
-      $pull: { pendingDoctorIds: doctorId },
+      $set: { pendingDoctorIds: [] },
       $addToSet: { linkedDoctorIds: doctorId }
     });
 

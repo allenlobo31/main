@@ -108,6 +108,12 @@ export default function PatientLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="connect-doctor"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

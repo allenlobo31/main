@@ -11,6 +11,7 @@ import {
   Image,
   Modal,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import {
   Phone,
@@ -26,6 +27,8 @@ import {
   Info,
   MapPin,
   X,
+  ShieldAlert,
+  Eye,
 } from 'lucide-react-native';
 import * as Linking from 'expo-linking';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +41,8 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { Avatar } from '../../src/components/ui/Avatar';
+
+
 
 interface LocationModalProps {
   visible: boolean;
@@ -80,6 +85,117 @@ function LocationModal({ visible, onClose, address, hospitalName }: LocationModa
   );
 }
 
+interface RemoveConnectionModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  doctorName: string;
+  isPending: boolean;
+}
+
+function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPending }: RemoveConnectionModalProps) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={modalStyles.modalOverlay}>
+        <View style={modalStyles.modalCard}>
+          <View style={modalStyles.headerRow}>
+            <View style={modalStyles.titleContainer}>
+              <ShieldAlert size={24} color="#ef4444" strokeWidth={2.5} />
+              <Text style={modalStyles.titleText}>
+                {isPending ? 'Cancel Request?' : 'Remove Connection?'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn} activeOpacity={0.7}>
+              <X size={18} color="#64748b" strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={modalStyles.contentArea}>
+            <Text style={modalStyles.bodyText}>
+              {isPending
+                ? `Are you sure you want to cancel your pending connection request to Dr. ${doctorName}?`
+                : `This will stop sharing your recovery logs, daily wound photos, and diaries with Dr. ${doctorName}.`}
+            </Text>
+          </View>
+
+          <View style={modalStyles.actionsRow}>
+            <TouchableOpacity style={modalStyles.cancelBtn} onPress={onClose} activeOpacity={0.8}>
+              <Text style={modalStyles.cancelBtnText}>Keep</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={modalStyles.confirmDeleteBtn} onPress={onConfirm} activeOpacity={0.8}>
+              <Text style={modalStyles.confirmDeleteBtnText}>
+                {isPending ? 'Cancel Request' : 'Remove'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+interface BookAppointmentModalProps {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  doctorName: string;
+  dateStr: string;
+  timeStr: string;
+}
+
+function BookAppointmentModal({ visible, onClose, onConfirm, doctorName, dateStr, timeStr }: BookAppointmentModalProps) {
+  return (
+    <Modal
+      animationType="fade"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+    >
+      <View style={modalStyles.modalOverlay}>
+        <View style={modalStyles.modalCard}>
+          <View style={modalStyles.headerRow}>
+            <View style={modalStyles.titleContainer}>
+              <Clock size={24} color="#0d5c75" strokeWidth={2.5} />
+              <Text style={modalStyles.titleText}>Confirm Booking</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn} activeOpacity={0.7}>
+              <X size={18} color="#64748b" strokeWidth={2.5} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={modalStyles.contentArea}>
+            <Text style={modalStyles.bodyText}>
+              Are you sure you want to book an appointment with Dr. {doctorName}?
+            </Text>
+            <View style={modalStyles.detailsContainer}>
+              <Text style={modalStyles.detailsLabel}>Date:</Text>
+              <Text style={modalStyles.detailsVal}>{dateStr}</Text>
+              <Text style={modalStyles.detailsLabel}>Time:</Text>
+              <Text style={modalStyles.detailsVal}>{timeStr}</Text>
+            </View>
+          </View>
+
+          <View style={modalStyles.actionsRow}>
+            <TouchableOpacity style={modalStyles.cancelBtn} onPress={onClose} activeOpacity={0.8}>
+              <Text style={modalStyles.cancelBtnText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={modalStyles.confirmBtn} onPress={onConfirm} activeOpacity={0.8}>
+              <Text style={modalStyles.confirmBtnText}>Confirm Booking</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ExpertsScreen() {
   const router = useRouter();
   const user = useAuthStore(state => state.user);
@@ -87,8 +203,13 @@ export default function ExpertsScreen() {
   const [appDoctors, setAppDoctors] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState<string | null>(null);
-  const [showAddDoctors, setShowAddDoctors] = useState(false);
   const { horizontalPadding } = useResponsiveLayout();
+
+  // Custom Confirmation Modals States
+  const [removeModalVisible, setRemoveModalVisible] = useState(false);
+  const [bookModalVisible, setBookModalVisible] = useState(false);
+  const [showDoctorListModal, setShowDoctorListModal] = useState(false);
+  const [cancelTargetDoc, setCancelTargetDoc] = useState<User | null>(null);
 
   const { callState, endCall } = useCall();
 
@@ -323,6 +444,7 @@ export default function ExpertsScreen() {
         ...d,
         uid: d.uid || d.id || d._id
       }));
+      
       setAppDoctors(normalized);
     } catch (error) {
       console.error('[ExpertsScreen] fetchData error:', error);
@@ -345,7 +467,7 @@ export default function ExpertsScreen() {
     setIsApplying(doctorId);
     try {
       await apiClient.post(`/users/apply/${doctorId}`);
-      Alert.alert('Request Sent 📩', 'The doctor will review your profile shortly.');
+      Alert.alert('Request Sent 📩', 'Your connection request has been sent successfully. The doctor will review your profile shortly.');
       fetchData();
     } catch (error) {
       Alert.alert('Error', 'Could not send request. Please try again.');
@@ -355,33 +477,203 @@ export default function ExpertsScreen() {
   }, [user?.uid, fetchData]);
 
   const onRemoveDoctor = async (doctorId: string) => {
-    Alert.alert('Remove Connection', 'Stop sharing your data with this doctor?', [
-      { text: 'Keep', style: 'cancel' },
-      {
-        text: 'Stop Sharing',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await apiClient.post(`/users/remove-doctor/${doctorId}`);
-            fetchData();
-          } catch (error) {
-            Alert.alert('Error', 'Could not remove doctor');
-          }
-        }
-      }
-    ]);
+    setRemoveModalVisible(true);
   };
 
-  const linkedDoctors = appDoctors.filter(d => user?.linkedDoctorIds?.includes(d.uid));
-  const pendingDoctorIds = (user as any)?.pendingDoctorIds || [];
-  const otherDoctors = appDoctors.filter(d =>
-    !user?.linkedDoctorIds?.includes(d.uid) &&
-    !pendingDoctorIds.includes(d.uid)
-  );
+  const handleConfirmRemove = async () => {
+    setRemoveModalVisible(false);
+    try {
+      await apiClient.post(`/users/remove-doctor/${doc.uid}`);
+      fetchData();
+      Alert.alert('Success 🎉', isPending ? 'Connection request deleted successfully.' : 'Connection removed successfully.');
+    } catch (error) {
+      Alert.alert('Error', 'Could not update connection. Please try again.');
+    }
+  };
 
-  // Redesigned Glassmorphic Doctor Profile Page when connection is active
-  if (linkedDoctors.length > 0 && !showAddDoctors) {
-    const doc = linkedDoctors[0]; // Active linked doctor
+  const handleConfirmBooking = async () => {
+    setBookModalVisible(false);
+    try {
+      await apiClient.post('/users/appointments', {
+        doctorId: doc.uid,
+        date: selectedDate,
+        time: selectedTime,
+      });
+      Alert.alert(
+        'Appointment Confirmed! 🎉',
+        `Your appointment with Dr. ${doc.name} has been successfully booked for ${getFormattedSelectedDate()} at ${selectedTime}.`
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Could not book appointment. Please try again.');
+    }
+  };
+
+  const handleConfirmCancelPending = async () => {
+    setRemoveModalVisible(false);
+    if (!cancelTargetDoc) return;
+    try {
+      await apiClient.post(`/users/remove-doctor/${cancelTargetDoc.uid}`);
+      fetchData();
+      Alert.alert('Success 🎉', `Connection request to Dr. ${cancelTargetDoc.name} has been cancelled.`);
+    } catch (error) {
+      Alert.alert('Error', 'Could not cancel request. Please try again.');
+    } finally {
+      setCancelTargetDoc(null);
+    }
+  };
+
+  // Derive linked, pending, and other doctor lists from user profile and fetched doctors
+  const linkedDoctors = useMemo(() => {
+    const ids = user?.linkedDoctorIds || [];
+    return appDoctors.filter(d => ids.includes(d.uid));
+  }, [user?.linkedDoctorIds, appDoctors]);
+
+  const pendingDoctors = useMemo(() => {
+    const ids = user?.pendingDoctorIds || [];
+    return appDoctors.filter(d => ids.includes(d.uid));
+  }, [user?.pendingDoctorIds, appDoctors]);
+
+  const otherDoctors = useMemo(() => {
+    const linkedIds = user?.linkedDoctorIds || [];
+    const pendingIds = user?.pendingDoctorIds || [];
+    return appDoctors.filter(d => !linkedIds.includes(d.uid) && !pendingIds.includes(d.uid));
+  }, [user?.linkedDoctorIds, user?.pendingDoctorIds, appDoctors]);
+
+  const isLinked = linkedDoctors.length > 0;
+  const isPending = !isLinked && pendingDoctors.length > 0;
+
+  const doc = isLinked 
+    ? linkedDoctors[0] 
+    : isPending 
+      ? pendingDoctors[0] 
+      : otherDoctors[0];
+
+  // If not connected and not pending, display the clean Connect Placeholder screen only
+  if (!isLinked && !isPending) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.placeholderWrapper}>
+          <View style={styles.placeholderCard}>
+            <View style={styles.placeholderIconContainer}>
+              <UserPlus size={40} color="#0d5c75" strokeWidth={2.5} />
+            </View>
+            <Text style={styles.placeholderTitle}>Connect with a Specialist</Text>
+            <Text style={styles.placeholderSubtitle}>
+              Connect with a hernia care specialist to share your symptom logs, daily diaries, and wound health photos for active medical monitoring.
+            </Text>
+            
+            <TouchableOpacity
+              style={styles.placeholderBtn}
+              onPress={() => router.push('/(patient)/connect-doctor')}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.placeholderBtnText}>Connect with Doctor</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If pending (sent requests but not yet accepted), show pending requests screen
+  if (isPending && !isLinked) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={fetchData}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
+          }
+        >
+          {/* Pending Header Card */}
+          <View style={[styles.placeholderWrapper, { flex: 0, justifyContent: 'flex-start', paddingTop: 30 }]}>
+            <View style={[styles.placeholderCard, { borderColor: '#000000' }]}>
+              <View style={[styles.placeholderIconContainer, { backgroundColor: '#fef9c3', borderColor: '#000000' }]}>
+                <Clock size={36} color="#d97706" strokeWidth={2.5} />
+              </View>
+              <Text style={styles.placeholderTitle}>Requests Pending</Text>
+              <Text style={styles.placeholderSubtitle}>
+                Your connection requests have been sent. Once a doctor accepts, you'll be able to schedule appointments and share recovery details.
+              </Text>
+            </View>
+          </View>
+
+          {/* List of Pending Requests */}
+          <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: '#0f172a', marginBottom: 12 }}>
+              Pending Requests ({pendingDoctors.length})
+            </Text>
+            {pendingDoctors.map((pendDoc) => (
+              <View key={pendDoc.uid} style={doctorListStyles.doctorCard}>
+                <View style={doctorListStyles.doctorInfo}>
+                  <View style={doctorListStyles.avatarCircle}>
+                    {pendDoc.avatarUrl ? (
+                      <Image source={{ uri: pendDoc.avatarUrl }} style={doctorListStyles.avatarImage} />
+                    ) : (
+                      <Text style={doctorListStyles.avatarInitials}>
+                        {(pendDoc.name ?? '?').trim().charAt(0).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={doctorListStyles.nameCol}>
+                    <Text style={doctorListStyles.doctorName}>Dr. {pendDoc.name}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                      <Clock size={11} color="#d97706" strokeWidth={2.5} />
+                      <Text style={{ fontSize: 11, color: '#d97706', fontWeight: '700', marginLeft: 4 }}>Pending</Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  <TouchableOpacity
+                    style={[doctorListStyles.connectBtn, { backgroundColor: '#ffffff' }]}
+                    onPress={() => router.push({ pathname: '/(patient)/doctor-profile', params: { doctorId: pendDoc.uid } })}
+                    activeOpacity={0.9}
+                  >
+                    <Eye size={14} color="#0f172a" strokeWidth={2.5} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[doctorListStyles.connectBtn, { backgroundColor: '#fef08a' }]}
+                    onPress={() => {
+                      setRemoveModalVisible(true);
+                      setCancelTargetDoc(pendDoc);
+                    }}
+                    activeOpacity={0.9}
+                  >
+                    <Text style={[doctorListStyles.connectBtnText, { color: '#92400e' }]}>Cancel</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+
+            {/* Connect with more doctors button */}
+            <TouchableOpacity
+              style={[styles.placeholderBtn, { marginTop: 16 }]}
+              onPress={() => router.push('/(patient)/connect-doctor')}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.placeholderBtnText}>Connect with More Doctors</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        <RemoveConnectionModal
+          visible={removeModalVisible}
+          onClose={() => setRemoveModalVisible(false)}
+          onConfirm={handleConfirmCancelPending}
+          doctorName={cancelTargetDoc?.name || ''}
+          isPending={true}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Redesigned Glassmorphic Doctor Profile Page (for linked doctor)
+  if (doc) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <ScrollView
@@ -408,13 +700,7 @@ export default function ExpertsScreen() {
                 <ChevronLeft size={22} color="#0f172a" strokeWidth={2.5} />
               </TouchableOpacity>
               
-              <TouchableOpacity
-                style={styles.navAddBtn}
-                onPress={() => setShowAddDoctors(true)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.navAddBtnText}>+</Text>
-              </TouchableOpacity>
+              <View style={{ width: 40 }} />
             </View>
 
             {/* Doctor Avatar / Details Column */}
@@ -442,6 +728,10 @@ export default function ExpertsScreen() {
                   <TouchableOpacity
                     style={styles.miniActionBtn}
                     onPress={() => {
+                      if (!isLinked) {
+                        Alert.alert('Not Connected 🚫', 'You must connect with the doctor to make calls.');
+                        return;
+                      }
                       if (doc.isActive) {
                         Linking.openURL(`tel:${doc.phoneNumber || '911'}`);
                       } else {
@@ -457,7 +747,13 @@ export default function ExpertsScreen() {
 
                   <TouchableOpacity
                     style={styles.miniActionBtn}
-                    onPress={() => setShowAddressPopup(true)}
+                    onPress={() => {
+                      if (!isLinked) {
+                        Alert.alert('Not Connected 🚫', 'You must connect with the doctor to view hospital location details.');
+                        return;
+                      }
+                      setShowAddressPopup(true);
+                    }}
                     activeOpacity={0.7}
                   >
                     <MapPin size={18} color="#0d5c75" strokeWidth={2.5} />
@@ -507,139 +803,137 @@ export default function ExpertsScreen() {
               </View>
             </View>
 
-            {/* Booking Scheduler Card */}
-            <View style={styles.schedulerCard}>
-              {/* Select Date Section */}
-              <View style={styles.schedulerSection}>
-                <View style={styles.sectionHeaderRow}>
-                  <Text style={styles.schedulerSectionTitle}>Appointment</Text>
-                  <View style={styles.monthSelector}>
-                    <TouchableOpacity onPress={handlePrevMonth} activeOpacity={0.7} style={styles.monthNavBtn}>
-                      <ChevronLeft size={16} color="#64748b" strokeWidth={2.5} />
-                    </TouchableOpacity>
-                    <Text style={styles.monthText}>{monthNames[displayedDate.getMonth()]} {displayedDate.getFullYear()}</Text>
-                    <TouchableOpacity onPress={handleNextMonth} activeOpacity={0.7} style={styles.monthNavBtn}>
-                      <ChevronLeft size={16} color="#64748b" strokeWidth={2.5} style={{ transform: [{ rotate: '180deg' }] }} />
-                    </TouchableOpacity>
+
+              {/* Booking Scheduler Card */}
+              <View style={styles.schedulerCard}>
+                {/* Select Date Section */}
+                <View style={styles.schedulerSection}>
+                  <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.schedulerSectionTitle}>Appointment</Text>
+                    <View style={styles.monthSelector}>
+                      <TouchableOpacity onPress={handlePrevMonth} activeOpacity={0.7} style={styles.monthNavBtn}>
+                        <ChevronLeft size={16} color="#64748b" strokeWidth={2.5} />
+                      </TouchableOpacity>
+                      <Text style={styles.monthText}>{monthNames[displayedDate.getMonth()]} {displayedDate.getFullYear()}</Text>
+                      <TouchableOpacity onPress={handleNextMonth} activeOpacity={0.7} style={styles.monthNavBtn}>
+                        <ChevronLeft size={16} color="#64748b" strokeWidth={2.5} style={{ transform: [{ rotate: '180deg' }] }} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <ScrollView
+                    ref={scrollViewRef}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={[styles.daysScroll, { paddingHorizontal: sidePadding }]}
+                    contentOffset={{ x: getInitialScrollOffset(), y: 0 }}
+                  >
+                    {bookingDays.map((d, index) => {
+                      const isSelected = selectedDate === d.dateString;
+                      const expired = isDateExpired(d.rawDate);
+                      const today = new Date();
+                      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                      const isToday = d.dateString === todayStr;
+                      const isLast = index === bookingDays.length - 1;
+                      return (
+                        <TouchableOpacity
+                          key={d.dateString}
+                          style={[
+                            styles.dayCard,
+                            isSelected && styles.dayCardSelected,
+                            isToday && styles.dayCardToday,
+                            expired && styles.dayCardExpired,
+                            isLast && { marginRight: 0 }
+                          ]}
+                          onPress={() => {
+                            if (expired) {
+                              Alert.alert('Date Expired 🚫', 'You cannot select a date in the past.');
+                              return;
+                            }
+                            setSelectedDate(d.dateString);
+                          }}
+                          activeOpacity={expired ? 1 : 0.8}
+                        >
+                          <Text style={[
+                            styles.dayNumber,
+                            isSelected && styles.dayTextSelected,
+                            isToday && styles.dayTextToday,
+                            expired && styles.dayTextExpired
+                          ]}>{d.dayNumber}</Text>
+                          <Text style={[
+                            styles.dayName,
+                            isSelected && styles.dayTextSelected,
+                            isToday && styles.dayTextToday,
+                            expired && styles.dayTextExpired
+                          ]}>{d.weekday.substring(0, 3)}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* Select Time Section */}
+                <View style={styles.schedulerSection}>
+                  <Text style={styles.schedulerSectionTitle}>Select Time</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeScroll}>
+                    {timeSlots.map(time => {
+                      const isSelected = selectedTime === time;
+                      const expired = isTimeSlotExpired(selectedDate, time);
+                      return (
+                        <TouchableOpacity
+                          key={time}
+                          style={[
+                            styles.timeSlotBtn,
+                            isSelected && styles.timeSlotBtnSelected,
+                            expired && styles.timeSlotBtnExpired
+                          ]}
+                          onPress={() => {
+                            if (expired) {
+                              Alert.alert('Time Slot Expired 🚫', 'This time slot has already passed for today.');
+                              return;
+                            }
+                            setSelectedTime(time);
+                          }}
+                          disabled={expired}
+                          activeOpacity={expired ? 1 : 0.8}
+                        >
+                          <Text style={[
+                            styles.timeSlotText,
+                            isSelected && styles.timeSlotTextSelected,
+                            expired && styles.timeSlotTextExpired
+                          ]}>{time}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+
+                  {/* Stylized Visual timeline bar matching the image */}
+                  <View style={styles.timelineContainer}>
+                    <View style={styles.timelineBar} />
+                    <View style={styles.timelineIndicator} />
                   </View>
                 </View>
 
-                <ScrollView
-                  ref={scrollViewRef}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={[styles.daysScroll, { paddingHorizontal: sidePadding }]}
-                  contentOffset={{ x: getInitialScrollOffset(), y: 0 }}
+                {/* Book Button */}
+                <TouchableOpacity
+                  style={styles.bookBtn}
+                  onPress={() => {
+                    setBookModalVisible(true);
+                  }}
+                  activeOpacity={0.9}
                 >
-                  {bookingDays.map((d, index) => {
-                    const isSelected = selectedDate === d.dateString;
-                    const expired = isDateExpired(d.rawDate);
-                    const today = new Date();
-                    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                    const isToday = d.dateString === todayStr;
-                    const isLast = index === bookingDays.length - 1;
-                    return (
-                      <TouchableOpacity
-                        key={d.dateString}
-                        style={[
-                          styles.dayCard,
-                          isSelected && styles.dayCardSelected,
-                          isToday && styles.dayCardToday,
-                          expired && styles.dayCardExpired,
-                          isLast && { marginRight: 0 }
-                        ]}
-                        onPress={() => {
-                          if (expired) {
-                            Alert.alert('Date Expired 🚫', 'You cannot select a date in the past.');
-                            return;
-                          }
-                          setSelectedDate(d.dateString);
-                        }}
-                        activeOpacity={expired ? 1 : 0.8}
-                      >
-                        <Text style={[
-                          styles.dayNumber,
-                          isSelected && styles.dayTextSelected,
-                          isToday && styles.dayTextToday,
-                          expired && styles.dayTextExpired
-                        ]}>{d.dayNumber}</Text>
-                        <Text style={[
-                          styles.dayName,
-                          isSelected && styles.dayTextSelected,
-                          isToday && styles.dayTextToday,
-                          expired && styles.dayTextExpired
-                        ]}>{d.weekday.substring(0, 3)}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                  <Text style={styles.bookBtnText}>Book Appointment</Text>
+                </TouchableOpacity>
               </View>
 
-              {/* Select Time Section */}
-              <View style={styles.schedulerSection}>
-                <Text style={styles.schedulerSectionTitle}>Select Time</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.timeScroll}>
-                  {timeSlots.map(time => {
-                    const isSelected = selectedTime === time;
-                    const expired = isTimeSlotExpired(selectedDate, time);
-                    return (
-                      <TouchableOpacity
-                        key={time}
-                        style={[
-                          styles.timeSlotBtn,
-                          isSelected && styles.timeSlotBtnSelected,
-                          expired && styles.timeSlotBtnExpired
-                        ]}
-                        onPress={() => {
-                          if (expired) {
-                            Alert.alert('Time Slot Expired 🚫', 'This time slot has already passed for today.');
-                            return;
-                          }
-                          setSelectedTime(time);
-                        }}
-                        disabled={expired}
-                        activeOpacity={expired ? 1 : 0.8}
-                      >
-                        <Text style={[
-                          styles.timeSlotText,
-                          isSelected && styles.timeSlotTextSelected,
-                          expired && styles.timeSlotTextExpired
-                        ]}>{time}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-
-                {/* Stylized Visual timeline bar matching the image */}
-                <View style={styles.timelineContainer}>
-                  <View style={styles.timelineBar} />
-                  <View style={styles.timelineIndicator} />
-                </View>
-              </View>
-
-              {/* Book Button */}
-              <TouchableOpacity
-                style={styles.bookBtn}
-                onPress={async () => {
-                  try {
-                    await apiClient.post('/users/appointments', {
-                      doctorId: doc.uid,
-                      date: selectedDate,
-                      time: selectedTime,
-                    });
-                    Alert.alert(
-                      'Appointment Confirmed! 🎉',
-                      `Your appointment with Dr. ${doc.name} has been successfully booked for ${getFormattedSelectedDate()} at ${selectedTime}.`
-                    );
-                  } catch (error) {
-                    Alert.alert('Error', 'Could not book appointment. Please try again.');
-                  }
-                }}
-                activeOpacity={0.9}
-              >
-                <Text style={styles.bookBtnText}>Book Appointment</Text>
-              </TouchableOpacity>
-            </View>
+            {/* Remove Connection button */}
+            <TouchableOpacity
+              style={styles.disconnectLink}
+              onPress={() => onRemoveDoctor(doc.uid)}
+              activeOpacity={0.9}
+            >
+              <Text style={styles.disconnectLinkText}>Remove Connection</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -655,117 +949,33 @@ export default function ExpertsScreen() {
           address={doc.hospitalAddress || 'St. Mary\'s Hernia Care Clinic, 456 Healthcare Ave, Suite 200'}
           hospitalName={doc.place || 'General Hospital'}
         />
+
+        <RemoveConnectionModal
+          visible={removeModalVisible}
+          onClose={() => setRemoveModalVisible(false)}
+          onConfirm={handleConfirmRemove}
+          doctorName={doc.name}
+          isPending={isPending}
+        />
+
+        <BookAppointmentModal
+          visible={bookModalVisible}
+          onClose={() => setBookModalVisible(false)}
+          onConfirm={handleConfirmBooking}
+          doctorName={doc.name}
+          dateStr={getFormattedSelectedDate()}
+          timeStr={selectedTime}
+        />
       </SafeAreaView>
     );
   }
 
-  // Available Doctors search list when showAddDoctors is true or no doctor is linked
+  // Loading / Redirect Placeholder state
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView
-        style={styles.mainScroll}
-        contentContainerStyle={[styles.scrollContent, { paddingHorizontal: 20, paddingTop: 15 }]}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={fetchData} colors={[theme.colors.primary]} tintColor={theme.colors.primary} />
-        }
-      >
-        {/* Custom modern header navigation row */}
-        <View style={styles.topNavRow}>
-          <TouchableOpacity
-            style={styles.navCircleBtn}
-            onPress={() => {
-              if (linkedDoctors.length > 0) {
-                setShowAddDoctors(false);
-              } else {
-                router.push('/(patient)/dashboard');
-              }
-            }}
-            activeOpacity={0.8}
-          >
-            <ChevronLeft size={22} color="#0f172a" strokeWidth={2.5} />
-          </TouchableOpacity>
-          <Text style={styles.addDoctorsHeaderTitle}>Add Expert</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
-        {isLoading && appDoctors.length === 0 ? (
-          <View style={styles.loadingArea}>
-            <ActivityIndicator color={theme.colors.primary} size="large" />
-          </View>
-        ) : (
-          <>
-            {/* Available Doctors Section */}
-            {otherDoctors.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Available Doctors</Text>
-                <Text style={styles.sectionSubtitle}>Connect with a surgeon to share your recovery logs</Text>
-                {otherDoctors.map(doc => (
-                  <View key={doc.uid} style={styles.doctorCard}>
-                    <View style={styles.avatarPlaceholderCircleSmall}>
-                      {doc.avatarUrl ? (
-                        <Image source={{ uri: doc.avatarUrl }} style={styles.avatarImageInside} />
-                      ) : (
-                        <Text style={styles.avatarInitialsTextSmall}>
-                          {(doc.name ?? '?').trim().charAt(0).toUpperCase()}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.docInfo}>
-                      <Text style={styles.docName}>Dr. {doc.name}</Text>
-                      <Text style={styles.docHospital}>Hernia Expert</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.applyBtn}
-                      onPress={() => onApplyToDoctor(doc.uid)}
-                      disabled={isApplying === doc.uid}
-                    >
-                      {isApplying === doc.uid ? (
-                        <ActivityIndicator size="small" color="#fff" />
-                      ) : (
-                        <>
-                          <UserPlus size={16} color="#fff" strokeWidth={2} />
-                          <Text style={styles.applyBtnText}>Connect</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Pending Requests */}
-            {pendingDoctorIds.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Sent Requests</Text>
-                {appDoctors.filter(d => pendingDoctorIds.includes(d.uid)).map(doc => (
-                  <View key={doc.uid} style={[styles.doctorCard, styles.pendingCard]}>
-                    <View style={styles.avatarPlaceholderCircleSmall}>
-                      {doc.avatarUrl ? (
-                        <Image source={{ uri: doc.avatarUrl }} style={styles.avatarImageInside} />
-                      ) : (
-                        <Text style={styles.avatarInitialsTextSmall}>
-                          {(doc.name ?? '?').trim().charAt(0).toUpperCase()}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.docInfo}>
-                      <Text style={styles.docName}>Dr. {doc.name}</Text>
-                      <Text style={styles.docPending}>Waiting for approval...</Text>
-                    </View>
-                    <Check size={20} color="#64748b" strokeWidth={2.5} />
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-      </ScrollView>
-
-      <CallModal
-        visible={callState !== 'idle'}
-        callState={callState}
-        onEndCall={endCall}
-      />
+      <View style={styles.loadingArea}>
+        <ActivityIndicator color={theme.colors.primary} size="large" />
+      </View>
     </SafeAreaView>
   );
 }
@@ -773,7 +983,7 @@ export default function ExpertsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#ffffff' },
   container: { paddingVertical: theme.spacing.xl },
-  header: { marginBottom: theme.spacing.xl },
+
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: 4 },
   subtitle: { ...theme.typography.body, color: theme.colors.textSecondary },
   loadingArea: { paddingVertical: 100, alignItems: 'center' },
@@ -842,6 +1052,68 @@ const styles = StyleSheet.create({
   },
   backToCareText: {
     ...theme.typography.caption,
+    fontWeight: '800',
+    color: '#000000',
+  },
+
+  otherDocsSection: {
+    marginTop: 24,
+    marginBottom: 20,
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  otherDocsSectionHeader: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 12,
+  },
+  otherDocProfileCard: {
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 12,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  otherDocProfileCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  otherDocProfileCardName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  otherDocProfileCardSub: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 2,
+  },
+  otherDocProfileCardBtn: {
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 14,
+    paddingVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  otherDocProfileCardBtnText: {
+    fontSize: 12,
     fontWeight: '800',
     color: '#000000',
   },
@@ -1295,18 +1567,133 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   disconnectLink: {
-    flexDirection: 'row',
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 24,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    paddingVertical: 10,
-    gap: 6,
-    marginBottom: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginTop: 10,
+    marginBottom: 20,
+    width: '100%',
   },
   disconnectLinkText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  connectCardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  connectCardSubtitle: {
     fontSize: 13,
-    color: '#ef4444',
-    fontWeight: '700',
+    fontWeight: '600',
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  connectBtn: {
+    backgroundColor: '#0d5c75',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginTop: 8,
+    width: '100%',
+  },
+  connectBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+
+  placeholderWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    backgroundColor: '#ffffff',
+  },
+  placeholderCard: {
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderWidth: 2.5,
+    borderColor: '#000000',
+    borderRadius: 28,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
+  },
+  placeholderIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#edf5fd',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  placeholderTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#0f172a',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  placeholderSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#475569',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 24,
+  },
+  placeholderBtn: {
+    backgroundColor: '#0d5c75',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 20,
+    paddingVertical: 14,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  placeholderBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 
@@ -1382,6 +1769,247 @@ const modalStyles = StyleSheet.create({
   okBtnText: {
     fontSize: 14,
     color: '#ffffff',
+    fontWeight: '800',
+  },
+  bodyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+    lineHeight: 20,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 8,
+  },
+  cancelBtn: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    color: '#000000',
+    fontWeight: '800',
+  },
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#0d5c75',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  confirmBtnText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  confirmDeleteBtn: {
+    flex: 1.2,
+    backgroundColor: '#ef4444',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  confirmDeleteBtnText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  detailsContainer: {
+    backgroundColor: '#edf5fd',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: '#000000',
+  },
+  detailsLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  detailsVal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 8,
+  },
+});
+
+const doctorListStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 2.5,
+    borderBottomWidth: 0,
+    borderColor: '#000000',
+    maxHeight: '75%',
+    paddingBottom: 30,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#e2e8f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0f172a',
+  },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingWrap: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748b',
+  },
+  emptyWrap: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#334155',
+    marginTop: 4,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#94a3b8',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+  },
+  doctorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#d1fae5',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 20,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  doctorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#0d5c75',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  avatarInitials: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  nameCol: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  doctorName: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  doctorSpec: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 2,
+  },
+  connectBtn: {
+    backgroundColor: '#0d5c75',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+    marginLeft: 10,
+  },
+  connectBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: '800',
   },
 });
