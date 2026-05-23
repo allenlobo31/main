@@ -1,9 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
   Text,
   View,
+  Image,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -113,6 +116,15 @@ export default function ActivityScreen() {
   const phase = useMemo(() => getActivityPhase(user?.surgeryStatus), [user?.surgeryStatus]);
   const copy = getPhaseCopy(phase);
 
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
+
+  const slides = useMemo(() => [
+    { id: '1', title: 'Gentle Walk', subtitle: 'Step towards active recovery', image: require('../../assets/walking_recovery.png') },
+    { id: '2', title: 'Healthy Diet', subtitle: 'Nourish your body daily with nutrition', image: require('../../assets/diet_nutrition.png') },
+    { id: '3', title: 'Rest & Heal', subtitle: 'Pillows, comfort, and peaceful sleep', image: require('../../assets/peaceful_rest.png') },
+    { id: '4', title: 'Soft Stretch', subtitle: 'Gentle breathing exercises and stretch', image: require('../../assets/gentle_stretch.png') },
+  ], []);
+
   const phaseContent = useMemo(() => {
     if (phase === 'post-op') {
       return {
@@ -164,6 +176,60 @@ export default function ActivityScreen() {
             </View>
           </View>
         </Card>
+
+        {/* Premium Neobrutalist Image Carousel */}
+        <View style={styles.carouselContainer}>
+          <View style={styles.carouselCard}>
+            <Image
+              source={slides[activeSlideIndex].image}
+              style={styles.carouselImage}
+              resizeMode="cover"
+            />
+            {/* Title & Description Overlay Banner */}
+            <View style={styles.carouselOverlay}>
+              <Text style={styles.carouselOverlayTitle}>{slides[activeSlideIndex].title}</Text>
+              <Text style={styles.carouselOverlaySubtitle}>{slides[activeSlideIndex].subtitle}</Text>
+            </View>
+            
+            {/* Navigation Overlay Arrows */}
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowLeft]}
+              activeOpacity={0.8}
+              onPress={() => setActiveSlideIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
+            >
+              <Text style={styles.arrowText}>‹</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowRight]}
+              activeOpacity={0.8}
+              onPress={() => setActiveSlideIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1))}
+            >
+              <Text style={styles.arrowText}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Mini Versions (Thumbnails) Row below */}
+          <View style={styles.thumbnailsRow}>
+            {slides.map((slide, index) => {
+              const isActive = activeSlideIndex === index;
+              return (
+                <TouchableOpacity
+                  key={slide.id}
+                  style={[
+                    styles.thumbnailContainer,
+                    isActive ? styles.thumbnailContainerActive : styles.thumbnailContainerInactive
+                  ]}
+                  activeOpacity={0.9}
+                  onPress={() => setActiveSlideIndex(index)}
+                >
+                  <Image source={slide.image} style={styles.thumbnailImage} resizeMode="cover" />
+                  {isActive && <View style={styles.thumbnailOverlayActive} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
         {phase === 'post-op' ? (
           <Card style={[styles.sectionCard, styles.timelineCard, styles.lavenderSection]} bordered>
@@ -266,6 +332,122 @@ function TipRow({
 }
 
 const styles = StyleSheet.create({
+  // Premium Neobrutalist Image Carousel Styles
+  carouselContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  carouselCard: {
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 24,
+    height: 220,
+    position: 'relative',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+  },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1.5,
+    borderTopColor: '#000000',
+  },
+  carouselOverlayTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+  carouselOverlaySubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#d1fae5',
+    marginTop: 2,
+  },
+  arrowBtn: {
+    position: 'absolute',
+    top: '40%',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  arrowLeft: {
+    left: 12,
+  },
+  arrowRight: {
+    right: 12,
+  },
+  arrowText: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#000000',
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  thumbnailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingHorizontal: 4,
+  },
+  thumbnailContainer: {
+    width: (Dimensions.get('window').width - 40 - 36) / 4,
+    height: 60,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#ffffff',
+  },
+  thumbnailContainerActive: {
+    borderWidth: 2.5,
+    borderColor: '#000000',
+    transform: [{ scale: 1.05 }],
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  thumbnailContainerInactive: {
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    opacity: 0.65,
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+  },
+  thumbnailOverlayActive: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(254, 240, 138, 0.15)', // light gold overlay tint
+  },
+
   safe: {
     flex: 1,
     backgroundColor: theme.colors.background,
