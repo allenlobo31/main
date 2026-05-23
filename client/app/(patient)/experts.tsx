@@ -634,7 +634,7 @@ export default function ExpertsScreen() {
                     onPress={() => router.push({ pathname: '/(patient)/doctor-profile', params: { doctorId: pendDoc.uid } })}
                     activeOpacity={0.9}
                   >
-                    <Eye size={14} color="#0f172a" strokeWidth={2.5} />
+                    <Text style={[doctorListStyles.connectBtnText, { color: '#0f172a' }]}>Profile</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[doctorListStyles.connectBtn, { backgroundColor: '#fef08a' }]}
@@ -720,6 +720,13 @@ export default function ExpertsScreen() {
               <View style={styles.bannerCenteredInfo}>
                 <Text style={styles.bannerDocName}>Dr. {doc.name}</Text>
                 <Text style={styles.bannerDocSpecialty}>Hernia Expert</Text>
+                <TouchableOpacity
+                  style={styles.bannerProfileBtn}
+                  onPress={() => router.push({ pathname: '/(patient)/doctor-profile', params: { doctorId: doc.uid } })}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.bannerProfileBtnText}>View Profile</Text>
+                </TouchableOpacity>
               </View>
 
               {/* Mini details container with Call and Location address icon placed on the right */}
@@ -996,7 +1003,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
     borderRadius: 20,
     marginBottom: 12,
     borderWidth: 2,
@@ -1258,6 +1265,25 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textAlign: 'center',
   },
+  bannerProfileBtn: {
+    marginTop: 10,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  bannerProfileBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
   miniActionsRightWrapper: {
     width: '100%',
     alignItems: 'flex-end',
@@ -1266,7 +1292,7 @@ const styles = StyleSheet.create({
   miniActionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
     borderColor: '#000000',
     borderWidth: 2,
     borderRadius: 20,
@@ -1342,7 +1368,7 @@ const styles = StyleSheet.create({
   },
   statsCardRow: {
     flexDirection: 'row',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
     borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 10,
@@ -1375,7 +1401,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statIconActive: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
   },
   statIconMuted: {
     backgroundColor: '#f1f5f9',
@@ -1393,7 +1419,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   schedulerCard: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
     borderRadius: 28,
     borderWidth: 2,
     borderColor: '#000000',
@@ -1939,7 +1965,7 @@ const doctorListStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#fef9c3',
     borderWidth: 2,
     borderColor: '#000000',
     borderRadius: 20,

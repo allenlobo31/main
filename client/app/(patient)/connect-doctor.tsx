@@ -100,7 +100,11 @@ export default function ConnectDoctorScreen() {
   };
 
   const renderDoctorCard = ({ item }: { item: User }) => (
-    <View style={styles.doctorCard}>
+    <TouchableOpacity
+      style={styles.doctorCard}
+      onPress={() => router.push({ pathname: '/(patient)/doctor-profile', params: { doctorId: item.uid } })}
+      activeOpacity={0.8}
+    >
       <View style={styles.doctorRow}>
         {/* Avatar */}
         <View style={styles.avatarCircle}>
@@ -117,12 +121,18 @@ export default function ConnectDoctorScreen() {
             Dr. {item.name}
           </Text>
           <Text style={styles.doctorSpecialty}>Hernia Specialist</Text>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: '#0d5c75', marginTop: 4 }}>
+            View Profile →
+          </Text>
         </View>
 
         {/* Connect Button */}
         <TouchableOpacity
           style={styles.connectBtn}
-          onPress={() => onApplyToDoctor(item.uid)}
+          onPress={(e) => {
+            e.stopPropagation(); // prevent card tap navigation
+            onApplyToDoctor(item.uid);
+          }}
           disabled={isApplying !== null}
           activeOpacity={0.9}
         >
@@ -133,7 +143,7 @@ export default function ConnectDoctorScreen() {
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderEmptyState = () => (

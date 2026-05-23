@@ -114,6 +114,12 @@ export default function PatientLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="doctor-profile"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
