@@ -18,7 +18,7 @@ import { Avatar } from '../../src/components/ui/Avatar';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { User, SymptomEntry } from '../../src/types';
-import { Check, Search, AlertCircle, RefreshCw } from 'lucide-react-native';
+import { Check, Search, AlertCircle } from 'lucide-react-native';
 
 interface PatientSummary {
   user: User;

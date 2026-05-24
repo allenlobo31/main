@@ -17,7 +17,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
-import { Building2, PhoneCall, Users, Calendar, ArrowRight, Activity, Clock } from 'lucide-react-native';
+import { Building2, PhoneCall, Users, Calendar, ArrowRight, Clock } from 'lucide-react-native';
 
 export default function DoctorHomeScreen() {
   const { user, updateProfile } = useAuthStore();

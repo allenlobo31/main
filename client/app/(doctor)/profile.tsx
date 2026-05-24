@@ -13,11 +13,9 @@ import { ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  MapPin,
   Phone,
   User as UserIcon,
   Building2,
-  ChevronLeft,
   Clock,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/authStore';
