@@ -42,6 +42,7 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { Avatar } from '../../src/components/ui/Avatar';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 
 
@@ -199,6 +200,7 @@ function BookAppointmentModal({ visible, onClose, onConfirm, doctorName, dateStr
 
 export default function ExpertsScreen() {
   const router = useRouter();
+  const { t } = useLanguageStore();
   const user = useAuthStore(state => state.user);
   const updateProfile = useAuthStore(state => state.updateProfile);
   const [appDoctors, setAppDoctors] = useState<User[]>([]);
@@ -570,9 +572,9 @@ export default function ExpertsScreen() {
             <View style={styles.placeholderIconContainer}>
               <UserPlus size={40} color="#0d5c75" strokeWidth={2.5} />
             </View>
-            <Text style={styles.placeholderTitle}>Connect with a Specialist</Text>
+            <Text style={styles.placeholderTitle}>{t('experts.connectWithSpecialist')}</Text>
             <Text style={styles.placeholderSubtitle}>
-              Connect with a hernia care specialist to share your symptom logs, daily diaries, and wound health photos for active medical monitoring.
+              {t('experts.connectWithSpecialistDesc')}
             </Text>
             
             <TouchableOpacity
@@ -580,7 +582,7 @@ export default function ExpertsScreen() {
               onPress={() => router.push('/(patient)/connect-doctor')}
               activeOpacity={0.9}
             >
-              <Text style={styles.placeholderBtnText}>Connect with Doctor</Text>
+              <Text style={styles.placeholderBtnText}>{t('experts.connectWithDoctorBtn')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -609,9 +611,9 @@ export default function ExpertsScreen() {
               <View style={[styles.placeholderIconContainer, { backgroundColor: '#fef9c3', borderColor: '#000000' }]}>
                 <Clock size={36} color="#d97706" strokeWidth={2.5} />
               </View>
-              <Text style={styles.placeholderTitle}>Requests Pending</Text>
+              <Text style={styles.placeholderTitle}>{t('experts.requestsPending')}</Text>
               <Text style={styles.placeholderSubtitle}>
-                Your connection requests have been sent. Once a doctor accepts, you'll be able to schedule appointments and share recovery details.
+                {t('experts.requestsPendingDesc')}
               </Text>
             </View>
           </View>
@@ -619,7 +621,7 @@ export default function ExpertsScreen() {
           {/* List of Pending Requests */}
           <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
             <Text style={{ fontSize: 14, fontWeight: '800', color: '#0f172a', marginBottom: 12 }}>
-              Pending Requests ({pendingDoctors.length})
+              {t('experts.pendingRequestsLabel', { count: pendingDoctors.length })}
             </Text>
             {pendingDoctors.map((pendDoc) => (
               <View key={pendDoc.uid} style={doctorListStyles.doctorCard}>
@@ -637,7 +639,7 @@ export default function ExpertsScreen() {
                     <Text style={doctorListStyles.doctorName}>Dr. {pendDoc.name}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                       <Clock size={11} color="#d97706" strokeWidth={2.5} />
-                      <Text style={{ fontSize: 11, color: '#d97706', fontWeight: '700', marginLeft: 4 }}>Pending</Text>
+                      <Text style={{ fontSize: 11, color: '#d97706', fontWeight: '700', marginLeft: 4 }}>{t('common.pending')}</Text>
                     </View>
                   </View>
                 </View>
@@ -647,7 +649,7 @@ export default function ExpertsScreen() {
                     onPress={() => router.push({ pathname: '/(patient)/doctor-profile', params: { doctorId: pendDoc.uid } })}
                     activeOpacity={0.9}
                   >
-                    <Text style={[doctorListStyles.connectBtnText, { color: '#0f172a' }]}>Profile</Text>
+                    <Text style={[doctorListStyles.connectBtnText, { color: '#0f172a' }]}>{t('experts.profileBtn')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[doctorListStyles.connectBtn, { backgroundColor: '#fef08a' }]}
@@ -657,7 +659,7 @@ export default function ExpertsScreen() {
                     }}
                     activeOpacity={0.9}
                   >
-                    <Text style={[doctorListStyles.connectBtnText, { color: '#92400e' }]}>Cancel</Text>
+                    <Text style={[doctorListStyles.connectBtnText, { color: '#92400e' }]}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -669,7 +671,7 @@ export default function ExpertsScreen() {
               onPress={() => router.push('/(patient)/connect-doctor')}
               activeOpacity={0.9}
             >
-              <Text style={styles.placeholderBtnText}>Connect with More Doctors</Text>
+              <Text style={styles.placeholderBtnText}>{t('experts.connectWithDoctorBtn')}</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

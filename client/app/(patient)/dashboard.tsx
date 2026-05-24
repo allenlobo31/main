@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -24,8 +25,9 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
-import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock, Trophy } from 'lucide-react-native';
+import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock, Trophy, Globe } from 'lucide-react-native';
 import { surgeryCountdownLabel } from '../../src/utils/dateHelpers';
+import { useLanguageStore, LanguageCode } from '../../src/store/languageStore';
 
 const BADGE_ICONS: Record<string, any> = {
   Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star
@@ -38,6 +40,47 @@ export default function DashboardScreen() {
   const { isCompact, horizontalPadding } = useResponsiveLayout();
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
   const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
+
+  const { language, setLanguage, t } = useLanguageStore();
+  const [langModalVisible, setLangModalVisible] = useState(false);
+
+  const getPhaseLabel = (p: string) => {
+    if (p === 'pre-op') return t('dashboard.phases.preop');
+    if (p === 'post-op') return t('dashboard.phases.postop');
+    if (p === 'recovery') return t('dashboard.phases.recovery');
+    return t('dashboard.phases.setup');
+  };
+
+  const getLanguageLabel = (code: LanguageCode) => {
+    switch (code) {
+      case 'en': return 'EN';
+      case 'kn': return 'KN';
+      case 'hi': return 'HI';
+      default: return 'EN';
+    }
+  };
+
+  const handleLanguageSelect = (lang: LanguageCode) => {
+    setLanguage(lang);
+    setLangModalVisible(false);
+  };
+
+  const getBadgeLabel = (badgeId: BadgeId, defaultLabel: string) => {
+    switch (badgeId) {
+      case 'first_checkin': return language === 'kn' ? 'ಮೊದಲ ಚೆಕ್-ಇನ್' : language === 'hi' ? 'पहला चेक-इन' : defaultLabel;
+      case 'streak_3': return language === 'kn' ? '3 ದಿನದ ಸರಣಿ' : language === 'hi' ? '3 दिवसीय स्ट्रीक' : defaultLabel;
+      case 'streak_7': return language === 'kn' ? 'ವಾರದ ಸರಣಿ' : language === 'hi' ? 'ಸಾಪ್ತಾಹಿಕ ಸ್ಟ್ರೀಕ್' : defaultLabel;
+      case 'streak_30': return language === 'kn' ? '30 ದಿನದ ಸರಣಿ' : language === 'hi' ? '30 दिवसीय स्ट्रीक' : defaultLabel;
+      case 'photo_uploader': return language === 'kn' ? 'ಫೋಟೋ ಅಪ್‌ಲೋಡರ್' : language === 'hi' ? 'फोटो अपलोडर' : defaultLabel;
+      case 'diary_starter': return language === 'kn' ? 'ದಿನಚರಿ ಆರಂಭಿಕ' : language === 'hi' ? 'डायरी स्टार्टर' : defaultLabel;
+      case 'dairy': return language === 'kn' ? 'ದಿನಚರಿ' : language === 'hi' ? 'डायरी' : defaultLabel;
+      case 'call_made': return language === 'kn' ? 'ಮೊದಲ ಕರೆ' : language === 'hi' ? 'पहला कॉल' : defaultLabel;
+      case 'week_warrior': return language === 'kn' ? 'ವಾರದ ಯೋಧ' : language === 'hi' ? 'साप्ताहिक योद्धा' : defaultLabel;
+      case 'pain_free': return language === 'kn' ? 'ನೋವಿಲ್ಲದ ದಿನಗಳು' : language === 'hi' ? 'दर्द मुक्त दिन' : defaultLabel;
+      case 'recovery_hero': return language === 'kn' ? 'ಚೇತರಿಕೆ ವೀರ' : language === 'hi' ? 'रिकवरी हीरो' : defaultLabel;
+      default: return defaultLabel;
+    }
+  };
 
   const countdown = useMemo(
     () =>
@@ -133,6 +176,72 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Language Selection Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={langModalVisible}
+        onRequestClose={() => setLangModalVisible(false)}
+      >
+        <View style={langModalStyles.modalOverlay}>
+          <View style={langModalStyles.modalCard}>
+            <View style={langModalStyles.headerRow}>
+              <View style={langModalStyles.titleContainer}>
+                <Globe size={20} color={theme.colors.primary} strokeWidth={2.5} />
+                <Text style={langModalStyles.titleText}>Select Language / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ</Text>
+              </View>
+              <TouchableOpacity onPress={() => setLangModalVisible(false)} style={langModalStyles.closeBtn} activeOpacity={0.7}>
+                <Text style={{ fontWeight: '800', color: '#64748b', fontSize: 16 }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={langModalStyles.contentArea}>
+              <TouchableOpacity
+                style={[
+                  langModalStyles.langOption,
+                  language === 'en' && langModalStyles.langOptionSelected
+                ]}
+                activeOpacity={0.8}
+                onPress={() => handleLanguageSelect('en')}
+              >
+                <Text style={[langModalStyles.langOptionText, language === 'en' && langModalStyles.langOptionTextSelected]}>
+                  English (Default)
+                </Text>
+                {language === 'en' && <Text style={langModalStyles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  langModalStyles.langOption,
+                  language === 'kn' && langModalStyles.langOptionSelected
+                ]}
+                activeOpacity={0.8}
+                onPress={() => handleLanguageSelect('kn')}
+              >
+                <Text style={[langModalStyles.langOptionText, language === 'kn' && langModalStyles.langOptionTextSelected]}>
+                  ಕನ್ನಡ (Kannada)
+                </Text>
+                {language === 'kn' && <Text style={langModalStyles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  langModalStyles.langOption,
+                  language === 'hi' && langModalStyles.langOptionSelected
+                ]}
+                activeOpacity={0.8}
+                onPress={() => handleLanguageSelect('hi')}
+              >
+                <Text style={[langModalStyles.langOptionText, language === 'hi' && langModalStyles.langOptionTextSelected]}>
+                  हिन्दी (Hindi)
+                </Text>
+                {language === 'hi' && <Text style={langModalStyles.checkmark}>✓</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
         showsVerticalScrollIndicator={false}
@@ -148,23 +257,35 @@ export default function DashboardScreen() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] ?? 'there'}</Text>
-              {/* <Hand size={20} color={theme.colors.textPrimary} strokeWidth={2} /> */}
+              <Text style={styles.greeting}>
+                {t('dashboard.hello', { name: user?.name?.split(' ')[0] ?? t('dashboard.helloThere') })}
+              </Text>
             </View>
             <View style={styles.phaseChip}>
               <View style={[styles.phaseDot, { backgroundColor: phaseConfig.color }]} />
               <Text style={[styles.phaseText, { color: phaseConfig.color }]}>
-                {phaseConfig.label}
+                {getPhaseLabel(phase)}
               </Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.headerRight}
-            activeOpacity={0.8}
-            onPress={() => router.push('/(patient)/profile')}
-          >
-            <Avatar name={user?.name} size={40} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity
+              style={styles.langSelectorBtn}
+              activeOpacity={0.8}
+              onPress={() => setLangModalVisible(true)}
+            >
+              <Globe size={16} color="#000000" strokeWidth={2.5} />
+              <Text style={styles.langSelectorText}>{getLanguageLabel(language)}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.headerRight}
+              activeOpacity={0.8}
+              onPress={() => router.push('/(patient)/profile')}
+            >
+              <Avatar name={user?.name} size={40} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Surgery Countdown */}
@@ -175,7 +296,7 @@ export default function DashboardScreen() {
                 <CalendarClock size={24} color={theme.colors.primary} />
               </View>
               <View style={styles.countdownText}>
-                <Text style={styles.countdownLabel}>Surgery Countdown</Text>
+                <Text style={styles.countdownLabel}>{t('dashboard.countdownLabel')}</Text>
                 <Text style={styles.countdownValue}>{countdown}</Text>
               </View>
             </View>
@@ -195,13 +316,13 @@ export default function DashboardScreen() {
           <Card style={[styles.statCard, isCompact && styles.statCardCompact]}>
             <View style={styles.statCenter}>
               <Text style={styles.statValue}>{gamification.xp}</Text>
-              <Text style={styles.statLabel}>Total XP</Text>
+              <Text style={styles.statLabel}>{t('dashboard.totalXp')}</Text>
             </View>
           </Card>
           <Card style={[styles.statCard, isCompact && styles.statCardFull]}>
             <View style={styles.statCenter}>
               <Text style={styles.statValue}>{gamification.badges.length}</Text>
-              <Text style={styles.statLabel}>Badges</Text>
+              <Text style={styles.statLabel}>{t('dashboard.badges')}</Text>
             </View>
           </Card>
         </View>
@@ -214,14 +335,14 @@ export default function DashboardScreen() {
                 <Trophy size={28} color="#eab308" strokeWidth={2.5} />
               </View>
               <View style={styles.allCompletedText}>
-                <Text style={styles.allCompletedTitle}>All Daily Tasks Completed!</Text>
-                <Text style={styles.allCompletedSubtitle}>Amazing job! You've earned all XP and completed your daily streak check-in. Keep up the excellent work!</Text>
+                <Text style={styles.allCompletedTitle}>{t('dashboard.allCompletedTitle')}</Text>
+                <Text style={styles.allCompletedSubtitle}>{t('dashboard.allCompletedSubtitle')}</Text>
               </View>
             </View>
           </Card>
         ) : (
           <>
-            <Text style={styles.sectionTitle}>Today's tasks</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.todaysTasks')}</Text>
             {pendingTasks.map((task) => {
               const isExpanded = expandedTaskId === task.id;
               const canManualComplete = isManuallyCompletable(task.id);
@@ -235,7 +356,7 @@ export default function DashboardScreen() {
                   {isExpanded && canManualComplete ? (
                     <View style={styles.completeActionWrap}>
                       <Button
-                        label="Completed"
+                        label={t('dashboard.completedBtn')}
                         onPress={() => onCompleteTask(task.id, task.xpReward)}
                         isLoading={completingTaskId === task.id}
                         style={styles.completeBtn}
@@ -251,7 +372,7 @@ export default function DashboardScreen() {
         {/* Badges */}
         {gamification.badges.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Badges earned</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.badgesEarned')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesRow}>
               {gamification.badges.map((badgeId) => {
                 const badge = BADGES[badgeId as BadgeId];
@@ -261,7 +382,7 @@ export default function DashboardScreen() {
                     <View style={styles.badgeEmojiWrap}>
                       {BadgeIcon ? <BadgeIcon size={32} color={theme.colors.textPrimary} strokeWidth={1.5} /> : null}
                     </View>
-                    <Text style={styles.badgeLabel}>{badge.label}</Text>
+                    <Text style={styles.badgeLabel}>{getBadgeLabel(badgeId as BadgeId, badge.label)}</Text>
                   </View>
                 );
               })}
@@ -271,9 +392,9 @@ export default function DashboardScreen() {
 
         {pendingTasks.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Tasks completed today</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.tasksCompletedToday')}</Text>
             {completedTasks.length === 0 ? (
-              <Text style={styles.noBadges}>No tasks completed yet.</Text>
+              <Text style={styles.noBadges}>{t('dashboard.noTasksCompleted')}</Text>
             ) : (
               completedTasks.map((task) => <TaskCard key={`completed-${task.id}`} task={task} isManuallyCompletable={false} />)
             )}
@@ -436,5 +557,113 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
     lineHeight: 18,
+  },
+  langSelectorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginRight: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  langSelectorText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000000',
+  },
+});
+
+const langModalStyles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: '#000000',
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 5,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#f1f5f9',
+    paddingBottom: 12,
+    marginBottom: 16,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  titleText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#0f172a',
+  },
+  closeBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  contentArea: {
+    gap: 12,
+    marginBottom: 8,
+  },
+  langOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#000000',
+    backgroundColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  langOptionSelected: {
+    backgroundColor: '#fef9c3',
+    borderColor: '#000000',
+  },
+  langOptionText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#000000',
+  },
+  langOptionTextSelected: {
+    color: '#000000',
+  },
+  checkmark: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#000000',
   },
 });

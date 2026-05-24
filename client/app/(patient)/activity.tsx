@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckCircle2, XCircle } from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 // Enable LayoutAnimation on Android
 if (
@@ -27,6 +28,7 @@ if (
 
 export default function ActivityScreen() {
   const { isCompact, horizontalPadding } = useResponsiveLayout();
+  const { t } = useLanguageStore();
 
   const [activeCanDoIndex, setActiveCanDoIndex] = useState(0);
   const [activeNotToDoIndex, setActiveNotToDoIndex] = useState(0);
@@ -35,20 +37,20 @@ export default function ActivityScreen() {
   const fadeNotToDoAnim = useRef(new Animated.Value(1)).current;
 
   const canDoSlides = useMemo(() => [
-    { id: '1', title: 'Eat High Fiber', subtitle: 'Fruit, vegetables, oats, and whole grains keep digestion safe', image: require('../../assets/diet_nutrition.png') },
-    { id: '2', title: 'Hydrate Well', subtitle: 'Keep sipping water throughout the day to support cellular recovery', image: require('../../assets/can_do_water.png') },
-    { id: '3', title: 'Gentle Walking', subtitle: 'A calm walk keeps your body active and improves blood circulation', image: require('../../assets/walking_recovery.png') },
-    { id: '4', title: 'Bed Rest', subtitle: 'Ensure plenty of restful sleep in a comfortable bed with pillows', image: require('../../assets/peaceful_rest.png') },
-    { id: '5', title: 'Light Chores', subtitle: 'Do small, safe tasks like watering a plant without lifting weight', image: require('../../assets/can_do_task.png') },
-  ], []);
+    { id: '1', title: t('activity.canDoSlides.slide1.title'), subtitle: t('activity.canDoSlides.slide1.subtitle'), image: require('../../assets/diet_nutrition.png') },
+    { id: '2', title: t('activity.canDoSlides.slide2.title'), subtitle: t('activity.canDoSlides.slide2.subtitle'), image: require('../../assets/can_do_water.png') },
+    { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: require('../../assets/walking_recovery.png') },
+    { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: require('../../assets/peaceful_rest.png') },
+    { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: require('../../assets/can_do_task.png') },
+  ], [t]);
 
   const notToDoSlides = useMemo(() => [
-    { id: '1', title: 'Avoid Junk Food', subtitle: 'Chips, fried snacks, and heavy meals slow down your digestion', image: require('../../assets/prohibited_junk_food.png') },
-    { id: '2', title: 'Avoid Drinking Alcohol', subtitle: 'Alcohol dehydrates your body and delays wound healing', image: require('../../assets/prohibited_alcohol.png') },
-    { id: '3', title: 'Avoid Running', subtitle: 'Strenuous running exerts unsafe pressure on surgical repair', image: require('../../assets/prohibited_running.png') },
-    { id: '4', title: 'Avoid Heavy Lifting', subtitle: 'Do not lift objects over 5 lbs to prevent abdominal wall hernia tear', image: require('../../assets/prohibited_lifting.png') },
-    { id: '5', title: 'Avoid Bending Over', subtitle: 'Do not bend at the waist; bend knees instead to protect wound', image: require('../../assets/prohibited_bending.png') },
-  ], []);
+    { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: require('../../assets/prohibited_junk_food.png') },
+    { id: '2', title: t('activity.notToDoSlides.slide2.title'), subtitle: t('activity.notToDoSlides.slide2.subtitle'), image: require('../../assets/prohibited_alcohol.png') },
+    { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: require('../../assets/prohibited_running.png') },
+    { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: require('../../assets/prohibited_lifting.png') },
+    { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: require('../../assets/prohibited_bending.png') },
+  ], [t]);
 
   // Custom helpers to change indices with LayoutAnimation
   const changeCanDoSlideIndex = (index: number) => {
@@ -111,7 +113,7 @@ export default function ActivityScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Core Screen Title */}
-        <Text style={styles.pageTitle}>Care Plan</Text>
+        <Text style={styles.pageTitle}>{t('activity.pageTitle')}</Text>
 
         {/* ======================================================== */}
         {/* PREMIUM NEOBRUTALIST CAROUSEL 1: CAN DO (RECOMMENDED) */}
@@ -122,7 +124,7 @@ export default function ActivityScreen() {
             <View style={[styles.iconWrapSuccess, { backgroundColor: '#d1fae5' }]}>
               <CheckCircle2 size={18} color="#059669" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.carouselSectionTitle, { color: '#059669' }]}>Can Do (Recommended)</Text>
+            <Text style={[styles.carouselSectionTitle, { color: '#059669' }]}>{t('activity.canDoTitle')}</Text>
           </View>
 
           <View style={[styles.carouselCard, styles.canDoCardBorder]}>
@@ -190,7 +192,7 @@ export default function ActivityScreen() {
             <View style={[styles.iconWrapDanger, { backgroundColor: '#fecaca' }]}>
               <XCircle size={18} color="#dc2626" strokeWidth={2.5} />
             </View>
-            <Text style={styles.carouselSectionTitle}>Not To Do (Things to Avoid)</Text>
+            <Text style={styles.carouselSectionTitle}>{t('activity.notToDoTitle')}</Text>
           </View>
 
           <View style={[styles.carouselCard, styles.notToDoCardBorder]}>

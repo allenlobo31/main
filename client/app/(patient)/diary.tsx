@@ -18,9 +18,11 @@ import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { MoodType } from '../../src/types';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 export default function DiaryScreen() {
   const { entries, isLoading, hasMore, isSubmitting, fetchEntries, addEntry } = useDiary();
+  const { t } = useLanguageStore();
 
   const [text, setText] = useState('');
   const [mood, setMood] = useState<MoodType | null>(null);
@@ -35,11 +37,11 @@ export default function DiaryScreen() {
 
   const handleSubmit = async () => {
     if (!mood) {
-      Alert.alert('Select Mood', 'Please pick how you are feeling today.');
+      Alert.alert(t('diary.selectMoodAlertTitle'), t('diary.selectMoodAlertDesc'));
       return;
     }
     if (text.trim().length < 10) {
-      Alert.alert('Too Short', 'Please write at least 10 characters.');
+      Alert.alert(t('diary.tooShortAlertTitle'), t('diary.tooShortAlertDesc'));
       return;
     }
 
@@ -48,7 +50,7 @@ export default function DiaryScreen() {
       setText('');
       setMood(null);
       setShowForm(false);
-      Alert.alert('Entry Added ✅', '+15 XP earned!');
+      Alert.alert(t('diary.entryAddedAlertTitle'), t('diary.entryAddedAlertDesc'));
     }
   };
 
@@ -65,20 +67,20 @@ export default function DiaryScreen() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={{ marginBottom: theme.spacing.md }}>
-              <Text style={styles.pageTitle}>Recovery Diary</Text>
+              <Text style={styles.pageTitle}>{t('diary.pageTitle')}</Text>
             </View>
           }
           ListEmptyComponent={
             !isLoading ? (
               <Text style={styles.empty}>
-                No entries yet. Add your first diary entry below.
+                {t('diary.empty')}
               </Text>
             ) : null
           }
           ListFooterComponent={
             hasMore ? (
               <Button
-                label="Load more"
+                label={t('diary.loadMore')}
                 onPress={() => fetchEntries()}
                 variant="ghost"
                 isLoading={isLoading}
@@ -102,7 +104,7 @@ export default function DiaryScreen() {
                 style={styles.textArea}
                 value={text}
                 onChangeText={setText}
-                placeholder="Write about how you feel today..."
+                placeholder={t('diary.placeholder')}
                 placeholderTextColor={theme.colors.textMuted}
                 multiline
                 numberOfLines={4}
@@ -110,13 +112,13 @@ export default function DiaryScreen() {
               />
               <View style={[styles.formBtns, isCompact && styles.formBtnsCompact]}>
                 <Button
-                  label="Cancel"
+                  label={t('common.cancel')}
                   onPress={() => { setShowForm(false); setText(''); setMood(null); }}
                   variant="ghost"
                   style={isCompact ? undefined : { flex: 1 }}
                 />
                 <Button
-                  label="Save +15 XP"
+                  label={t('diary.saveXp')}
                   onPress={handleSubmit}
                   isLoading={isSubmitting}
                   style={isCompact ? undefined : { flex: 1 }}
@@ -125,7 +127,7 @@ export default function DiaryScreen() {
             </View>
           ) : (
             <Button
-              label="+ Add today's entry"
+              label={t('diary.addTodayEntry')}
               onPress={() => setShowForm(true)}
               variant="primary"
               fullWidth

@@ -17,8 +17,10 @@ import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { theme } from '../../src/constants/theme';
 import { User } from '../../src/types';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 export default function ConnectDoctorScreen() {
+  const { t } = useLanguageStore();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
@@ -75,14 +77,14 @@ export default function ConnectDoctorScreen() {
       try {
         await apiClient.post('/users/apply/' + doctorId);
         Alert.alert(
-          'Request Sent 📩',
-          'Your connection request has been sent successfully. The doctor will review your profile shortly.'
+          t('experts.requestSentTitle'),
+          t('experts.requestSentDesc')
         );
         // Refresh user profile to update linked/pending lists
         const meRes = await apiClient.get('/users/me');
         updateProfile(meRes.data);
       } catch (error) {
-        Alert.alert('Error', 'Could not send request. Please try again.');
+        Alert.alert(t('experts.errorTitle'), t('experts.sendRequestError'));
       } finally {
         setIsApplying(null);
       }
@@ -120,9 +122,9 @@ export default function ConnectDoctorScreen() {
           <Text style={styles.doctorName} numberOfLines={1}>
             Dr. {item.name}
           </Text>
-          <Text style={styles.doctorSpecialty}>Hernia Specialist</Text>
+          <Text style={styles.doctorSpecialty}>{t('experts.specialistSubtitle')}</Text>
           <Text style={{ fontSize: 10, fontWeight: '700', color: '#0d5c75', marginTop: 4 }}>
-            View Profile →
+            {t('experts.viewProfile')}
           </Text>
         </View>
 
@@ -139,7 +141,7 @@ export default function ConnectDoctorScreen() {
           {isApplying === item.uid ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <Text style={styles.connectBtnText}>Connect</Text>
+            <Text style={styles.connectBtnText}>{t('common.connect')}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -152,12 +154,12 @@ export default function ConnectDoctorScreen() {
         <Info size={40} color="#94a3b8" strokeWidth={2} />
       </View>
       <Text style={styles.emptyTitle}>
-        {searchQuery.trim() ? 'No Doctors Found' : 'No Doctors Available'}
+        {searchQuery.trim() ? t('experts.noDoctorsFound') : t('experts.noDoctorsAvailable')}
       </Text>
       <Text style={styles.emptySubtitle}>
         {searchQuery.trim()
-          ? 'No doctors match your search. Try a different name or phone number.'
-          : 'There are no new doctors to connect with at the moment. Please check back later.'}
+          ? t('experts.noDoctorsFoundDesc')
+          : t('experts.noDoctorsAvailableDesc')}
       </Text>
     </View>
   );
@@ -173,7 +175,7 @@ export default function ConnectDoctorScreen() {
         >
           <ChevronLeft size={22} color="#0f172a" strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Find Doctors</Text>
+        <Text style={styles.headerTitle}>{t('experts.pageTitle')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -183,7 +185,7 @@ export default function ConnectDoctorScreen() {
           <Search size={18} color="#64748b" strokeWidth={2.5} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by name or phone..."
+            placeholder={t('experts.searchPlaceholder')}
             placeholderTextColor="#94a3b8"
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -198,7 +200,7 @@ export default function ConnectDoctorScreen() {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0d5c75" />
-          <Text style={styles.loadingText}>Loading doctors...</Text>
+          <Text style={styles.loadingText}>{t('experts.loadingDoctors')}</Text>
         </View>
       ) : (
         <FlatList

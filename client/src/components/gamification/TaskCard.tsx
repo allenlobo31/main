@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
 import { Task } from '../../types';
 import { Bandage, Pill, Camera, BarChart, Check } from 'lucide-react-native';
+import { useLanguageStore } from '../../store/languageStore';
 
 const TASK_ICONS: Record<string, any> = {
   Bandage,
@@ -18,6 +19,8 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCardProps) {
+  const { t } = useLanguageStore();
+  
   return (
     <TouchableOpacity
       style={[styles.container, task.completed && styles.completed]}
@@ -34,10 +37,10 @@ export function TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCa
         </View>
         <View style={styles.labelContainer}>
           <Text style={[styles.label, task.completed && styles.labelDone]}>
-            {task.label}
+            {t(`dashboard.tasks.${task.id}`) || task.label}
           </Text>
           {!isManuallyCompletable && !task.completed && (
-            <Text style={styles.autoCompleteHint}>Auto-completes when you log data</Text>
+            <Text style={styles.autoCompleteHint}>{t('dashboard.tasks.autoCompleteHint')}</Text>
           )}
         </View>
       </View>

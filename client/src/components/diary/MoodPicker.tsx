@@ -2,16 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
 import { MoodType } from '../../types';
-
 import { Laugh, Smile, Meh, Frown, Annoyed } from 'lucide-react-native';
-
-const MOODS: Array<{ value: MoodType; iconName: string; label: string }> = [
-  { value: 'great', iconName: 'Laugh', label: 'Great' },
-  { value: 'good', iconName: 'Smile', label: 'Good' },
-  { value: 'okay', iconName: 'Meh', label: 'Okay' },
-  { value: 'bad', iconName: 'Frown', label: 'Bad' },
-  { value: 'terrible', iconName: 'Annoyed', label: 'Terrible' },
-];
+import { useLanguageStore } from '../../store/languageStore';
 
 const ICONS: Record<string, any> = { Laugh, Smile, Meh, Frown, Annoyed };
 
@@ -21,11 +13,42 @@ interface MoodPickerProps {
 }
 
 export function MoodPicker({ selected, onSelect }: MoodPickerProps) {
+  const { language, t } = useLanguageStore();
+
+  const getMoodLabel = (mood: MoodType) => {
+    switch (mood) {
+      case 'great':
+        return language === 'kn' ? 'ತುಂಬಾ ಚೆನ್ನಾಗಿದೆ' : language === 'hi' ? 'बहुत बढ़िया' : 'Great';
+      case 'good':
+        return language === 'kn' ? 'ಚೆನ್ನಾಗಿದೆ' : language === 'hi' ? 'अच्छा' : 'Good';
+      case 'okay':
+        return language === 'kn' ? 'ಪರವಾಗಿಲ್ಲ' : language === 'hi' ? 'ठीक-ठाक' : 'Okay';
+      case 'bad':
+        return language === 'kn' ? 'ಬೇಸರವಾಗಿದೆ' : language === 'hi' ? 'खराब' : 'Bad';
+      case 'terrible':
+        return language === 'kn' ? 'ಬಹಳ ಬೇಸರವಾಗಿದೆ' : language === 'hi' ? 'बहुत खराब' : 'Terrible';
+      default:
+        return mood;
+    }
+  };
+
+  const getTitle = () => {
+    return language === 'kn' ? 'ನಿಮಗೆ ಹೇಗನಿಸುತ್ತಿದೆ?' : language === 'hi' ? 'आप कैसा महसूस कर रहे हैं?' : 'How are you feeling?';
+  };
+
+  const moodsList: Array<{ value: MoodType; iconName: string }> = [
+    { value: 'great', iconName: 'Laugh' },
+    { value: 'good', iconName: 'Smile' },
+    { value: 'okay', iconName: 'Meh' },
+    { value: 'bad', iconName: 'Frown' },
+    { value: 'terrible', iconName: 'Annoyed' },
+  ];
+
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>How are you feeling?</Text>
+      <Text style={styles.label}>{getTitle()}</Text>
       <View style={styles.row}>
-        {MOODS.map((m) => (
+        {moodsList.map((m) => (
           <TouchableOpacity
             key={m.value}
             style={[styles.option, selected === m.value && styles.selected]}
@@ -34,7 +57,7 @@ export function MoodPicker({ selected, onSelect }: MoodPickerProps) {
           >
             {ICONS[m.iconName] && React.createElement(ICONS[m.iconName], { size: 24, strokeWidth: 1.5, color: selected === m.value ? theme.colors.primaryLight : theme.colors.textMuted, style: { marginBottom: 4 } })}
             <Text style={[styles.optLabel, selected === m.value && styles.optLabelSelected]}>
-              {m.label}
+              {getMoodLabel(m.value)}
             </Text>
           </TouchableOpacity>
         ))}

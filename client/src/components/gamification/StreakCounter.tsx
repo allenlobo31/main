@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { theme } from '../../constants/theme';
+import { useLanguageStore } from '../../store/languageStore';
 
 interface StreakCounterProps {
   streak: number;
@@ -8,6 +9,7 @@ interface StreakCounterProps {
 
 export function StreakCounter({ streak }: StreakCounterProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const { t } = useLanguageStore();
 
   useEffect(() => {
     if (streak === 0) return;
@@ -36,7 +38,7 @@ export function StreakCounter({ streak }: StreakCounterProps) {
         🔥
       </Animated.Text>
       <Text style={styles.count}>{streak}</Text>
-      <Text style={styles.label}>day streak</Text>
+      <Text style={styles.label}>{t('dashboard.dailyStreak')}</Text>
     </View>
   );
 }

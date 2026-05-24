@@ -29,6 +29,7 @@ import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { theme } from '../../src/constants/theme';
 import { User } from '../../src/types';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 // Modals
 interface LocationModalProps {
@@ -185,6 +186,60 @@ function BookAppointmentModal({ visible, onClose, onConfirm, doctorName, dateStr
 
 export default function DoctorProfileScreen() {
   const router = useRouter();
+  const { t, language } = useLanguageStore();
+  
+  const getExperienceText = (exp: string | undefined) => {
+    const yearsStr = t('experts.years') || 'years';
+    if (!exp) return `8 ${yearsStr}`;
+    return exp.replace(/years/gi, yearsStr).replace(/year/gi, yearsStr);
+  };
+
+  const getCallStatusLabel = () => {
+    return language === 'kn' ? 'ಕರೆ ಸ್ಥಿತಿ' : language === 'hi' ? 'कॉल स्थिति' : 'Call Status';
+  };
+
+  const getCallStatusValue = (active: boolean) => {
+    if (active) return language === 'kn' ? 'ಸಕ್ರಿಯ' : language === 'hi' ? 'सक्रिय' : 'Active';
+    return language === 'kn' ? 'ಆಫ್‌ಲೈನ್' : language === 'hi' ? 'ऑफ़लाइन' : 'Offline';
+  };
+
+  const getHospitalVisitLabel = () => {
+    return language === 'kn' ? 'ಆಸ್ಪತ್ರೆ ಭೇಟಿ' : language === 'hi' ? 'अस्पताल का दौरा' : 'Hospital Visit';
+  };
+
+  const getHospitalVisitValue = (available: boolean) => {
+    if (available) return language === 'kn' ? 'ತೆರೆದಿದೆ' : language === 'hi' ? 'खुला है' : 'Open';
+    return language === 'kn' ? 'ಮುಚ್ಚಲಾಗಿದೆ' : language === 'hi' ? 'बंद है' : 'Closed';
+  };
+
+  const getPendingRequestText = (name: string) => {
+    if (language === 'kn') {
+      return `ಡಾ. ${name} ಅವರಿಗೆ ನಿಮ್ಮ ಸಂಪರ್ಕ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸಲಾಗಿದೆ. ಒಮ್ಮೆ ಒಪ್ಪಿಕೊಂಡ ನಂತರ, ನೀವು ಅವರ ಕ್ಲಿನಿಕ್‌ಗಳನ್ನು ವೀಕ್ಷಿಸಲು ಮತ್ತು ಅಪಾಯಿಂಟ್‌ಮೆಂಟ್‌ಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲು ಸಾಧ್ಯವಾಗುತ್ತದೆ.`;
+    }
+    if (language === 'hi') {
+      return `आपका कनेक्शन अनुरोध डॉ. ${name} को भेज दिया गया है। एक बार स्वीकार हो जाने पर, आप उनके क्लीनिक देख सकेंगे और यहां अपॉइंटमेंट शेड्यूल कर सकेंगे।`;
+    }
+    return `Your connection request has been sent to Dr. ${name}. Once accepted, you will be able to view their clinics and schedule appointments here.`;
+  };
+
+  const getUnconnectedText = (name: string) => {
+    if (language === 'kn') {
+      return `ಸಕ್ರಿಯ ಕ್ಲಿನಿಕಲ್ ಮೇಲ್ವಿಚಾರಣೆಗಾಗಿ ನಿಮ್ಮ ದಿನನಿತ್ಯದ ಹರ್ನಿಯಾ ರೋಗಲಕ್ಷಣಗಳ ದಾಖಲೆಗಳು, ದೈನಂದಿನ ದಿನಚರಿ ನವೀಕರಣಗಳು ಮತ್ತು ಶಸ್ತ್ರಚಿಕಿತ್ಸೆಯ ಗಾಯದ ಗುಣಪಡಿಸುವ ಫೋಟೋಗಳನ್ನು ಹಂಚಿಕೊಳ್ಳಲು ಡಾ. ${name} ಅವರೊಂದಿಗೆ ಸಂಪರ್ಕ ಸಾಧಿಸಿ.`;
+    }
+    if (language === 'hi') {
+      return `सक्रिय नैदानिक निगरानी के लिए अपने दैनिक हर्निया लक्षण लॉग, दैनिक डायरी अपडेट और सर्जिकल घाव भरने वाले फ़ोटो साझा करने के लिए डॉ. ${name} से जुड़ें।`;
+    }
+    return `Connect with Dr. ${name} to share your daily hernia symptom logs, daily diary updates, and surgical wound healing photos for active clinical monitoring.`;
+  };
+
+  const getSpecialistConnectionTitle = () => {
+    return language === 'kn' ? 'ತಜ್ಞರ ಸಂಪರ್ಕ' : language === 'hi' ? 'विशेषज्ञ कनेक्शन' : 'Specialist Connection';
+  };
+
+  const getCancelConnectionBtnLabel = () => {
+    return language === 'kn' ? 'ಸಂಪರ್ಕ ವಿನಂತಿಯನ್ನು ರದ್ದುಗೊಳಿಸಿ' : language === 'hi' ? 'कनेक्शन अनुरोध रद्द करें' : 'Cancel Connection Request';
+  };
+
   const params = useLocalSearchParams();
   const doctorId = params.doctorId as string;
 
@@ -656,8 +711,8 @@ export default function DoctorProfileScreen() {
             <View style={styles.statIconWrap}>
               <Clock size={18} color="#0d5c75" strokeWidth={2.2} />
             </View>
-            <Text style={styles.statValue}>{doctor.experience || '8 Years'}</Text>
-            <Text style={styles.statLabel}>Experience</Text>
+            <Text style={styles.statValue}>{getExperienceText(doctor.experience)}</Text>
+            <Text style={styles.statLabel}>{t('experts.experience')}</Text>
           </View>
 
           <View style={styles.statDivider} />
@@ -668,9 +723,9 @@ export default function DoctorProfileScreen() {
               <Phone size={18} color={doctor.isActive ? '#059669' : '#64748b'} strokeWidth={2.2} />
             </View>
             <Text style={[styles.statValue, { color: doctor.isActive ? '#059669' : '#0f172a' }]}>
-              {doctor.isActive ? 'Active' : 'Offline'}
+              {getCallStatusValue(!!doctor.isActive)}
             </Text>
-            <Text style={styles.statLabel}>Call Status</Text>
+            <Text style={styles.statLabel}>{getCallStatusLabel()}</Text>
           </View>
 
           <View style={styles.statDivider} />
@@ -681,9 +736,9 @@ export default function DoctorProfileScreen() {
               <Building2 size={18} color={doctor.availableAtHospital ? '#059669' : '#64748b'} strokeWidth={2.2} />
             </View>
             <Text style={[styles.statValue, { color: doctor.availableAtHospital ? '#059669' : '#0f172a' }]}>
-              {doctor.availableAtHospital ? 'Open' : 'Closed'}
+              {getHospitalVisitValue(!!doctor.availableAtHospital)}
             </Text>
-            <Text style={styles.statLabel}>Hospital Visit</Text>
+            <Text style={styles.statLabel}>{getHospitalVisitLabel()}</Text>
           </View>
         </View>
 
@@ -818,9 +873,11 @@ export default function DoctorProfileScreen() {
           <View style={styles.schedulerCard}>
             <View style={styles.centeredActionWrapper}>
               <ShieldAlert size={40} color="#d97706" strokeWidth={2.5} style={{ marginBottom: 12 }} />
-              <Text style={styles.schedulerSectionTitle}>Connection Pending</Text>
+              <Text style={styles.schedulerSectionTitle}>
+                {language === 'kn' ? 'ಸಂಪರ್ಕ ಬಾಕಿ ಇದೆ' : language === 'hi' ? 'कनेक्शन लंबित' : 'Connection Pending'}
+              </Text>
               <Text style={styles.stateExplainText}>
-                Your connection request has been sent to Dr. {doctor.name}. Once accepted, you will be able to view their clinics and schedule appointments here.
+                {getPendingRequestText(doctor.name)}
               </Text>
               <TouchableOpacity
                 style={styles.cancelRequestBtn}
@@ -831,7 +888,7 @@ export default function DoctorProfileScreen() {
                 {isProcessing ? (
                   <ActivityIndicator size="small" color="#dc2626" />
                 ) : (
-                  <Text style={styles.cancelRequestBtnText}>Cancel Connection Request</Text>
+                  <Text style={styles.cancelRequestBtnText}>{getCancelConnectionBtnLabel()}</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -841,9 +898,9 @@ export default function DoctorProfileScreen() {
           <View style={styles.schedulerCard}>
             <View style={styles.centeredActionWrapper}>
               <UserPlus size={40} color="#0d5c75" strokeWidth={2.5} style={{ marginBottom: 12 }} />
-              <Text style={styles.schedulerSectionTitle}>Specialist Connection</Text>
+              <Text style={styles.schedulerSectionTitle}>{getSpecialistConnectionTitle()}</Text>
               <Text style={styles.stateExplainText}>
-                Connect with Dr. {doctor.name} to share your daily hernia symptom logs, daily diary updates, and surgical wound healing photos for active clinical monitoring.
+                {getUnconnectedText(doctor.name)}
               </Text>
               <TouchableOpacity
                 style={styles.bookAppointmentBtn}
@@ -854,7 +911,7 @@ export default function DoctorProfileScreen() {
                 {isProcessing ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Text style={styles.bookAppointmentBtnText}>Connect with Doctor</Text>
+                  <Text style={styles.bookAppointmentBtnText}>{t('experts.connectWithDoctorBtn')}</Text>
                 )}
               </TouchableOpacity>
             </View>
