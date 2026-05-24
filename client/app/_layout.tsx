@@ -34,7 +34,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
         router.replace('/(auth)/login');
       } else if (isAuthenticated) {
         if (role === 'doctor' && !inDoctor) {
-          router.replace('/(doctor)/patient-list');
+          router.replace('/(doctor)/home');
         } else if (role === 'patient') {
           if (needsPatientOnboarding && inPatientOnboarding !== 'onboarding') {
             router.replace('/(patient)/onboarding');

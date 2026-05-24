@@ -7,16 +7,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  TextInput,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { getMyPatients, acceptPatient, updateProfile as updateRemoteProfile } from '../../src/services/dataService';
+import { getMyPatients, acceptPatient } from '../../src/services/dataService';
 import { useAuthStore } from '../../src/store/authStore';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { User, SymptomEntry } from '../../src/types';
-import { Building2, Check, Calendar } from 'lucide-react-native';
+import { Check, Search, AlertCircle, RefreshCw } from 'lucide-react-native';
 
 interface PatientSummary {
   user: User;
@@ -26,11 +28,13 @@ interface PatientSummary {
 }
 
 export default function PatientListScreen() {
-  const { user, updateProfile } = useAuthStore();
+  const { user } = useAuthStore();
   const router = useRouter();
-  const { isCompact, horizontalPadding } = useResponsiveLayout();
+  const { horizontalPadding } = useResponsiveLayout();
   const [patients, setPatients] = useState<PatientSummary[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   useEffect(() => {
@@ -38,16 +42,7 @@ export default function PatientListScreen() {
     loadPatients();
   }, [user?.uid]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadPatients(); // Automatically refresh every 30 seconds
-    }, 30000);
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
-
   const loadPatients = async () => {
-    setIsLoading(true);
     try {
       const data = await getMyPatients();
       setPatients(data);
@@ -55,7 +50,13 @@ export default function PatientListScreen() {
       console.error('[PatientList] load error:', err);
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const onRefresh = () => {
+    setIsRefreshing(true);
+    loadPatients();
   };
 
   const onAcceptPatient = async (patientId: string) => {
@@ -73,141 +74,134 @@ export default function PatientListScreen() {
     }
   };
 
-  const onToggleActive = async () => {
-    if (!user?.uid) return;
-    const newState = !user.isActive;
-    try {
-      await updateRemoteProfile({ isActive: newState });
-      updateProfile({ isActive: newState });
-    } catch (error) {
-      Alert.alert('Error', 'Could not update status');
-    }
-  };
+  // Filter patients by name or email based on search query
+  const filteredPatients = patients.filter((item) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      item.user.name.toLowerCase().includes(query) ||
+      item.user.email.toLowerCase().includes(query)
+    );
+  });
 
-  const onToggleHospital = async () => {
-    if (!user?.uid) return;
-    const newState = !user.availableAtHospital;
-    try {
-      await updateRemoteProfile({ availableAtHospital: newState });
-      updateProfile({ availableAtHospital: newState });
-    } catch (error) {
-      Alert.alert('Error', 'Could not update status');
-    }
-  };
+  // Separate pending vs active for clean categorization
+  const pendingPatients = filteredPatients.filter((p) => p.isPending);
+  const activePatients = filteredPatients.filter((p) => !p.isPending);
+
+  const renderPatientCard = (item: PatientSummary) => (
+    <TouchableOpacity
+      key={item.user.uid}
+      style={[styles.card, item.hasFlag && styles.cardFlagged]}
+      onPress={() =>
+        router.push({ pathname: '/(doctor)/patient-detail', params: { uid: item.user.uid } })
+      }
+      activeOpacity={0.7}
+    >
+      <Avatar uri={item.user.avatarUrl} name={item.user.name} size={48} />
+      
+      <View style={styles.info}>
+        <View style={styles.nameRow}>
+          <Text style={styles.name}>{item.user.name}</Text>
+          {item.hasFlag && (
+            <View style={styles.flagBadge}>
+              <AlertCircle size={12} color="#dc2626" style={{ marginRight: 2 }} />
+              <Text style={styles.flagText}>Urgent</Text>
+            </View>
+          )}
+        </View>
+        <Text style={styles.email}>{item.user.email}</Text>
+        <View style={styles.statusRow}>
+          {item.latestSymptom ? (
+            <Text style={styles.meta}>
+              Pain: {item.latestSymptom.painLevel}/10 ·{' '}
+              {item.hasFlag ? (
+                <Text style={{ color: '#dc2626', fontWeight: '700' }}>Requires Review</Text>
+              ) : (
+                <Text style={{ color: '#059669', fontWeight: '700' }}>Stable</Text>
+              )}
+            </Text>
+          ) : (
+            <Text style={styles.meta}>No symptoms logged yet</Text>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.cardActions}>
+        {item.isPending ? (
+          <TouchableOpacity
+            style={styles.acceptBtn}
+            onPress={() => onAcceptPatient(item.user.uid)}
+            disabled={isProcessing === item.user.uid}
+          >
+            {isProcessing === item.user.uid ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.acceptText}>Accept</Text>
+            )}
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.linkedBadge}>
+            <Check size={14} color="#059669" strokeWidth={3} />
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      {isLoading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <View style={[styles.headerContainer, { paddingHorizontal: horizontalPadding }]}>
+        <Text style={styles.pageTitle}>Patient Directory</Text>
+        <Text style={styles.pageSubtitle}>Monitor status, symptoms, and reports</Text>
+        
+        {/* Search Bar */}
+        <View style={styles.searchBar}>
+          <Search size={18} color="#94a3b8" style={{ marginRight: 8 }} />
+          <TextInput
+            placeholder="Search patient name or email..."
+            placeholderTextColor="#94a3b8"
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+          />
+        </View>
+      </View>
+
+      {isLoading && !isRefreshing ? (
+        <View style={styles.loadingArea}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
       ) : (
         <FlatList
-          data={patients}
-          keyExtractor={(item) => item.user.uid}
-          contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
-          ListHeaderComponent={
-            <View>
-              <View style={[styles.header, isCompact && styles.headerCompact]}>
-                <View>
-                  <Text style={styles.welcome}>Welcome, Dr. {user?.name?.split(' ')?.pop() || 'Doctor'}</Text>
-                  <Text style={styles.pageTitle}>Dashboard</Text>
-                </View>
-                <View style={styles.headerActions}>
-                  <TouchableOpacity 
-                    onPress={() => router.push('/(doctor)/appointments')}
-                    style={[styles.profileCircle, { marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff' }]}
-                    activeOpacity={0.8}
-                  >
-                    <Calendar size={20} color="#0f172a" />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => router.push('/(doctor)/profile')}
-                    style={styles.profileCircle}
-                    activeOpacity={0.8}
-                  >
-                    <Avatar name={user?.name} uri={user?.avatarUrl} size={40} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View style={styles.statusCardsRow}>
-                <TouchableOpacity 
-                  style={[styles.statusCard, user?.isActive && styles.statusCardActive]}
-                  onPress={onToggleActive}
-                >
-                  <View style={[styles.statusIconWrap, user?.isActive && styles.statusIconWrapActive]}>
-                    <View style={[styles.dot, user?.isActive && styles.dotActive]} />
-                  </View>
-                  <Text style={styles.statusLabel}>Active For Calls</Text>
-                  <Text style={styles.statusValue}>{user?.isActive ? 'Online' : 'Offline'}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={[styles.statusCard, user?.availableAtHospital && styles.statusCardActive]}
-                  onPress={onToggleHospital}
-                >
-                  <View style={[styles.statusIconWrap, user?.availableAtHospital && styles.statusIconWrapActive]}>
-                    <Building2 size={20} color={user?.availableAtHospital ? '#059669' : '#64748b'} />
-                  </View>
-                  <Text style={styles.statusLabel}>Hospital Visitable</Text>
-                  <Text style={styles.statusValue}>{user?.availableAtHospital ? 'Yes' : 'No'}</Text>
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.sectionTitle}>Inquiries & Appointments</Text>
-            </View>
+          data={[
+            ...(pendingPatients.length > 0 ? [{ id: 'pending-section-header', isHeader: true, title: `Connection Requests (${pendingPatients.length})` }, ...pendingPatients] : []),
+            ...(activePatients.length > 0 ? [{ id: 'active-section-header', isHeader: true, title: `Active Patients (${activePatients.length})` }, ...activePatients] : [])
+          ]}
+          keyExtractor={(item) => (item as any).isHeader ? (item as any).id : (item as PatientSummary).user.uid}
+          contentContainerStyle={[styles.scrollContainer, { paddingHorizontal: horizontalPadding }]}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
           }
+          renderItem={({ item }) => {
+            if ((item as any).isHeader) {
+              return <Text style={styles.sectionTitle}>{(item as any).title}</Text>;
+            }
+            return renderPatientCard(item as PatientSummary);
+          }}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyTitle}>No pending applications</Text>
-              <Text style={styles.empty}>
-                Patients will appear here once they request a consultation or link their profile.
+              <AlertCircle size={36} color="#94a3b8" style={{ marginBottom: 12 }} />
+              <Text style={styles.emptyTitle}>No patients found</Text>
+              <Text style={styles.emptySubtitle}>
+                {searchQuery ? 'Try adjusting your search query.' : 'Connected patient listings will show up here.'}
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.card, item.hasFlag && styles.cardFlagged]}
-              onPress={() =>
-                router.push({ pathname: '/(doctor)/patient-detail', params: { uid: item.user.uid } })
-              }
-              activeOpacity={0.7}
-            >
-              <Avatar uri={item.user.avatarUrl} name={item.user.name} size={50} />
-              <View style={styles.info}>
-                <Text style={styles.name}>{item.user.name}</Text>
-                <Text style={styles.email}>{item.user.email}</Text>
-                <View style={styles.statusRow}>
-                  {item.latestSymptom ? (
-                    <Text style={styles.meta}>
-                      Pain: {item.latestSymptom.painLevel}/10 ·{' '}
-                      {item.hasFlag ? <Text>⚠️ Urgent Review</Text> : <Text>Stable</Text>}
-                    </Text>
-                  ) : (
-                    <Text style={styles.meta}>Requested Connection</Text>
-                  )}
-                </View>
-              </View>
-              <View style={styles.cardActions}>
-                {item.isPending ? (
-                  <TouchableOpacity 
-                    style={styles.acceptBtn} 
-                    onPress={() => onAcceptPatient(item.user.uid)}
-                    disabled={isProcessing === item.user.uid}
-                  >
-                    {isProcessing === item.user.uid ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <Text style={styles.acceptText}>Accept</Text>
-                    )}
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.linkedBadge}>
-                    <Check size={16} color="#059669" />
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          )}
         />
       )}
     </SafeAreaView>
@@ -215,100 +209,129 @@ export default function PatientListScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
-  container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: theme.spacing.lg,
-  },
-  headerCompact: { flexDirection: 'row', alignItems: 'center' },
-  welcome: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
-  pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary },
-  headerActions: { flexDirection: 'row', gap: theme.spacing.md },
-  profileCircle: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-  },
-  statusCardsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statusCard: {
+  safe: {
     flex: 1,
-    backgroundColor: theme.colors.surfaceAlt,
+    backgroundColor: '#f8fafc',
+  },
+  headerContainer: {
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: '#f8fafc',
+  },
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  pageSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 2,
+    marginBottom: 16,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#000000',
+    borderWidth: 2,
     borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingHorizontal: 12,
+    height: 48,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
-  statusCardActive: {
-    borderColor: '#10b981',
-    backgroundColor: '#f0fdf4',
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0f172a',
+    paddingVertical: 8,
   },
-  statusIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+  loadingArea: {
+    paddingVertical: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  statusIconWrapActive: {
-    backgroundColor: '#d1fae5',
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#94a3b8',
-  },
-  dotActive: {
-    backgroundColor: '#10b981',
-  },
-  statusLabel: {
-    ...theme.typography.caption,
-    color: theme.colors.textMuted,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  statusValue: {
-    ...theme.typography.body,
-    fontWeight: '700',
-    color: theme.colors.textPrimary,
+  scrollContainer: {
+    paddingBottom: 40,
   },
   sectionTitle: {
-    ...theme.typography.h3,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#334155',
+    marginTop: 20,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 12,
-    color: theme.colors.textPrimary,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    gap: 14,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
   },
-  card: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: theme.colors.surfaceAlt, 
-    borderRadius: 16, 
-    padding: 16, 
-    marginBottom: 12, 
-    borderWidth: 1, 
-    borderColor: '#e2e8f0', 
-    gap: 16,
+  cardFlagged: {
+    borderColor: '#dc2626',
+    backgroundColor: '#fef2f2',
   },
-  cardFlagged: { borderColor: '#fee2e2', backgroundColor: '#fffbfb' },
-  info: { flex: 1, minWidth: 0 },
-  name: { ...theme.typography.body, color: theme.colors.textPrimary, fontWeight: '700', fontSize: 16 },
-  email: { ...theme.typography.caption, color: theme.colors.textMuted },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  meta: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '500' },
+  info: {
+    flex: 1,
+    minWidth: 0,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  flagBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  flagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#dc2626',
+  },
+  email: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#64748b',
+    marginTop: 1,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  meta: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
   cardActions: {
     justifyContent: 'center',
   },
@@ -319,21 +342,40 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     minWidth: 70,
     alignItems: 'center',
+    borderColor: '#000000',
+    borderWidth: 1.5,
   },
   acceptText: {
     color: '#ffffff',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 12,
   },
   linkedBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#d1fae5',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#059669',
   },
-  emptyContainer: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
-  emptyTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: 8 },
-  empty: { ...theme.typography.body, color: theme.colors.textMuted, textAlign: 'center', fontStyle: 'italic' },
+  emptyContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });
