@@ -25,6 +25,7 @@ import { theme } from '../../src/constants/theme';
 import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
+import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
 
 interface RemoveConnectionModalProps {
   visible: boolean;
@@ -93,21 +94,25 @@ export default function ExpertsScreen() {
   const [removeModalVisible, setRemoveModalVisible] = useState(false);
   const [cancelTargetDoc, setCancelTargetDoc] = useState<User | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  const fetchData = useCallback(async (showLoader = true) => {
+    const cached = getCachedDoctors();
+    if (cached && cached.length > 0) {
+      setAppDoctors(cached);
+      setIsLoading(false);
+      showLoader = false;
+    }
+
+    if (showLoader) {
+      setIsLoading(true);
+    }
     try {
       // 1. Refresh my own profile to get latest linkedDoctorIds/pendingDoctorIds
       const meRes = await apiClient.get('/users/me');
       updateProfile(meRes.data);
 
       // 2. Fetch all doctors
-      const docsRes = await apiClient.get('/users/doctors');
-      const normalized = docsRes.data.map((d: any) => ({
-        ...d,
-        uid: d.uid || d.id || d._id
-      }));
-      
-      setAppDoctors(normalized);
+      const doctorsList = await fetchDoctorsCached();
+      setAppDoctors(doctorsList);
     } catch (error) {
       console.error('[ExpertsScreen] fetchData error:', error);
     } finally {
@@ -116,9 +121,9 @@ export default function ExpertsScreen() {
   }, [updateProfile]);
 
   useEffect(() => {
-    fetchData();
+    fetchData(true);
     const interval = setInterval(() => {
-      fetchData(); // Automatically refresh every 30 seconds
+      fetchData(false); // background refresh
     }, 30000);
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
@@ -129,7 +134,7 @@ export default function ExpertsScreen() {
     if (!cancelTargetDoc) return;
     try {
       await apiClient.post(`/users/remove-doctor/${cancelTargetDoc.uid}`);
-      fetchData();
+      fetchData(false);
       Alert.alert('Success 🎉', `Connection request to Dr. ${cancelTargetDoc.name} has been cancelled.`);
     } catch (error) {
       Alert.alert('Error', 'Could not cancel request. Please try again.');
@@ -149,32 +154,48 @@ export default function ExpertsScreen() {
     return appDoctors.filter(d => ids.includes(d.uid));
   }, [user?.pendingDoctorIds, appDoctors]);
 
-  const otherDoctors = useMemo(() => {
-    const linkedIds = user?.linkedDoctorIds || [];
-    const pendingIds = user?.pendingDoctorIds || [];
-    return appDoctors.filter(d => !linkedIds.includes(d.uid) && !pendingIds.includes(d.uid));
-  }, [user?.linkedDoctorIds, user?.pendingDoctorIds, appDoctors]);
+  const isLinkedSync = !!(user?.linkedDoctorIds && user.linkedDoctorIds.length > 0);
+  const isPendingSync = !isLinkedSync && !!(user?.pendingDoctorIds && user.pendingDoctorIds.length > 0);
 
-  const isLinked = linkedDoctors.length > 0;
-  const isPending = !isLinked && pendingDoctors.length > 0;
-
-  const doc = isLinked 
-    ? linkedDoctors[0] 
-    : isPending 
-      ? pendingDoctors[0] 
-      : otherDoctors[0];
+  const isLinked = isLinkedSync || linkedDoctors.length > 0;
+  const isPending = isPendingSync || pendingDoctors.length > 0;
 
   const isFocused = useIsFocused();
 
   // Automatically redirect to doctor profile when active/connected
   useEffect(() => {
-    if (isFocused && isLinked && doc) {
+    if (isFocused && isLinkedSync && user?.linkedDoctorIds?.[0]) {
       router.replace({
         pathname: '/(patient)/doctor-profile',
-        params: { doctorId: doc.uid }
+        params: { doctorId: user.linkedDoctorIds[0] }
       });
     }
-  }, [isFocused, isLinked, doc]);
+  }, [isFocused, isLinkedSync, user?.linkedDoctorIds]);
+
+  // Redirect instantly if linked to avoid rendering Connect Placeholder or loaders
+  if (isLinkedSync) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+          <ActivityIndicator size="large" color="#0d5c75" />
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#0d5c75', marginTop: 12 }}>
+            Loading Specialist Profile...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If loading and we have no cached doctors, show loading spinner
+  if (isLoading && appDoctors.length === 0) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.loadingArea}>
+          <ActivityIndicator color={theme.colors.primary} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // If not connected and not pending, display the clean Connect Placeholder screen only
   if (!isLinked && !isPending) {
@@ -212,7 +233,7 @@ export default function ExpertsScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isLoading}
-              onRefresh={fetchData}
+              onRefresh={() => fetchData(false)}
               colors={[theme.colors.primary]}
               tintColor={theme.colors.primary}
             />
@@ -296,20 +317,6 @@ export default function ExpertsScreen() {
           doctorName={cancelTargetDoc?.name || ''}
           isPending={true}
         />
-      </SafeAreaView>
-    );
-  }
-
-  // Redesigned Doctor Profile Page Placeholder (for active redirect)
-  if (isLinked && doc) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-          <ActivityIndicator size="large" color="#0d5c75" />
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#0d5c75', marginTop: 12 }}>
-            Loading Specialist Profile...
-          </Text>
-        </View>
       </SafeAreaView>
     );
   }

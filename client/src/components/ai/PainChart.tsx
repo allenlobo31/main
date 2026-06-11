@@ -90,15 +90,16 @@ export function PainChart({ entries }: PainChartProps) {
       return 9; // High (9)
     };
 
+    const isSinglePoint = chronDayEntries.length === 1;
     let labels = chronDayEntries.map((e) => format(new Date(e.date), 'HH:mm'));
     let data = chronDayEntries.map((e) => mapPainLevel(e.painLevel));
 
-    if (data.length === 1) {
-      labels = ['', labels[0]];
+    if (isSinglePoint) {
+      labels = [labels[0], ''];
       data = [data[0], data[0]];
     }
 
-    return { labels, data, isEmpty: false };
+    return { labels, data, isEmpty: false, isSinglePoint };
   }, [chronDayEntries]);
 
   // Fallback Empty Chart Data
@@ -107,6 +108,7 @@ export function PainChart({ entries }: PainChartProps) {
       labels: ['08:00', '12:00', '16:00', '20:00'],
       data: [1, 1, 1, 1],
       isEmpty: true,
+      isSinglePoint: false,
     };
   }, []);
 
@@ -164,7 +166,7 @@ export function PainChart({ entries }: PainChartProps) {
                   color: (opacity = 1) => chartToRender.isEmpty 
                     ? 'rgba(0, 0, 0, 0)' 
                     : `rgba(0, 0, 0, ${opacity})`,
-                  strokeWidth: chartToRender.isEmpty ? 0 : 3,
+                  strokeWidth: chartToRender.isEmpty || chartToRender.isSinglePoint ? 0 : 3,
                   withDots: !chartToRender.isEmpty,
                 },
                 {
@@ -176,6 +178,7 @@ export function PainChart({ entries }: PainChartProps) {
                 },
               ],
             }}
+            hidePointsAtIndex={chartToRender.isSinglePoint ? [1] : []}
             width={chartWidth}
             height={180}
             yAxisSuffix=""

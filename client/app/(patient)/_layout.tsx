@@ -4,6 +4,7 @@ import { Tabs } from 'expo-router';
 import { theme } from '../../src/constants/theme';
 import { Home, TrendingUp, Phone, Heart, BookOpen, Activity } from 'lucide-react-native';
 import { useGamification } from '../../src/hooks/useGamification';
+import { fetchDoctorsCached } from '../../src/utils/doctorsCache';
 
 function useResponsiveFooter() {
   const { height: screenHeight } = useWindowDimensions();
@@ -21,7 +22,7 @@ export default function PatientLayout() {
   const footer = useResponsiveFooter();
   const gamification = useGamification();
 
-  // Auto-complete daily login task when app opens
+  // Auto-complete daily login task and pre-fetch doctors list when app opens
   useEffect(() => {
     const completeDailyLogin = async () => {
       const taskId = 'daily_logging';
@@ -30,6 +31,9 @@ export default function PatientLayout() {
       }
     };
     completeDailyLogin();
+
+    // Prefetch doctors list to warm the cache
+    fetchDoctorsCached().catch((err) => console.log('[PatientLayout] Prefetch doctors failed:', err));
   }, []);
 
   return (

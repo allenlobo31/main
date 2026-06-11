@@ -283,10 +283,16 @@ export default function AIMonitorScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
-        contentContainerStyle={[styles.container, { paddingHorizontal: horizontalPadding }]}
+        contentContainerStyle={[
+          styles.container,
+          {
+            paddingHorizontal: horizontalPadding,
+            paddingTop: theme.spacing.xxxl,
+            marginTop: theme.spacing.xl,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Health Monitor</Text>
 
         {/* Flag Alert */}
         {hasFlaggedEntries && latestFlag && (

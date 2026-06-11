@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,15 @@ import {
   Linking,
   TouchableOpacity,
   LayoutAnimation,
+  Animated,
+  Dimensions,
+  Image,
 } from 'react-native';
 import {
-  AlertTriangle,
   Camera,
-  Droplets,
-  Hand,
   Image as ImageIcon,
-  Pill,
-  Shirt,
-  Shield,
-  Phone,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -30,32 +28,6 @@ import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { formatDate } from '../../src/utils/dateHelpers';
-
-const CARE_TIPS: Array<{
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-}> = [
-  { id: 'clean', label: 'Keep clean & dry', icon: Shield },
-  { id: 'clothes', label: 'Wear loose clothes', icon: Shirt },
-  { id: 'dressing', label: 'Change dressing daily', icon: Droplets },
-  { id: 'scratch', label: 'Do not scratch', icon: Hand },
-  { id: 'meds', label: 'Take meds on time', icon: Pill },
-  { id: 'call', label: 'Inform Doctor if concerned', icon: Phone },
-
-];
-
-const WARNING_SIGNS: Array<{
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
-}> = [
-  { id: 'redness', label: 'Redness', icon: AlertTriangle },
-  { id: 'swelling', label: 'Swelling', icon: AlertTriangle },
-  { id: 'pus', label: 'Pus discharge', icon: AlertTriangle },
-  { id: 'bleeding', label: 'Bleeding', icon: AlertTriangle },
-
-];
 
 export default function ReportsScreen() {
   const {
@@ -76,6 +48,74 @@ export default function ReportsScreen() {
   React.useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   }, [reports]);
+
+  const careSlides = useMemo(() => [
+    { id: 'clean', title: 'Keep clean & dry', subtitle: 'Protect the incision area', image: require('../../assets/care_clean_dry.png') },
+    { id: 'clothes', title: 'Wear loose clothes', subtitle: 'Avoid friction and tightness', image: require('../../assets/care_loose_clothes.png') },
+    { id: 'dressing', title: 'Change dressing daily', subtitle: 'Maintain proper hygiene', image: require('../../assets/care_change_dressing.png') },
+    { id: 'scratch', title: 'Do not scratch', subtitle: 'Prevent wound irritation', image: require('../../assets/care_no_scratch.png') },
+    { id: 'meds', title: 'Take meds on time', subtitle: 'Support recovery and pain relief', image: require('../../assets/care_take_meds.png') },
+    { id: 'call', title: 'Inform Doctor if concerned', subtitle: 'Reach out for help early', image: require('../../assets/care_call_doctor.png') },
+  ], []);
+
+  const warningSlides = useMemo(() => [
+    { id: 'redness', title: 'Redness', subtitle: 'Watch for spreading discoloration', image: require('../../assets/warning_redness.png') },
+    { id: 'swelling', title: 'Swelling', subtitle: 'Check for abnormal fluid or expansion', image: require('../../assets/warning_swelling.png') },
+    { id: 'pus', title: 'Pus discharge', subtitle: 'Report any cloudy or yellow discharge', image: require('../../assets/warning_pus.png') },
+    { id: 'bleeding', title: 'Bleeding', subtitle: 'Monitor for active blood flow', image: require('../../assets/warning_bleeding.png') },
+  ], []);
+
+  const [activeCareIndex, setActiveCareIndex] = useState(0);
+  const [activeWarningIndex, setActiveWarningIndex] = useState(0);
+
+  const fadeCareAnim = useRef(new Animated.Value(1)).current;
+  const fadeWarningAnim = useRef(new Animated.Value(1)).current;
+
+  const changeCareSlideIndex = (index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setActiveCareIndex(index);
+  };
+
+  const changeWarningSlideIndex = (index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setActiveWarningIndex(index);
+  };
+
+  // Auto-play timer for Care Tips (2.5 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      changeCareSlideIndex(activeCareIndex === careSlides.length - 1 ? 0 : activeCareIndex + 1);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [activeCareIndex, careSlides.length]);
+
+  // Auto-play timer for Warning Signs (2.5 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      changeWarningSlideIndex(activeWarningIndex === warningSlides.length - 1 ? 0 : activeWarningIndex + 1);
+    }, 2500);
+    return () => clearInterval(timer);
+  }, [activeWarningIndex, warningSlides.length]);
+
+  // Smooth fade-in animation for Care Tips
+  useEffect(() => {
+    fadeCareAnim.setValue(0.4);
+    Animated.timing(fadeCareAnim, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [activeCareIndex]);
+
+  // Smooth fade-in animation for Warning Signs
+  useEffect(() => {
+    fadeWarningAnim.setValue(0.4);
+    Animated.timing(fadeWarningAnim, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [activeWarningIndex]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -194,36 +234,131 @@ export default function ReportsScreen() {
           )}
         </View>
 
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionHeading}>Care</Text>
-          <View style={styles.grid}>
-            {CARE_TIPS.map((item) => {
-              const Icon = item.icon;
+        {/* ======================================================== */}
+        {/* CAROUSEL 1: WOUND CARE TIPS */}
+        {/* ======================================================== */}
+        <View style={styles.carouselContainer}>
+          <View style={styles.carouselHeader}>
+            <View style={[styles.iconWrapSuccess, { backgroundColor: '#dcfce7' }]}>
+              <CheckCircle2 size={18} color="#34d399" strokeWidth={2.5} />
+            </View>
+            <Text style={[styles.carouselSectionTitle, { color: '#34d399' }]}>Wound Care Tips</Text>
+          </View>
+
+          <View style={[styles.carouselCard, styles.canDoCardBorder]}>
+            <Animated.View style={{ opacity: fadeCareAnim, width: '100%', height: '100%' }}>
+              <Image
+                source={careSlides[activeCareIndex].image}
+                style={styles.carouselImage}
+                resizeMode="cover"
+              />
+              <View style={[styles.carouselOverlay, styles.canDoOverlay]}>
+                <Text style={styles.carouselOverlayTitle}>{careSlides[activeCareIndex].title}</Text>
+                <Text style={[styles.carouselOverlaySubtitle, { color: '#dcfce7' }]}>
+                  {careSlides[activeCareIndex].subtitle}
+                </Text>
+              </View>
+            </Animated.View>
+            
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowLeft]}
+              activeOpacity={0.8}
+              onPress={() => changeCareSlideIndex(activeCareIndex === 0 ? careSlides.length - 1 : activeCareIndex - 1)}
+            >
+              <Text style={styles.arrowText}>‹</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowRight]}
+              activeOpacity={0.8}
+              onPress={() => changeCareSlideIndex(activeCareIndex === careSlides.length - 1 ? 0 : activeCareIndex + 1)}
+            >
+              <Text style={styles.arrowText}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.thumbnailsRow}>
+            {careSlides.map((slide, index) => {
+              const isActive = activeCareIndex === index;
               return (
-                <View key={item.id} style={styles.tile}>
-                  <Icon size={18} color="#111111" strokeWidth={2} />
-                  <Text style={styles.tileText}>{item.label}</Text>
-                </View>
+                <TouchableOpacity
+                  key={slide.id}
+                  style={[
+                    styles.thumbnailContainer,
+                    isActive ? styles.thumbnailContainerActiveCanDo : styles.thumbnailContainerInactive
+                  ]}
+                  activeOpacity={0.9}
+                  onPress={() => changeCareSlideIndex(index)}
+                >
+                  <Image source={slide.image} style={styles.thumbnailImage} resizeMode="cover" />
+                  {isActive && <View style={styles.thumbnailOverlayActiveCanDo} />}
+                </TouchableOpacity>
               );
             })}
-            {CARE_TIPS.length % 2 !== 0 && <View style={styles.tilePlaceholder} />}
           </View>
         </View>
 
-        <View style={styles.warningSection}>
-          <Text style={styles.warningTitle}>Warning signs</Text>
-          <Text style={styles.warningSubTitle}>Check for</Text>
-          <View style={styles.grid}>
-            {WARNING_SIGNS.map((item) => {
-              const Icon = item.icon;
+        {/* ======================================================== */}
+        {/* CAROUSEL 2: WARNING SIGNS */}
+        {/* ======================================================== */}
+        <View style={[styles.carouselContainer, { marginTop: 16, marginBottom: 24 }]}>
+          <View style={styles.carouselHeader}>
+            <View style={[styles.iconWrapDanger, { backgroundColor: '#fecaca' }]}>
+              <XCircle size={18} color="#dc2626" strokeWidth={2.5} />
+            </View>
+            <Text style={[styles.carouselSectionTitle, { color: '#dc2626' }]}>Warning Signs (Check for)</Text>
+          </View>
+
+          <View style={[styles.carouselCard, styles.notToDoCardBorder]}>
+            <Animated.View style={{ opacity: fadeWarningAnim, width: '100%', height: '100%' }}>
+              <Image
+                source={warningSlides[activeWarningIndex].image}
+                style={styles.carouselImage}
+                resizeMode="cover"
+              />
+              <View style={[styles.carouselOverlay, styles.notToDoOverlay]}>
+                <Text style={styles.carouselOverlayTitle}>{warningSlides[activeWarningIndex].title}</Text>
+                <Text style={styles.carouselOverlaySubtitle}>
+                  {warningSlides[activeWarningIndex].subtitle}
+                </Text>
+              </View>
+            </Animated.View>
+            
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowLeft]}
+              activeOpacity={0.8}
+              onPress={() => changeWarningSlideIndex(activeWarningIndex === 0 ? warningSlides.length - 1 : activeWarningIndex - 1)}
+            >
+              <Text style={styles.arrowText}>‹</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.arrowBtn, styles.arrowRight]}
+              activeOpacity={0.8}
+              onPress={() => changeWarningSlideIndex(activeWarningIndex === warningSlides.length - 1 ? 0 : activeWarningIndex + 1)}
+            >
+              <Text style={styles.arrowText}>›</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.thumbnailsRow}>
+            {warningSlides.map((slide, index) => {
+              const isActive = activeWarningIndex === index;
               return (
-                <View key={item.id} style={styles.warningTile}>
-                  <Icon size={18} color="#9b1c1c" strokeWidth={2} />
-                  <Text style={styles.warningTileText}>{item.label}</Text>
-                </View>
+                <TouchableOpacity
+                  key={slide.id}
+                  style={[
+                    styles.thumbnailContainerWarning,
+                    isActive ? styles.thumbnailContainerActiveNotToDo : styles.thumbnailContainerInactive
+                  ]}
+                  activeOpacity={0.9}
+                  onPress={() => changeWarningSlideIndex(index)}
+                >
+                  <Image source={slide.image} style={styles.thumbnailImage} resizeMode="cover" />
+                  {isActive && <View style={styles.thumbnailOverlayActiveNotToDo} />}
+                </TouchableOpacity>
               );
             })}
-            {WARNING_SIGNS.length % 2 !== 0 && <View style={styles.tilePlaceholder} />}
           </View>
         </View>
 
@@ -287,87 +422,6 @@ const styles = StyleSheet.create({
     borderLeftColor: '#000000',
   },
 
-  infoSection: {
-    marginBottom: theme.spacing.lg,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    backgroundColor: '#f0fdf4',
-    padding: theme.spacing.md,
-  },
-  sectionHeading: {
-    ...theme.typography.caption,
-    color: '#262626',
-    marginBottom: theme.spacing.sm,
-    letterSpacing: 1,
-    fontWeight: '700',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: theme.spacing.sm,
-  },
-  tile: {
-    width: '48%',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    backgroundColor: '#f7fff9',
-    padding: theme.spacing.sm,
-    gap: 6,
-    minHeight: 72,
-    justifyContent: 'center',
-  },
-  tileText: {
-    ...theme.typography.caption,
-    color: '#1f2937',
-    fontWeight: '600',
-    lineHeight: 16,
-  },
-  tilePlaceholder: {
-    width: '48%',
-    minHeight: 72,
-  },
-
-  warningSection: {
-    marginBottom: theme.spacing.xl,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    backgroundColor: '#fef2f2',
-    padding: theme.spacing.md,
-  },
-  warningTitle: {
-    ...theme.typography.body,
-    color: '#7f1d1d',
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  warningSubTitle: {
-    ...theme.typography.caption,
-    color: '#991b1b',
-    marginBottom: theme.spacing.sm,
-    fontWeight: '600',
-  },
-  warningTile: {
-    width: '48%',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    backgroundColor: '#fee2e2',
-    padding: theme.spacing.sm,
-    gap: 6,
-    minHeight: 64,
-    justifyContent: 'center',
-  },
-  warningTileText: {
-    ...theme.typography.caption,
-    color: '#7f1d1d',
-    fontWeight: '700',
-    lineHeight: 16,
-  },
-
   // Upload Section
   uploadSection: { marginBottom: theme.spacing.xl },
   uploadTitle: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
@@ -380,7 +434,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.surface, // this is the light green now
+    backgroundColor: theme.colors.surface,
   },
   dropzoneText: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 1.5, marginBottom: 4 },
   dropzoneSubtext: { ...theme.typography.caption, color: '#333333', letterSpacing: 1 },
@@ -398,9 +452,6 @@ const styles = StyleSheet.create({
   progressTrack: { height: 4, backgroundColor: '#e5e5e5', width: '100%', borderRadius: 2, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#000000' },
 
-  // List Section
-  sectionTitle: { ...theme.typography.caption, color: '#333333', marginBottom: theme.spacing.md, letterSpacing: 1.5, fontWeight: '700' },
-
   emptyState: {
     alignItems: 'flex-start',
     paddingVertical: theme.spacing.xxxl,
@@ -410,48 +461,184 @@ const styles = StyleSheet.create({
   emptyTitle: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 1.5, marginBottom: theme.spacing.xs },
   emptyDesc: { ...theme.typography.caption, color: '#404040', letterSpacing: 0.5 },
 
-  // Preview Styles
-  previewContainer: {
-    borderRadius: 8,
+  // Carousel Styles (copied from Activity page)
+  carouselContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  carouselCard: {
+    backgroundColor: '#ffffff',
     borderWidth: 2,
     borderColor: '#000000',
+    borderRadius: 24,
+    width: Dimensions.get('window').width - 120,
+    height: Dimensions.get('window').width - 120,
+    position: 'relative',
     overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    alignSelf: 'center',
+  },
+  carouselImage: {
+    width: '100%',
+    height: '100%',
+  },
+  carouselOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderTopWidth: 1.5,
+    borderTopColor: '#000000',
+  },
+  carouselOverlayTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#ffffff',
+  },
+  carouselOverlaySubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#fecaca',
+    marginTop: 2,
+  },
+  arrowBtn: {
+    position: 'absolute',
+    top: '40%',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  arrowLeft: {
+    left: 12,
+  },
+  arrowRight: {
+    right: 12,
+  },
+  arrowText: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#000000',
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  carouselHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  carouselSectionTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  thumbnailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingHorizontal: 4,
+    marginBottom: 10,
+  },
+  thumbnailContainer: {
+    width: (Dimensions.get('window').width - 40 - 50) / 6,
+    height: 50,
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
     backgroundColor: '#ffffff',
   },
-  previewImage: {
+  thumbnailContainerWarning: {
+    width: (Dimensions.get('window').width - 40 - 50) / 4,
+    height: 50,
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#ffffff',
+  },
+  canDoCardBorder: {
+    borderColor: '#bbf7d0',
+  },
+  canDoOverlay: {
+    backgroundColor: 'rgba(52, 211, 153, 0.85)',
+  },
+  notToDoCardBorder: {
+    borderColor: '#dc2626',
+  },
+  notToDoOverlay: {
+    backgroundColor: 'rgba(127, 29, 29, 0.85)',
+  },
+  thumbnailContainerActiveCanDo: {
+    borderWidth: 2.5,
+    borderColor: '#34d399',
+    transform: [{ scale: 1.05 }],
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  thumbnailOverlayActiveCanDo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(52, 211, 153, 0.15)',
+  },
+  thumbnailContainerActiveNotToDo: {
+    borderWidth: 2.5,
+    borderColor: '#ef4444',
+    transform: [{ scale: 1.05 }],
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  thumbnailOverlayActiveNotToDo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+  },
+  thumbnailContainerInactive: {
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    opacity: 0.65,
+  },
+  thumbnailImage: {
     width: '100%',
-    height: 200,
-    backgroundColor: '#f5f5f5',
+    height: '100%',
   },
-  previewActions: {
-    padding: theme.spacing.md,
-    flexDirection: 'row',
+  iconWrapSuccess: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
-  changePhotoBtn: {
-    flexDirection: 'row',
+  iconWrapDanger: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#000000',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 6,
-    gap: 8,
-  },
-  changePhotoText: {
-    ...theme.typography.caption,
-    color: '#ffffff',
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  deletePhotoBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  deletePhotoText: {
-    ...theme.typography.caption,
-    color: '#991b1b',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
+    justifyContent: 'center',
   },
 });

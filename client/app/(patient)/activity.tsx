@@ -106,14 +106,13 @@ export default function ActivityScreen() {
           styles.container,
           {
             paddingHorizontal: horizontalPadding,
-            paddingTop: isCompact ? theme.spacing.lg : theme.spacing.xl,
+            paddingTop: theme.spacing.xxxl,
+            marginTop: theme.spacing.xl,
             paddingBottom: isCompact ? theme.spacing.xxxl : theme.spacing.xxl,
           },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Core Screen Title */}
-        <Text style={styles.pageTitle}>{t('activity.pageTitle')}</Text>
 
         {/* ======================================================== */}
         {/* PREMIUM NEOBRUTALIST CAROUSEL 1: CAN DO (RECOMMENDED) */}

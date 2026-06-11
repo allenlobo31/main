@@ -29,6 +29,7 @@ import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
+import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
 
 // Modals
 interface LocationModalProps {
@@ -474,34 +475,44 @@ export default function DoctorProfileScreen() {
   }, [displayedDate, selectedDate, scrollToSelectedDate]);
 
   // API Callbacks
-  const fetchDoctorDetails = useCallback(async () => {
+  const fetchDoctorDetails = useCallback(async (showLoader = true) => {
     if (!doctorId) return;
-    setIsLoading(true);
+    if (showLoader) {
+      setIsLoading(true);
+    }
     try {
-      const res = await apiClient.get('/users/doctors');
-      const found = res.data.find(
-        (d: any) => (d.uid || d.id || d._id) === doctorId
+      const doctorsList = await fetchDoctorsCached();
+      const found = doctorsList.find(
+        (d: any) => d.uid === doctorId
       );
       if (found) {
-        setDoctor({
-          ...found,
-          uid: found.uid || found.id || found._id,
-        });
-      } else {
+        setDoctor(found);
+      } else if (showLoader) {
         Alert.alert('Not Found', 'Could not locate this doctor profile.');
         router.back();
       }
     } catch (error) {
       console.error('[DoctorProfileScreen] fetchDoctorDetails error:', error);
-      Alert.alert('Error', 'Failed to load doctor profile.');
+      if (showLoader) {
+        Alert.alert('Error', 'Failed to load doctor profile.');
+      }
     } finally {
       setIsLoading(false);
     }
   }, [doctorId, router]);
 
   useEffect(() => {
-    fetchDoctorDetails();
-  }, [fetchDoctorDetails]);
+    // Check if doctor is in cache for instant render
+    const cached = getCachedDoctors();
+    const foundInCache = cached?.find((d) => d.uid === doctorId);
+    if (foundInCache) {
+      setDoctor(foundInCache);
+      setIsLoading(false);
+      fetchDoctorDetails(false); // Background update (silent)
+    } else {
+      fetchDoctorDetails(true); // Initial fetch with spinner
+    }
+  }, [doctorId, fetchDoctorDetails]);
 
   // Connect request
   const handleConnect = useCallback(async () => {

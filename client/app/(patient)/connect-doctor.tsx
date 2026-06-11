@@ -17,6 +17,7 @@ import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
+import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
 
 export default function ConnectDoctorScreen() {
   const { t } = useLanguageStore();
@@ -29,15 +30,20 @@ export default function ConnectDoctorScreen() {
   const [isApplying, setIsApplying] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchDoctors = useCallback(async () => {
-    setIsLoading(true);
+  const fetchDoctors = useCallback(async (showLoader = true) => {
+    const cached = getCachedDoctors();
+    if (cached && cached.length > 0) {
+      setDoctors(cached);
+      setIsLoading(false);
+      showLoader = false;
+    }
+
+    if (showLoader) {
+      setIsLoading(true);
+    }
     try {
-      const docsRes = await apiClient.get('/users/doctors');
-      const normalized: User[] = docsRes.data.map((d: any) => ({
-        ...d,
-        uid: d.uid || d.id || d._id,
-      }));
-      setDoctors(normalized);
+      const doctorsList = await fetchDoctorsCached();
+      setDoctors(doctorsList);
     } catch (error) {
       console.error('[ConnectDoctorScreen] fetchDoctors error:', error);
     } finally {
@@ -46,7 +52,7 @@ export default function ConnectDoctorScreen() {
   }, []);
 
   useEffect(() => {
-    fetchDoctors();
+    fetchDoctors(true);
   }, [fetchDoctors]);
 
   // Filter out already linked and pending doctors
