@@ -116,7 +116,7 @@ export default function PatientListScreen() {
               {item.hasFlag ? (
                 <Text style={{ color: '#dc2626', fontWeight: '700' }}>Requires Review</Text>
               ) : (
-                <Text style={{ color: '#059669', fontWeight: '700' }}>Stable</Text>
+                <Text style={{ color: '#34d399', fontWeight: '700' }}>Stable</Text>
               )}
             </Text>
           ) : (
@@ -140,7 +140,7 @@ export default function PatientListScreen() {
           </TouchableOpacity>
         ) : (
           <View style={styles.linkedBadge}>
-            <Check size={14} color="#059669" strokeWidth={3} />
+            <Check size={14} color="#34d399" strokeWidth={3} />
           </View>
         )}
       </View>
@@ -354,11 +354,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#059669',
+    borderColor: '#34d399',
   },
   emptyContainer: {
     alignItems: 'center',

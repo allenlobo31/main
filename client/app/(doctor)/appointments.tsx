@@ -257,14 +257,14 @@ export default function DoctorAppointmentsScreen() {
               <View key={`${item.patientId}-${index}`} style={styles.appointmentCard}>
                 <View style={styles.patientRow}>
                   <View style={styles.avatarMiniFallback}>
-                    <UserIcon size={16} color="#059669" />
+                    <UserIcon size={16} color="#34d399" />
                   </View>
                   <View style={styles.patientInfo}>
                     <Text style={styles.patientName}>{item.patientName}</Text>
                     <Text style={styles.patientMeta}>Hernia Recovery Consultation</Text>
                   </View>
                   <View style={styles.timeTag}>
-                    <Clock size={12} color="#047857" style={{ marginRight: 4 }} />
+                    <Clock size={12} color="#34d399" style={{ marginRight: 4 }} />
                     <Text style={styles.timeTagText}>{item.time}</Text>
                   </View>
                 </View>
@@ -387,8 +387,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f172a',
   },
   dayCellHasApp: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#86efac',
+    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
     borderWidth: 1.5,
   },
   dayText: {
@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   dayTextToday: {
-    color: '#10b981',
+    color: '#34d399',
     fontWeight: '900',
     fontSize: 15,
   },
   dayTextHasApp: {
-    color: '#047857',
+    color: '#34d399',
   },
   appDot: {
     width: 4,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   appDotHasApp: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#34d399',
   },
   sectionTitleRow: {
     flexDirection: 'row',
@@ -499,11 +499,11 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#059669',
+    borderColor: '#34d399',
   },
   patientInfo: {
     flex: 1,
@@ -522,17 +522,17 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#86efac',
+    borderColor: '#bbf7d0',
   },
   timeTagText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#047857',
+    color: '#34d399',
   },
   cardDivider: {
     height: 1.5,

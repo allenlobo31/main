@@ -138,11 +138,11 @@ export default function DoctorHomeScreen() {
                 activeOpacity={0.9}
               >
                 <View style={[styles.statusIconWrap, user?.isActive && styles.statusIconWrapActive]}>
-                  <PhoneCall size={20} color={user?.isActive ? '#10b981' : '#64748b'} />
+                  <PhoneCall size={20} color={user?.isActive ? '#34d399' : '#64748b'} />
                 </View>
                 <Text style={styles.statusLabel}>Active For Calls</Text>
                 <Text style={styles.statusValue}>{user?.isActive ? 'Online' : 'Offline'}</Text>
-                <View style={[styles.badgeIndicator, { backgroundColor: user?.isActive ? '#10b981' : '#94a3b8' }]} />
+                <View style={[styles.badgeIndicator, { backgroundColor: user?.isActive ? '#34d399' : '#94a3b8' }]} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -151,11 +151,11 @@ export default function DoctorHomeScreen() {
                 activeOpacity={0.9}
               >
                 <View style={[styles.statusIconWrap, user?.availableAtHospital && styles.statusIconWrapActive]}>
-                  <Building2 size={20} color={user?.availableAtHospital ? '#059669' : '#64748b'} />
+                  <Building2 size={20} color={user?.availableAtHospital ? '#34d399' : '#64748b'} />
                 </View>
                 <Text style={styles.statusLabel}>Hospital Visitable</Text>
                 <Text style={styles.statusValue}>{user?.availableAtHospital ? 'Yes' : 'No'}</Text>
-                <View style={[styles.badgeIndicator, { backgroundColor: user?.availableAtHospital ? '#059669' : '#94a3b8' }]} />
+                <View style={[styles.badgeIndicator, { backgroundColor: user?.availableAtHospital ? '#34d399' : '#94a3b8' }]} />
               </TouchableOpacity>
             </View>
 
@@ -198,8 +198,8 @@ export default function DoctorHomeScreen() {
               onPress={() => router.push('/(doctor)/appointments')}
               activeOpacity={0.8}
             >
-              <View style={[styles.actionIconWrap, { backgroundColor: '#ecfdf5' }]}>
-                <Calendar size={20} color="#10b981" />
+              <View style={[styles.actionIconWrap, { backgroundColor: '#f0fdf4' }]}>
+                <Calendar size={20} color="#34d399" />
               </View>
               <View style={styles.actionInfo}>
                 <Text style={styles.actionTitle}>Manage Schedule</Text>
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   statusCardActive: {
-    borderColor: '#10b981',
+    borderColor: '#34d399',
     backgroundColor: '#f0fdf4',
   },
   statusIconWrap: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   statusIconWrapActive: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
   },
   statusLabel: {
     fontSize: 12,

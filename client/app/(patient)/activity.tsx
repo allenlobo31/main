@@ -121,10 +121,10 @@ export default function ActivityScreen() {
         <View style={styles.carouselContainer}>
           {/* Section Header specifying "Can Do" positive list */}
           <View style={styles.carouselHeader}>
-            <View style={[styles.iconWrapSuccess, { backgroundColor: '#d1fae5' }]}>
-              <CheckCircle2 size={18} color="#059669" strokeWidth={2.5} />
+            <View style={[styles.iconWrapSuccess, { backgroundColor: '#dcfce7' }]}>
+              <CheckCircle2 size={18} color="#34d399" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.carouselSectionTitle, { color: '#059669' }]}>{t('activity.canDoTitle')}</Text>
+            <Text style={[styles.carouselSectionTitle, { color: '#34d399' }]}>{t('activity.canDoTitle')}</Text>
           </View>
 
           <View style={[styles.carouselCard, styles.canDoCardBorder]}>
@@ -137,7 +137,7 @@ export default function ActivityScreen() {
               {/* Title & Description Overlay Banner */}
               <View style={[styles.carouselOverlay, styles.canDoOverlay]}>
                 <Text style={styles.carouselOverlayTitle}>{canDoSlides[activeCanDoIndex].title}</Text>
-                <Text style={[styles.carouselOverlaySubtitle, { color: '#d1fae5' }]}>
+                <Text style={[styles.carouselOverlaySubtitle, { color: '#dcfce7' }]}>
                   {canDoSlides[activeCanDoIndex].subtitle}
                 </Text>
               </View>
@@ -370,10 +370,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   canDoCardBorder: {
-    borderColor: '#059669', // Recovery green border
+    borderColor: '#bbf7d0', // Mint border
   },
   canDoOverlay: {
-    backgroundColor: 'rgba(6, 78, 59, 0.85)', // Recovery deep green overlay
+    backgroundColor: 'rgba(52, 211, 153, 0.85)', // Mint overlay
   },
   notToDoCardBorder: {
     borderColor: '#dc2626', // Warning red border
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   thumbnailContainerActiveCanDo: {
     borderWidth: 2.5,
-    borderColor: '#059669', // Active green border
+    borderColor: '#34d399', // Active mint border
     transform: [{ scale: 1.05 }],
     shadowColor: '#000000',
     shadowOffset: { width: 2, height: 2 },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(5, 150, 105, 0.15)', // Active green tint
+    backgroundColor: 'rgba(52, 211, 153, 0.15)', // Active mint tint
   },
   thumbnailContainerActiveNotToDo: {
     borderWidth: 2.5,

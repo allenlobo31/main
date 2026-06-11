@@ -195,7 +195,7 @@ export default function AIMonitorScreen() {
       },
       safe: {
         bg: '#dcfce7',
-        border: '#22c55e',
+        border: '#34d399',
         text: '#166534',
         title: 'Stable',
         icon: CheckCircle2,
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
   formCard: {
     marginTop: theme.spacing.md,
-    backgroundColor: '#e6f9ed',
+    backgroundColor: '#f0fdf4',
     borderColor: '#000000',
     borderWidth: 2,
     shadowColor: '#000000',

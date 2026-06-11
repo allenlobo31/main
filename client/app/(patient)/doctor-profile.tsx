@@ -720,9 +720,9 @@ export default function DoctorProfileScreen() {
           {/* Stat 2: Call Status */}
           <View style={styles.statCol}>
             <View style={[styles.statIconWrap, doctor.isActive ? styles.statIconActive : styles.statIconMuted]}>
-              <Phone size={18} color={doctor.isActive ? '#059669' : '#64748b'} strokeWidth={2.2} />
+              <Phone size={18} color={doctor.isActive ? '#34d399' : '#64748b'} strokeWidth={2.2} />
             </View>
-            <Text style={[styles.statValue, { color: doctor.isActive ? '#059669' : '#0f172a' }]}>
+            <Text style={[styles.statValue, { color: doctor.isActive ? '#34d399' : '#0f172a' }]}> 
               {getCallStatusValue(!!doctor.isActive)}
             </Text>
             <Text style={styles.statLabel}>{getCallStatusLabel()}</Text>
@@ -733,9 +733,9 @@ export default function DoctorProfileScreen() {
           {/* Stat 3: Visit Status */}
           <View style={styles.statCol}>
             <View style={[styles.statIconWrap, doctor.availableAtHospital ? styles.statIconActive : styles.statIconMuted]}>
-              <Building2 size={18} color={doctor.availableAtHospital ? '#059669' : '#64748b'} strokeWidth={2.2} />
+              <Building2 size={18} color={doctor.availableAtHospital ? '#34d399' : '#64748b'} strokeWidth={2.2} />
             </View>
-            <Text style={[styles.statValue, { color: doctor.availableAtHospital ? '#059669' : '#0f172a' }]}>
+            <Text style={[styles.statValue, { color: doctor.availableAtHospital ? '#34d399' : '#0f172a' }]}> 
               {getHospitalVisitValue(!!doctor.availableAtHospital)}
             </Text>
             <Text style={styles.statLabel}>{getHospitalVisitLabel()}</Text>
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
   miniActionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     borderColor: '#000000',
     borderWidth: 2,
     borderRadius: 20,
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
   // Stats Card Row
   statsCardRow: {
     flexDirection: 'row',
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 10,
@@ -1119,7 +1119,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   statIconActive: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
   },
   statIconMuted: {
     backgroundColor: '#f1f5f9',
@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
 
   // Scheduler Card
   schedulerCard: {
-    backgroundColor: '#d1fae5',
+    backgroundColor: '#dcfce7',
     borderRadius: 28,
     borderWidth: 2,
     borderColor: '#000000',

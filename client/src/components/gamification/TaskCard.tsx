@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#e6f9ed', // Green for today's tasks
+    backgroundColor: '#f0fdf4', // Mint for today's tasks
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.md,
     marginBottom: theme.spacing.sm,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkDone: {
-    backgroundColor: '#10b981',
+    backgroundColor: '#34d399',
     borderColor: '#000000',
   },
   iconWrap: { width: 24, alignItems: 'center' },
