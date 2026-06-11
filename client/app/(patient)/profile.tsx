@@ -535,16 +535,15 @@ export default function PatientProfileScreen() {
                   onPress={onStartEdit}
                   style={styles.primaryAction}
                 />
+                <TouchableOpacity
+                  style={styles.logoutBtn}
+                  onPress={onLogout}
+                  disabled={isLoggingOut}
+                >
+                  <Text style={styles.logoutText}>{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
+                </TouchableOpacity>
               </>
             )}
-
-            <TouchableOpacity
-              style={styles.logoutBtn}
-              onPress={onLogout}
-              disabled={isLoggingOut}
-            >
-              <Text style={styles.logoutText}>{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
-            </TouchableOpacity>
           </Card>
         </ScrollView>
 
