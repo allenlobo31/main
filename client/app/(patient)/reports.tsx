@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   LayoutAnimation,
   Animated,
+  useWindowDimensions,
   Dimensions,
   Image,
 } from 'react-native';
@@ -17,17 +18,29 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   XCircle,
+  Trash2,
+  Paperclip,
+  FileText,
+  Activity as ActivityIcon,
+  Zap,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useReports } from '../../src/hooks/useReports';
 import { useGamification } from '../../src/hooks/useGamification';
-import { ReportCard } from '../../src/components/reports/ReportCard';
 import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { formatDate } from '../../src/utils/dateHelpers';
+
+const TYPE_ICONS: Record<string, any> = {
+  scan: ImageIcon,
+  discharge: FileText,
+  wound_photo: Camera,
+  lab: ActivityIcon,
+  other: Paperclip,
+};
 
 export default function ReportsScreen() {
   const {
@@ -40,6 +53,12 @@ export default function ReportsScreen() {
     deleteReport,
   } = useReports();
   const gamification = useGamification();
+  const { width } = useWindowDimensions();
+
+  const gapSize = 10;
+  const paddingSize = 16; // theme.spacing.lg is 16
+  const gridItemWidth = (width - paddingSize * 2 - gapSize * 2) / 3;
+  const maxGridHeight = 4 * gridItemWidth + 3 * gapSize + 40;
 
   React.useEffect(() => {
     fetchReports();
@@ -201,10 +220,15 @@ export default function ReportsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[
+          styles.container,
+          {
+            paddingTop: theme.spacing.xxxl,
+            marginTop: theme.spacing.xl,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>Wound Health</Text>
 
         {/* Upload area */}
         <View style={styles.uploadSection}>
@@ -362,25 +386,71 @@ export default function ReportsScreen() {
           </View>
         </View>
 
-        {/* Reports list grouped by date */}
-        {groupedReports.map(([date, dateReports]) => (
-          <View key={date} style={styles.dateGroup}>
-            <Text style={styles.dateHeader}>{date.toUpperCase()}</Text>
-            {dateReports.map((report) => (
-              <ReportCard
-                key={report.id}
-                report={report}
-                onView={() => handleViewReport(report)}
-                onDelete={() => {
-                  Alert.alert('Delete Report', 'Are you sure you want to delete this report?', [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Delete', style: 'destructive', onPress: () => deleteReport(report.id) },
-                  ]);
-                }}
-              />
-            ))}
+        {/* Reports list grouped by date as an album grid */}
+        {reports.length > 0 && (
+          <View style={{ width: '100%' }}>
+            <Text style={styles.sectionHeader}>Wound Photo</Text>
+            <ScrollView
+              style={{ maxHeight: maxGridHeight }}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+            >
+              {groupedReports.map(([date, dateReports]) => (
+                <View key={date} style={styles.dateGroup}>
+                  <Text style={styles.dateHeader}>{date.toUpperCase()}</Text>
+                  <View style={styles.albumGrid}>
+                    {dateReports.map((report) => {
+                      const isPhoto = report.type === 'wound_photo';
+                      const Icon = TYPE_ICONS[report.type] || Paperclip;
+                      
+                      return (
+                        <View key={report.id} style={[styles.albumItemContainer, { width: gridItemWidth }]}>
+                          <TouchableOpacity
+                            style={styles.albumItem}
+                            onPress={() => handleViewReport(report)}
+                            activeOpacity={0.8}
+                          >
+                            {isPhoto ? (
+                              <Image source={{ uri: report.fileUrl }} style={styles.albumImage} />
+                            ) : (
+                              <View style={styles.albumDocFallback}>
+                                <Icon size={24} color="#000000" strokeWidth={1.5} />
+                                <Text style={styles.albumDocText} numberOfLines={1}>
+                                  {report.title}
+                                </Text>
+                              </View>
+                            )}
+                            
+                            {/* AI Analyzed Indicator */}
+                            {report.aiWoundAnalysis && (
+                              <View style={styles.albumAiBadge}>
+                                <Zap size={10} color="#000000" fill="#000000" />
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                          
+                          {/* Delete Overlay Button */}
+                          <TouchableOpacity
+                            style={styles.albumDeleteBtn}
+                            onPress={() => {
+                              Alert.alert('Delete Photo', 'Are you sure you want to delete this photo?', [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Delete', style: 'destructive', onPress: () => deleteReport(report.id) },
+                              ]);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Trash2 size={16} color="#ffffff" strokeWidth={2.5} />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        ))}
+        )}
 
         {hasMore && (
           <Button
@@ -423,21 +493,24 @@ const styles = StyleSheet.create({
   },
 
   // Upload Section
-  uploadSection: { marginBottom: theme.spacing.xl },
-  uploadTitle: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
+  uploadSection: { marginBottom: theme.spacing.xxl },
+  uploadTitle: { ...theme.typography.h2, color: '#000000', fontWeight: '800', letterSpacing: 0.5, marginBottom: 4 },
   uploadSubtitle: { ...theme.typography.caption, color: '#404040', marginBottom: theme.spacing.md },
 
   uploadDropzone: {
     borderWidth: 2,
     borderColor: '#000000',
-    borderRadius: 8,
-    padding: theme.spacing.xxl,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    width: 200,
+    height: 200,
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.surface,
   },
-  dropzoneText: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 1.5, marginBottom: 4 },
-  dropzoneSubtext: { ...theme.typography.caption, color: '#333333', letterSpacing: 1 },
+  dropzoneText: { ...theme.typography.body, color: '#000000', fontWeight: '700', letterSpacing: 1.5, marginBottom: 4, textAlign: 'center' },
+  dropzoneSubtext: { ...theme.typography.caption, color: '#333333', letterSpacing: 1, textAlign: 'center' },
 
   progressContainer: {
     padding: theme.spacing.lg,
@@ -640,5 +713,96 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  albumGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 10,
+    rowGap: 10,
+    paddingHorizontal: 2,
+  },
+  albumItemContainer: {
+    aspectRatio: 1,
+    position: 'relative',
+    marginBottom: 10,
+  },
+  albumItem: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#000000',
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  albumImage: {
+    width: '100%',
+    height: '100%',
+  },
+  albumDocFallback: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f1f5f9',
+    padding: 6,
+  },
+  albumDocText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#000000',
+    marginTop: 4,
+    textAlign: 'center',
+    width: '100%',
+  },
+  albumAiBadge: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 6,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 1,
+  },
+  albumDeleteBtn: {
+    position: 'absolute',
+    bottom: 8,
+    alignSelf: 'center',
+    backgroundColor: '#ef4444',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    borderRadius: 14,
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.2, height: 1.2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  sectionHeader: {
+    ...theme.typography.h3,
+    color: '#000000',
+    fontWeight: '800',
+    marginTop: theme.spacing.xl,
+    marginBottom: theme.spacing.md,
+    letterSpacing: 0.5,
   },
 });
