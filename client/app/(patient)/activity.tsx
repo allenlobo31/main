@@ -28,7 +28,7 @@ if (
 
 export default function ActivityScreen() {
   const { isCompact, horizontalPadding } = useResponsiveLayout();
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
 
   const [activeCanDoIndex, setActiveCanDoIndex] = useState(0);
   const [activeNotToDoIndex, setActiveNotToDoIndex] = useState(0);
@@ -42,7 +42,7 @@ export default function ActivityScreen() {
     { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: require('../../assets/walking_recovery.jpg') },
     { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: require('../../assets/peaceful_rest.jpg') },
     { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: require('../../assets/can_do_task.jpg') },
-  ], [t]);
+  ], [t, language]);
 
   const notToDoSlides = useMemo(() => [
     { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: require('../../assets/prohibited_junk_food.jpg') },
@@ -50,7 +50,7 @@ export default function ActivityScreen() {
     { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: require('../../assets/prohibited_running.jpg') },
     { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: require('../../assets/prohibited_lifting.jpg') },
     { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: require('../../assets/prohibited_bending.jpg') },
-  ], [t]);
+  ], [t, language]);
 
   // Custom helpers to change indices with LayoutAnimation
   const changeCanDoSlideIndex = (index: number) => {

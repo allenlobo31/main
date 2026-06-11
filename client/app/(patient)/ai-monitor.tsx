@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAIMonitor } from '../../src/hooks/useAIMonitor';
+import { useLanguageStore } from '../../src/store/languageStore';
 import { useGamification } from '../../src/hooks/useGamification';
 import { AIInsightCard } from '../../src/components/ai/AIInsightCard';
 import { SymptomFlagAlert } from '../../src/components/ai/SymptomFlagAlert';
@@ -39,6 +40,7 @@ export default function AIMonitorScreen() {
   const { entries, aiInsight, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
   const gamification = useGamification();
   const { user } = useAuthStore();
+  const { t, language } = useLanguageStore();
 
   const [fever, setFever] = useState(false);
   const [swelling, setSwelling] = useState(false);
@@ -66,18 +68,18 @@ export default function AIMonitorScreen() {
     if (redness || bleeding) return 'danger';
     if (vomiting || difficultUrination) return 'warning';
     return 'safe';
-  }, [redness, bleeding, vomiting, difficultUrination]);
+  }, [redness, bleeding, vomiting, difficultUrination, language]);
 
   const symptomSummary = useMemo(() => {
     const selected: string[] = [];
-    if (fever) selected.push('Fever');
-    if (swelling) selected.push('Swelling');
-    if (vomiting) selected.push('Vomiting');
-    if (redness) selected.push('Redness');
-    if (bleeding) selected.push('Bleeding');
-    if (difficultUrination) selected.push('Difficult urination');
-    return selected.length > 0 ? selected.join(', ') : 'No critical symptom selected';
-  }, [fever, swelling, vomiting, redness, bleeding, difficultUrination]);
+    if (fever) selected.push(t('monitor.symptomNames.fever'));
+    if (swelling) selected.push(t('monitor.symptomNames.swelling'));
+    if (vomiting) selected.push(t('monitor.symptomNames.vomiting'));
+    if (redness) selected.push(t('monitor.symptomNames.redness'));
+    if (bleeding) selected.push(t('monitor.symptomNames.bleeding'));
+    if (difficultUrination) selected.push(t('monitor.symptomNames.urination'));
+    return selected.length > 0 ? selected.join(', ') : t('monitor.noSymptomSelected');
+  }, [fever, swelling, vomiting, redness, bleeding, difficultUrination, language]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -167,7 +169,7 @@ export default function AIMonitorScreen() {
       setPainDescription('');
     } catch (error) {
       console.error('[AIMonitor] handleSubmit error:', error);
-      Alert.alert('Error', 'Could not save your symptoms. Please try again.');
+      Alert.alert(t('experts.errorTitle'), t('monitor.saveError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -179,25 +181,25 @@ export default function AIMonitorScreen() {
         bg: '#fee2e2',
         border: '#ef4444',
         text: '#991b1b',
-        title: 'High Alert',
+        title: t('monitor.alertTitleHigh'),
         icon: Siren,
-        msg: 'Please visit your doctor promptly for in-person evaluation.',
+        msg: t('monitor.alertMsgHigh'),
       },
       warning: {
         bg: '#fef9c3',
         border: '#eab308',
         text: '#854d0e',
-        title: 'Medium Alert',
+        title: t('monitor.alertTitleMedium'),
         icon: TriangleAlert,
-        msg: 'Please contact your doctor for medical advice.',
+        msg: t('monitor.alertMsgMedium'),
       },
       safe: {
         bg: '#dcfce7',
         border: '#34d399',
         text: '#166534',
-        title: 'Stable',
+        title: t('monitor.alertTitleStable'),
         icon: CheckCircle2,
-        msg: 'Your current symptoms appear stable. Continue routine monitoring.',
+        msg: t('monitor.alertMsgStable'),
       },
     }[submittedData.alertLevel];
 
@@ -212,7 +214,7 @@ export default function AIMonitorScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.pageTitle}>Symptom Report</Text>
+          <Text style={styles.pageTitle}>{t('monitor.pageTitle')}</Text>
 
           {/* Alert Section */}
           <View style={[styles.reportAlertCard, { backgroundColor: alertLevelInfo.bg }]}>
@@ -225,7 +227,7 @@ export default function AIMonitorScreen() {
 
           {/* Mini Report Card */}
           <Card style={styles.reportDetailCard} bordered>
-            <Text style={styles.reportCardTitle}>Logged Details</Text>
+            <Text style={styles.reportCardTitle}>{t('monitor.loggedDetails')}</Text>
 
             {/* Timestamp */}
             <View style={styles.reportDetailRow}>
@@ -237,27 +239,27 @@ export default function AIMonitorScreen() {
 
             {/* Pain Severity Badge */}
             <View style={styles.reportDetailRow}>
-              <Text style={styles.reportDetailLabel}>Severity Rating:</Text>
+              <Text style={styles.reportDetailLabel}>{t('monitor.severityRating')}</Text>
               <View style={[
                 styles.reportPainBadge,
                 submittedData.painLevel === 9 ? styles.painHigh : (submittedData.painLevel === 5 ? styles.painMedium : styles.painMild)
               ]}>
                 <Text style={styles.reportPainBadgeText}>
-                  {submittedData.painLevel === 9 ? 'High (9/10)' : (submittedData.painLevel === 5 ? 'Medium (5/10)' : 'Mild (1/10)')}
+                  {submittedData.painLevel === 9 ? t('monitor.highSeverity') : (submittedData.painLevel === 5 ? t('monitor.mediumSeverity') : t('monitor.mildSeverity'))}
                 </Text>
               </View>
             </View>
 
             {/* Logged Symptoms */}
             <View style={styles.reportDetailBlock}>
-              <Text style={styles.reportDetailLabel}>Logged Symptoms:</Text>
+              <Text style={styles.reportDetailLabel}>{t('monitor.loggedSymptoms')}</Text>
               <Text style={styles.reportDetailText}>{submittedData.symptoms}</Text>
             </View>
 
             {/* Pain Description */}
             {submittedData.painDescription.trim().length > 0 && (
               <View style={styles.reportDetailBlock}>
-                <Text style={styles.reportDetailLabel}>Notes:</Text>
+                <Text style={styles.reportDetailLabel}>{t('monitor.notes')}</Text>
                 <View style={styles.reportNotesBubble}>
                   <Text style={styles.reportNotesText}>"{submittedData.painDescription.trim()}"</Text>
                 </View>
@@ -267,7 +269,7 @@ export default function AIMonitorScreen() {
 
           {/* Action Button */}
           <Button
-            label="Done"
+            label={t('monitor.done')}
             onPress={() => {
               setShowReport(false);
               setSubmittedData(null);
@@ -307,21 +309,21 @@ export default function AIMonitorScreen() {
 
         {/* Symptom Log Form */}
         <Card style={styles.formCard} bordered>
-          <Text style={styles.formTitle}>Log Symptoms</Text>
+          <Text style={styles.formTitle}>{t('monitor.logTitle')}</Text>
 
 
 
-          <Text style={styles.fieldLabel}>Symptoms</Text>
+          <Text style={styles.fieldLabel}>{t('monitor.symptomsHeader')}</Text>
           <View style={[styles.optionRow, isCompact && styles.optionRowCompact]}>
             {[
-              { key: 'fever', label: 'Fever', value: fever, onToggle: setFever, Icon: Thermometer },
-              { key: 'swelling', label: 'Swelling', value: swelling, onToggle: setSwelling, Icon: Droplets },
-              { key: 'vomiting', label: 'Vomiting', value: vomiting, onToggle: setVomiting, Icon: Flame },
-              { key: 'redness', label: 'Redness', value: redness, onToggle: setRedness, Icon: TriangleAlert },
-              { key: 'bleeding', label: 'Bleeding', value: bleeding, onToggle: setBleeding, Icon: Siren },
+              { key: 'fever', label: t('monitor.symptomNames.fever'), value: fever, onToggle: setFever, Icon: Thermometer },
+              { key: 'swelling', label: t('monitor.symptomNames.swelling'), value: swelling, onToggle: setSwelling, Icon: Droplets },
+              { key: 'vomiting', label: t('monitor.symptomNames.vomiting'), value: vomiting, onToggle: setVomiting, Icon: Flame },
+              { key: 'redness', label: t('monitor.symptomNames.redness'), value: redness, onToggle: setRedness, Icon: TriangleAlert },
+              { key: 'bleeding', label: t('monitor.symptomNames.bleeding'), value: bleeding, onToggle: setBleeding, Icon: Siren },
               {
                 key: 'urination',
-                label: 'Difficult urination',
+                label: t('monitor.symptomNames.urination'),
                 value: difficultUrination,
                 onToggle: setDifficultUrination,
                 Icon: Droplets,
@@ -345,12 +347,12 @@ export default function AIMonitorScreen() {
             })}
           </View>
 
-          <Text style={styles.fieldLabel}>Pain Description (Optional)</Text>
+          <Text style={styles.fieldLabel}>{t('monitor.painDescriptionHeader')}</Text>
           <TextInput
             style={styles.textArea}
             value={painDescription}
             onChangeText={setPainDescription}
-            placeholder="Briefly describe your pain..."
+            placeholder={t('monitor.painPlaceholder')}
             placeholderTextColor={theme.colors.textMuted}
             multiline
             numberOfLines={3}
@@ -358,7 +360,7 @@ export default function AIMonitorScreen() {
           />
 
           <Button
-            label="Submit Symptoms +20 XP"
+            label={t('monitor.submitBtn')}
             onPress={handleSubmit}
             isLoading={isSubmitting}
             fullWidth

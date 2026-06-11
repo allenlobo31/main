@@ -19,7 +19,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCardProps) {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   
   return (
     <TouchableOpacity

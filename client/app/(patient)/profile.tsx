@@ -21,6 +21,7 @@ import {
   Wrench,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/authStore';
+import { useLanguageStore } from '../../src/store/languageStore';
 import { updateProfile as updateRemoteProfile } from '../../src/services/dataService';
 import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
@@ -91,6 +92,7 @@ type DetailField = {
 export default function PatientProfileScreen() {
   const router = useRouter();
   const { user, logout, updateProfile } = useAuthStore();
+  const { t, language } = useLanguageStore();
   const { horizontalPadding } = useResponsiveLayout();
 
   const initialValues = useMemo<ProfileFormState>(
@@ -201,38 +203,38 @@ export default function PatientProfileScreen() {
   const generalFields = useMemo<DetailField[]>(
     () => [
       {
-        label: 'Gender',
+        label: t('profile.genderLabel'),
         value: formatGender(user?.gender),
         tone: 'sky',
         icon: Users,
       },
       {
-        label: 'Address',
+        label: t('profile.addressLabel'),
         value: user?.address,
         tone: 'sky',
         icon: House,
       },
     ],
-    [user?.gender, user?.address]
+    [user?.gender, user?.address, language]
   );
 
   const surgicalFields = useMemo<DetailField[]>(
     () => {
       const fields: DetailField[] = [
         {
-          label: 'Hernia Type',
+          label: t('profile.herniaTypeLabel'),
           value: formatHerniaType(user?.herniaType),
           tone: 'peach',
           icon: HeartPulse,
         },
         {
-          label: 'Surgery Status',
+          label: t('profile.surgeryStatusLabel'),
           value: formatSurgeryStatus(user?.surgeryStatus),
           tone: 'lilac',
           icon: CalendarClock,
         },
         {
-          label: 'Surgery Type',
+          label: t('profile.surgeryTypeLabel'),
           value: formatSurgeryType(user?.surgeryType),
           tone: 'mint',
           icon: Wrench,
@@ -250,19 +252,19 @@ export default function PatientProfileScreen() {
 
       return fields;
     },
-    [user?.herniaType, user?.surgeryStatus, user?.surgeryType, reminderText]
+    [user?.herniaType, user?.surgeryStatus, user?.surgeryType, reminderText, language]
   );
 
   const emergencyFields = useMemo<DetailField[]>(
     () => [
       {
-        label: 'Emergency Family Contact Number',
+        label: t('profile.emergencyLabel'),
         value: user?.emergencyContactNumber,
         tone: 'peach',
         icon: ShieldAlert,
       },
     ],
-    [user?.emergencyContactNumber]
+    [user?.emergencyContactNumber, language]
   );
 
   const onChange = <K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) => {
@@ -272,12 +274,12 @@ export default function PatientProfileScreen() {
   const onSave = async () => {
     if (!user?.uid) return;
     if (!form.name.trim()) {
-      Alert.alert('Name required', 'Please enter your name.');
+      Alert.alert(t('profile.nameRequired'), t('profile.nameRequiredDesc'));
       return;
     }
 
     if (isScheduled && !isScheduledDateValid) {
-      Alert.alert('Invalid date', 'Please enter surgery date in YYYY-MM-DD format.');
+      Alert.alert(t('profile.invalidDate'), t('profile.invalidDateDesc'));
       return;
     }
 
@@ -302,10 +304,10 @@ export default function PatientProfileScreen() {
       await updateRemoteProfile(updates);
       updateProfile(updates);
       setIsEditing(false);
-      Alert.alert('Saved', 'Your profile has been updated.');
+      Alert.alert(t('profile.saved'), t('profile.savedDesc'));
     } catch (error) {
       console.error('[Profile] save error:', error);
-      Alert.alert('Save failed', 'Could not update your profile. Please try again.');
+      Alert.alert(t('profile.saveFailed'), t('profile.saveFailedDesc'));
     } finally {
       setIsSaving(false);
     }
@@ -351,9 +353,9 @@ export default function PatientProfileScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.headerRow}>
-            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.title}>{t('profile.pageTitle')}</Text>
             <Button
-              label="Back"
+              label={t('common.close')}
               variant="ghost"
               onPress={() => router.back()}
               style={styles.backBtn}
@@ -364,7 +366,7 @@ export default function PatientProfileScreen() {
             <View style={styles.avatarRow}>
               <Avatar name={form.name} size={90} />
               <View style={styles.identityBlock}>
-                <Text style={styles.name} numberOfLines={1}>{form.name || 'Your name'}</Text>
+                <Text style={styles.name} numberOfLines={1}>{form.name || t('profile.defaultName')}</Text>
                 <Text style={styles.email} numberOfLines={1}>{user?.email ?? ''}</Text>
                 {user?.phoneNumber ? (
                   <Text style={styles.phoneText} numberOfLines={1}>{user.phoneNumber}</Text>
@@ -375,37 +377,37 @@ export default function PatientProfileScreen() {
             {isEditing ? (
               <>
                 <Input
-                  label="Full Name"
+                  label={t('profile.fullNameLabel')}
                   value={form.name}
                   onChangeText={(text) => onChange('name', text)}
-                  placeholder="Enter your full name"
+                  placeholder={t('profile.fullNamePlaceholder')}
                   autoCapitalize="words"
                   returnKeyType="next"
                 />
 
                 <SelectionGroup
-                  label="Gender"
+                  label={t('profile.genderLabel')}
                   options={GENDER_OPTIONS}
                   selected={form.gender}
                   onSelect={(value) => onChange('gender', value)}
                 />
 
                 <SelectionGroup
-                  label="Hernia Type"
+                  label={t('profile.herniaTypeLabel')}
                   options={HERNIA_TYPE_OPTIONS}
                   selected={form.herniaType}
                   onSelect={(value) => onChange('herniaType', value)}
                 />
 
                 <SelectionGroup
-                  label="Surgery Status"
+                  label={t('profile.surgeryStatusLabel')}
                   options={SURGERY_STATUS_OPTIONS}
                   selected={form.surgeryStatus}
                   onSelect={(value) => onChange('surgeryStatus', value)}
                 />
 
                 <SelectionGroup
-                  label="Surgery Type"
+                  label={t('profile.surgeryTypeLabel')}
                   options={SURGERY_TYPE_OPTIONS}
                   selected={form.surgeryType}
                   onSelect={(value) => onChange('surgeryType', value)}
@@ -415,9 +417,9 @@ export default function PatientProfileScreen() {
                   <TouchableOpacity onPress={handleOpenDatePicker} activeOpacity={0.9}>
                     <View pointerEvents="none">
                       <Input
-                        label="Scheduled Surgery Date"
+                        label={t('profile.surgeryDateLabel')}
                         value={form.scheduledSurgeryDate}
-                        placeholder="Select surgery date"
+                        placeholder={t('profile.surgeryDatePlaceholder')}
                         editable={false}
                       />
                     </View>
@@ -425,35 +427,35 @@ export default function PatientProfileScreen() {
                 ) : null}
 
                 <Input
-                  label="Phone Number"
+                  label={t('profile.phoneLabel')}
                   value={form.phoneNumber}
                   onChangeText={(text) => onChange('phoneNumber', text)}
-                  placeholder="Your phone number"
+                  placeholder={t('profile.phonePlaceholder')}
                   keyboardType="phone-pad"
                   returnKeyType="next"
                 />
 
                 <Input
-                  label="Address"
+                  label={t('profile.addressLabel')}
                   value={form.address}
                   onChangeText={(text) => onChange('address', text)}
-                  placeholder="Home address"
+                  placeholder={t('profile.addressPlaceholder')}
                   autoCapitalize="sentences"
                   multiline
                   numberOfLines={3}
                 />
 
                 <Input
-                  label="Emergency Family Contact Number"
+                  label={t('profile.emergencyLabel')}
                   value={form.emergencyContactNumber}
                   onChangeText={(text) => onChange('emergencyContactNumber', text)}
-                  placeholder="Emergency contact number"
+                  placeholder={t('profile.emergencyPlaceholder')}
                   keyboardType="phone-pad"
                   returnKeyType="done"
                 />
 
                 <Button
-                  label="Save Details"
+                  label={t('profile.saveDetails')}
                   onPress={onSave}
                   isLoading={isSaving}
                   style={styles.primaryAction}
@@ -473,7 +475,7 @@ export default function PatientProfileScreen() {
                     />
                   ))}
                   
-                  <Text style={styles.sectionTitle}>Surgical Plan</Text>
+                  <Text style={styles.sectionTitle}>{t('profile.surgicalPlan')}</Text>
                   
                   {/* Surgical Plan Grid */}
                   {surgicalFields.length === 3 ? (
@@ -531,7 +533,7 @@ export default function PatientProfileScreen() {
                   ))}
                 </View>
                 <Button
-                  label="Edit Profile"
+                  label={t('profile.editProfile')}
                   onPress={onStartEdit}
                   style={styles.primaryAction}
                 />
@@ -540,7 +542,7 @@ export default function PatientProfileScreen() {
                   onPress={onLogout}
                   disabled={isLoggingOut}
                 >
-                  <Text style={styles.logoutText}>{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
+                  <Text style={styles.logoutText}>{isLoggingOut ? t('profile.loggingOut') : t('profile.logout')}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -620,7 +622,7 @@ export default function PatientProfileScreen() {
                 style={styles.closePickerBtn}
                 onPress={() => setIsDatePickerVisible(false)}
               >
-                <Text style={styles.closePickerText}>Close</Text>
+                <Text style={styles.closePickerText}>{t('profile.closePicker')}</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>

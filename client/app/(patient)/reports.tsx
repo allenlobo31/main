@@ -33,6 +33,7 @@ import { Button } from '../../src/components/ui/Button';
 import { theme } from '../../src/constants/theme';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { formatDate } from '../../src/utils/dateHelpers';
+import { useLanguageStore } from '../../src/store/languageStore';
 
 const TYPE_ICONS: Record<string, any> = {
   scan: ImageIcon,
@@ -43,6 +44,7 @@ const TYPE_ICONS: Record<string, any> = {
 };
 
 export default function ReportsScreen() {
+  const { t, language } = useLanguageStore();
   const {
     reports,
     isLoading,
@@ -69,20 +71,20 @@ export default function ReportsScreen() {
   }, [reports]);
 
   const careSlides = useMemo(() => [
-    { id: 'clean', title: 'Keep clean & dry', subtitle: 'Protect the incision area', image: require('../../assets/care_clean_dry.png') },
-    { id: 'clothes', title: 'Wear loose clothes', subtitle: 'Avoid friction and tightness', image: require('../../assets/care_loose_clothes.png') },
-    { id: 'dressing', title: 'Change dressing daily', subtitle: 'Maintain proper hygiene', image: require('../../assets/care_change_dressing.png') },
-    { id: 'scratch', title: 'Do not scratch', subtitle: 'Prevent wound irritation', image: require('../../assets/care_no_scratch.png') },
-    { id: 'meds', title: 'Take meds on time', subtitle: 'Support recovery and pain relief', image: require('../../assets/care_take_meds.png') },
-    { id: 'call', title: 'Inform Doctor if concerned', subtitle: 'Reach out for help early', image: require('../../assets/care_call_doctor.png') },
-  ], []);
+    { id: 'clean', title: t('reports.careTips.clean'), subtitle: t('reports.careTips.cleanSub'), image: require('../../assets/care_clean_dry.png') },
+    { id: 'clothes', title: t('reports.careTips.clothes'), subtitle: t('reports.careTips.clothesSub'), image: require('../../assets/care_loose_clothes.png') },
+    { id: 'dressing', title: t('reports.careTips.dressing'), subtitle: t('reports.careTips.dressingSub'), image: require('../../assets/care_change_dressing.png') },
+    { id: 'scratch', title: t('reports.careTips.scratch'), subtitle: t('reports.careTips.scratchSub'), image: require('../../assets/care_no_scratch.png') },
+    { id: 'meds', title: t('reports.careTips.meds'), subtitle: t('reports.careTips.medsSub'), image: require('../../assets/care_take_meds.png') },
+    { id: 'call', title: t('reports.careTips.call'), subtitle: t('reports.careTips.callSub'), image: require('../../assets/care_call_doctor.png') },
+  ], [t, language]);
 
   const warningSlides = useMemo(() => [
-    { id: 'redness', title: 'Redness', subtitle: 'Watch for spreading discoloration', image: require('../../assets/warning_redness.png') },
-    { id: 'swelling', title: 'Swelling', subtitle: 'Check for abnormal fluid or expansion', image: require('../../assets/warning_swelling.png') },
-    { id: 'pus', title: 'Pus discharge', subtitle: 'Report any cloudy or yellow discharge', image: require('../../assets/warning_pus.png') },
-    { id: 'bleeding', title: 'Bleeding', subtitle: 'Monitor for active blood flow', image: require('../../assets/warning_bleeding.png') },
-  ], []);
+    { id: 'redness', title: t('reports.warningSigns.redness'), subtitle: t('reports.warningSigns.rednessSub'), image: require('../../assets/warning_redness.png') },
+    { id: 'swelling', title: t('reports.warningSigns.swelling'), subtitle: t('reports.warningSigns.swellingSub'), image: require('../../assets/warning_swelling.png') },
+    { id: 'pus', title: t('reports.warningSigns.pus'), subtitle: t('reports.warningSigns.pusSub'), image: require('../../assets/warning_pus.png') },
+    { id: 'bleeding', title: t('reports.warningSigns.bleeding'), subtitle: t('reports.warningSigns.bleedingSub'), image: require('../../assets/warning_bleeding.png') },
+  ], [t, language]);
 
   const [activeCareIndex, setActiveCareIndex] = useState(0);
   const [activeWarningIndex, setActiveWarningIndex] = useState(0);
@@ -140,9 +142,9 @@ export default function ReportsScreen() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
-        'Permission Required',
-        'Photo library access is needed to upload reports.',
-        [{ text: 'OK' }],
+        t('reports.failUpload'),
+        t('reports.failUploadDesc'),
+        [{ text: t('common.close') }],
       );
       return;
     }
@@ -181,10 +183,10 @@ export default function ReportsScreen() {
         await gamification.completeTask(taskId, 30);
       }
 
-      Alert.alert('Uploaded ✅', 'Your wound photo has been securely uploaded. Task completed!');
+      Alert.alert(t('reports.successUpload'), t('reports.successUploadDesc'));
     } catch (error) {
       console.error('[Reports] pickImage error:', error);
-      Alert.alert('Upload Failed', 'Could not upload the image. Please try again.');
+      Alert.alert(t('reports.failUpload'), t('reports.failUploadDesc'));
     }
   };
 
@@ -192,18 +194,18 @@ export default function ReportsScreen() {
     try {
       const url = report.fileUrl;
       if (!url) {
-        Alert.alert('Error', 'This report has no valid file URL.');
+        Alert.alert(t('experts.errorTitle'), t('reports.failUploadDesc'));
         return;
       }
       const canOpen = await Linking.canOpenURL(url);
       if (canOpen) {
         await Linking.openURL(url);
       } else {
-        Alert.alert('View Report', `Download URL:\n${url.slice(0, 120)}…`);
+        Alert.alert(t('reports.pageTitle'), `URL:\n${url.slice(0, 120)}…`);
       }
     } catch (error) {
       console.error('[Reports] view error:', error);
-      Alert.alert('Error', 'Could not open the report. Please try again.');
+      Alert.alert(t('experts.errorTitle'), t('reports.failUploadDesc'));
     }
   };
 
@@ -232,8 +234,8 @@ export default function ReportsScreen() {
 
         {/* Upload area */}
         <View style={styles.uploadSection}>
-          <Text style={styles.uploadTitle}>Upload photo</Text>
-          <Text style={styles.uploadSubtitle}>Latest wound image</Text>
+          <Text style={styles.uploadTitle}>{t('reports.uploadTitle')}</Text>
+          <Text style={styles.uploadSubtitle}>{t('reports.uploadDesc')}</Text>
 
           {uploadProgress !== null ? (
             <View style={styles.progressContainer}>
@@ -252,7 +254,7 @@ export default function ReportsScreen() {
               activeOpacity={0.7}
             >
               <Camera size={32} color="#000000" style={{ marginBottom: 12 }} strokeWidth={1.5} />
-              <Text style={styles.dropzoneText}>UPLOAD PHOTO</Text>
+              <Text style={styles.dropzoneText}>{t('reports.uploadTitle').toUpperCase()}</Text>
               <Text style={styles.dropzoneSubtext}>JPEG/PNG · MAX 20MB</Text>
             </TouchableOpacity>
           )}
@@ -266,7 +268,7 @@ export default function ReportsScreen() {
             <View style={[styles.iconWrapSuccess, { backgroundColor: '#dcfce7' }]}>
               <CheckCircle2 size={18} color="#34d399" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.carouselSectionTitle, { color: '#34d399' }]}>Wound Care Tips</Text>
+            <Text style={[styles.carouselSectionTitle, { color: '#34d399' }]}>{t('reports.careTipsHeader')}</Text>
           </View>
 
           <View style={[styles.carouselCard, styles.canDoCardBorder]}>
@@ -330,7 +332,7 @@ export default function ReportsScreen() {
             <View style={[styles.iconWrapDanger, { backgroundColor: '#fecaca' }]}>
               <XCircle size={18} color="#dc2626" strokeWidth={2.5} />
             </View>
-            <Text style={[styles.carouselSectionTitle, { color: '#dc2626' }]}>Warning Signs (Check for)</Text>
+            <Text style={[styles.carouselSectionTitle, { color: '#dc2626' }]}>{t('reports.warningSignsHeader')}</Text>
           </View>
 
           <View style={[styles.carouselCard, styles.notToDoCardBorder]}>
@@ -389,7 +391,7 @@ export default function ReportsScreen() {
         {/* Reports list grouped by date as an album grid */}
         {reports.length > 0 && (
           <View style={{ width: '100%' }}>
-            <Text style={styles.sectionHeader}>Wound Photo</Text>
+            <Text style={styles.sectionHeader}>{t('reports.sectionHeader')}</Text>
             <ScrollView
               style={{ maxHeight: maxGridHeight }}
               nestedScrollEnabled={true}
@@ -433,9 +435,9 @@ export default function ReportsScreen() {
                           <TouchableOpacity
                             style={styles.albumDeleteBtn}
                             onPress={() => {
-                              Alert.alert('Delete Photo', 'Are you sure you want to delete this photo?', [
-                                { text: 'Cancel', style: 'cancel' },
-                                { text: 'Delete', style: 'destructive', onPress: () => deleteReport(report.id) },
+                              Alert.alert(t('reports.deleteTitle'), t('reports.deleteConfirm'), [
+                                { text: t('common.cancel'), style: 'cancel' },
+                                { text: t('reports.deleteTitle'), style: 'destructive', onPress: () => deleteReport(report.id) },
                               ]);
                             }}
                             activeOpacity={0.7}
@@ -454,7 +456,7 @@ export default function ReportsScreen() {
 
         {hasMore && (
           <Button
-            label="Load more"
+            label={t('diary.loadMore')}
             onPress={() => fetchReports()}
             variant="ghost"
             isLoading={isLoading}
@@ -464,8 +466,8 @@ export default function ReportsScreen() {
         {reports.length === 0 && !isLoading && (
           <View style={styles.emptyState}>
             <ImageIcon size={48} color="#000000" style={{ marginBottom: 16 }} strokeWidth={1} />
-            <Text style={styles.emptyTitle}>NO PHOTOS</Text>
-            <Text style={styles.emptyDesc}>Your reports will appear here.</Text>
+            <Text style={styles.emptyTitle}>{t('reports.sectionHeader').toUpperCase()}</Text>
+            <Text style={styles.emptyDesc}>{t('reports.uploadDesc')}</Text>
           </View>
         )}
       </ScrollView>

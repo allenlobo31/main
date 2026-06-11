@@ -36,6 +36,7 @@ interface RemoveConnectionModalProps {
 }
 
 function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPending }: RemoveConnectionModalProps) {
+  const { t, language } = useLanguageStore();
   return (
     <Modal
       animationType="fade"
@@ -49,7 +50,7 @@ function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPend
             <View style={modalStyles.titleContainer}>
               <ShieldAlert size={24} color="#ef4444" strokeWidth={2.5} />
               <Text style={modalStyles.titleText}>
-                {isPending ? 'Cancel Request?' : 'Remove Connection?'}
+                {isPending ? t('experts.removeConnection') : t('experts.removeConnection')}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn} activeOpacity={0.7}>
@@ -60,19 +61,19 @@ function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPend
           <View style={modalStyles.contentArea}>
             <Text style={modalStyles.bodyText}>
               {isPending
-                ? `Are you sure you want to cancel your pending connection request to Dr. ${doctorName}?`
-                : `This will stop sharing your recovery logs, daily wound photos, and diaries with Dr. ${doctorName}.`}
+                ? t('experts.removePendingDesc', { name: doctorName })
+                : t('experts.removeConnectionDesc', { name: doctorName })}
             </Text>
           </View>
 
           <View style={modalStyles.actionsRow}>
             <TouchableOpacity style={modalStyles.cancelBtn} onPress={onClose} activeOpacity={0.8}>
-              <Text style={modalStyles.cancelBtnText}>Keep</Text>
+              <Text style={modalStyles.cancelBtnText}>{t('common.close')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity style={modalStyles.confirmDeleteBtn} onPress={onConfirm} activeOpacity={0.8}>
               <Text style={modalStyles.confirmDeleteBtnText}>
-                {isPending ? 'Cancel Request' : 'Remove'}
+                {isPending ? t('common.cancel') : t('experts.removeConnection')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -84,7 +85,7 @@ function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPend
 
 export default function ExpertsScreen() {
   const router = useRouter();
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const user = useAuthStore(state => state.user);
   const updateProfile = useAuthStore(state => state.updateProfile);
   const [appDoctors, setAppDoctors] = useState<User[]>([]);
@@ -135,9 +136,9 @@ export default function ExpertsScreen() {
     try {
       await apiClient.post(`/users/remove-doctor/${cancelTargetDoc.uid}`);
       fetchData(false);
-      Alert.alert('Success 🎉', `Connection request to Dr. ${cancelTargetDoc.name} has been cancelled.`);
+      Alert.alert(t('experts.requestSentTitle'), t('experts.requestSentDesc'));
     } catch (error) {
-      Alert.alert('Error', 'Could not cancel request. Please try again.');
+      Alert.alert(t('experts.errorTitle'), t('experts.sendRequestError'));
     } finally {
       setCancelTargetDoc(null);
     }

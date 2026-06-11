@@ -22,7 +22,7 @@ import { useLanguageStore } from '../../src/store/languageStore';
 
 export default function DiaryScreen() {
   const { entries, isLoading, hasMore, isSubmitting, fetchEntries, addEntry } = useDiary();
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
 
   const [text, setText] = useState('');
   const [mood, setMood] = useState<MoodType | null>(null);
@@ -84,7 +84,7 @@ export default function DiaryScreen() {
         >
           {/* Today's Section Header */}
           <Text style={styles.dateSectionHeader}>
-            Today — {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            {t('diary.todayHeader')} — {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </Text>
 
           {/* Today's Entries with 1.5-row height limitation */}
@@ -99,13 +99,13 @@ export default function DiaryScreen() {
               ))}
             </ScrollView>
           ) : (
-            <Text style={styles.emptyTodayText}>No entries written today.</Text>
+            <Text style={styles.emptyTodayText}>{t('diary.noEntriesToday')}</Text>
           )}
 
           {/* Older Entries with 1.5-row height limitation */}
           {otherEntries.length > 0 && (
             <View style={{ marginTop: theme.spacing.lg }}>
-              <Text style={styles.dateSectionHeader}>Older Entries</Text>
+              <Text style={styles.dateSectionHeader}>{t('diary.olderEntriesHeader')}</Text>
               <ScrollView
                 style={styles.entriesScroll}
                 nestedScrollEnabled={true}

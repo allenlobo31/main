@@ -20,7 +20,7 @@ import { useLanguageStore } from '../../src/store/languageStore';
 import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
 
 export default function ConnectDoctorScreen() {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
