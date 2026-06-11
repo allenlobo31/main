@@ -12,10 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Search, UserPlus, Info } from 'lucide-react-native';
+import { ChevronLeft, Search, Info } from 'lucide-react-native';
 import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
-import { theme } from '../../src/constants/theme';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 

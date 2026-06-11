@@ -27,7 +27,6 @@ import {
 } from 'lucide-react-native';
 import apiClient from '../../src/services/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
-import { theme } from '../../src/constants/theme';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 
@@ -538,11 +537,8 @@ export default function DoctorProfileScreen() {
   // Cancel pending request
   const handleCancelRequest = useCallback(async () => {
     if (!doctor) return;
-    setCancelTargetDoc(doctor);
     setRemoveModalVisible(true);
   }, [doctor]);
-
-  const [cancelTargetDoc, setCancelTargetDoc] = useState<User | null>(null);
 
   const handleConfirmRemove = async () => {
     setRemoveModalVisible(false);
@@ -563,7 +559,6 @@ export default function DoctorProfileScreen() {
       Alert.alert('Error', 'Failed to update connection. Please try again.');
     } finally {
       setIsProcessing(false);
-      setCancelTargetDoc(null);
     }
   };
 

@@ -25,42 +25,19 @@ import { Button } from '../../src/components/ui/Button';
 import {
   HerniaType,
   Gender,
-  OperationStage,
   SurgeryStatus,
   SurgeryType,
 } from '../../src/types';
 import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { parseISODateOnly } from '../../src/utils/dateHelpers';
-
-const genderOptions: Array<{ label: string; value: Gender }> = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
-];
-
-const herniaTypeOptions: Array<{ label: string; value: HerniaType }> = [
-  { label: 'Inguinal', value: 'inguinal' },
-  { label: 'Femoral', value: 'femoral' },
-  { label: 'Umbilical', value: 'umbilical' },
-  { label: 'Incisional', value: 'incisional' },
-];
-
-const surgeryStatusOptions: Array<{ label: string; value: SurgeryStatus }> = [
-  { label: 'Not Done', value: 'not-done' },
-  { label: 'Scheduled', value: 'scheduled' },
-  { label: 'Completed', value: 'completed' },
-];
-
-const surgeryTypeOptions: Array<{ label: string; value: SurgeryType }> = [
-  { label: 'Open', value: 'open' },
-  { label: 'Laparoscopic', value: 'laparoscopic' },
-];
-
-function deriveOperationStage(status: SurgeryStatus | null): OperationStage | null {
-  if (!status) return null;
-  return status === 'completed' ? 'post-operation' : 'pre-operation';
-}
+import {
+  GENDER_OPTIONS,
+  HERNIA_TYPE_OPTIONS,
+  SURGERY_STATUS_OPTIONS,
+  SURGERY_TYPE_OPTIONS,
+  deriveOperationStage,
+} from '../../src/utils/profileConstants';
 
 export default function PatientOnboardingScreen() {
   const router = useRouter();
@@ -168,7 +145,7 @@ export default function PatientOnboardingScreen() {
 
             <SelectionGroup
               label="Gender"
-              options={genderOptions}
+              options={GENDER_OPTIONS}
               selected={gender}
               onSelect={(value) => setGender(value)}
               Icon={Users}
@@ -177,7 +154,7 @@ export default function PatientOnboardingScreen() {
 
             <SelectionGroup
               label="Hernia Type"
-              options={herniaTypeOptions}
+              options={HERNIA_TYPE_OPTIONS}
               selected={herniaType}
               onSelect={(value) => setHerniaType(value)}
               Icon={HeartPulse}
@@ -186,7 +163,7 @@ export default function PatientOnboardingScreen() {
 
             <SelectionGroup
               label="Surgery Status"
-              options={surgeryStatusOptions}
+              options={SURGERY_STATUS_OPTIONS}
               selected={surgeryStatus}
               onSelect={(value) => setSurgeryStatus(value)}
               Icon={CalendarClock}
@@ -195,7 +172,7 @@ export default function PatientOnboardingScreen() {
 
             <SelectionGroup
               label="Surgery Type"
-              options={surgeryTypeOptions}
+              options={SURGERY_TYPE_OPTIONS}
               selected={surgeryType}
               onSelect={(value) => setSurgeryType(value)}
               Icon={Wrench}

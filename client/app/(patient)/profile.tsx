@@ -14,10 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   CalendarClock,
-  ClipboardList,
   House,
-  MapPin,
-  Phone,
   ShieldAlert,
   Users,
   HeartPulse,
@@ -34,71 +31,21 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import {
   Gender,
   HerniaType,
-  OperationStage,
   SurgeryStatus,
   SurgeryType,
 } from '../../src/types';
 import { parseISODateOnly, surgeryCountdownLabel } from '../../src/utils/dateHelpers';
+import {
+  GENDER_OPTIONS,
+  HERNIA_TYPE_OPTIONS,
+  SURGERY_STATUS_OPTIONS,
+  SURGERY_TYPE_OPTIONS,
+  deriveOperationStage,
+  formatHerniaType,
+  formatGender,
+} from '../../src/utils/profileConstants';
 
-const genderOptions: Array<{ label: string; value: Gender }> = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
-];
-
-const herniaTypeOptions: Array<{ label: string; value: HerniaType }> = [
-  { label: 'Inguinal', value: 'inguinal' },
-  { label: 'Femoral', value: 'femoral' },
-  { label: 'Umbilical', value: 'umbilical' },
-  { label: 'Incisional', value: 'incisional' },
-];
-
-const surgeryStatusOptions: Array<{ label: string; value: SurgeryStatus }> = [
-  { label: 'Not Done', value: 'not-done' },
-  { label: 'Scheduled', value: 'scheduled' },
-  { label: 'Completed', value: 'completed' },
-];
-
-const surgeryTypeOptions: Array<{ label: string; value: SurgeryType }> = [
-  { label: 'Open', value: 'open' },
-  { label: 'Laparoscopic', value: 'laparoscopic' },
-];
-
-function deriveOperationStage(status: SurgeryStatus | null): OperationStage | null {
-  if (!status) return null;
-  return status === 'completed' ? 'post-operation' : 'pre-operation';
-}
-
-function formatHerniaType(value?: HerniaType | null) {
-  if (!value) return undefined;
-  const map: Record<HerniaType, string> = {
-    inguinal: 'Inguinal',
-    femoral: 'Femoral',
-    umbilical: 'Umbilical',
-    incisional: 'Incisional',
-  };
-  return map[value];
-}
-
-function formatGender(value?: Gender | null) {
-  if (!value) return undefined;
-  const map: Record<Gender, string> = {
-    male: 'Male',
-    female: 'Female',
-    other: 'Other',
-  };
-  return map[value];
-}
-
-function formatOperationStage(value?: OperationStage | null) {
-  if (!value) return undefined;
-  const map: Record<OperationStage, string> = {
-    'pre-operation': 'Pre Operation',
-    'post-operation': 'Post Operation',
-  };
-  return map[value];
-}
-
+// Additional format functions specific to profile
 function formatSurgeryStatus(value?: SurgeryStatus | null) {
   if (!value) return undefined;
   const map: Record<SurgeryStatus, string> = {
@@ -241,7 +188,6 @@ export default function PatientProfileScreen() {
     return cells;
   }, [currentCalendarMonth, form.scheduledSurgeryDate]);
 
-  const derivedStage = deriveOperationStage(form.surgeryStatus);
   const isScheduled = form.surgeryStatus === 'scheduled';
   const isScheduledDateValid = !isScheduled || !!parseISODateOnly(form.scheduledSurgeryDate.trim());
   const reminderText = useMemo(
@@ -381,22 +327,6 @@ export default function PatientProfileScreen() {
     setIsEditing(true);
   };
 
-  const onCancelEdit = () => {
-    setForm({
-      name: user?.name ?? '',
-      gender: user?.gender ?? null,
-      herniaType: user?.herniaType ?? null,
-      surgeryStatus: user?.surgeryStatus ?? null,
-      surgeryType: user?.surgeryType ?? null,
-      scheduledSurgeryDate: user?.scheduledSurgeryDate ?? '',
-      place: user?.place ?? '',
-      phoneNumber: user?.phoneNumber ?? '',
-      address: user?.address ?? '',
-      emergencyContactNumber: user?.emergencyContactNumber ?? '',
-    });
-    setIsEditing(false);
-  };
-
   const onLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -455,28 +385,28 @@ export default function PatientProfileScreen() {
 
                 <SelectionGroup
                   label="Gender"
-                  options={genderOptions}
+                  options={GENDER_OPTIONS}
                   selected={form.gender}
                   onSelect={(value) => onChange('gender', value)}
                 />
 
                 <SelectionGroup
                   label="Hernia Type"
-                  options={herniaTypeOptions}
+                  options={HERNIA_TYPE_OPTIONS}
                   selected={form.herniaType}
                   onSelect={(value) => onChange('herniaType', value)}
                 />
 
                 <SelectionGroup
                   label="Surgery Status"
-                  options={surgeryStatusOptions}
+                  options={SURGERY_STATUS_OPTIONS}
                   selected={form.surgeryStatus}
                   onSelect={(value) => onChange('surgeryStatus', value)}
                 />
 
                 <SelectionGroup
                   label="Surgery Type"
-                  options={surgeryTypeOptions}
+                  options={SURGERY_TYPE_OPTIONS}
                   selected={form.surgeryType}
                   onSelect={(value) => onChange('surgeryType', value)}
                 />

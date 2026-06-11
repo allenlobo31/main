@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -25,12 +25,27 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { DAILY_TASKS, BADGES } from '../../src/constants/gamification';
 import { PHASE_CONFIGS } from '../../src/constants/phases';
 import { BadgeId } from '../../src/types';
-import { Hand, Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock, Trophy, Globe } from 'lucide-react-native';
+import { Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star, CalendarClock, Trophy, Globe } from 'lucide-react-native';
 import { surgeryCountdownLabel } from '../../src/utils/dateHelpers';
 import { useLanguageStore, LanguageCode } from '../../src/store/languageStore';
 
 const BADGE_ICONS: Record<string, any> = {
   Hospital, Flame, Zap, Camera, Book, Phone, Shield, Activity, Star
+};
+
+// Badge label translations map
+const BADGE_LABELS: Record<BadgeId, Record<LanguageCode, string>> = {
+  first_checkin: { en: 'First Check-In', kn: 'ಮೊದಲ ಚೆಕ್-ಇನ್', hi: 'पहला चेक-इन' },
+  streak_3: { en: '3 Day Streak', kn: '3 ದಿನದ ಸರಣಿ', hi: '3 दिवसीय स्ट्रीक' },
+  streak_7: { en: 'Weekly Streak', kn: 'ವಾರದ ಸರಣಿ', hi: 'साप्ताहिक स्ट्रीक' },
+  streak_30: { en: '30 Day Streak', kn: '30 ದಿನದ ಸರಣಿ', hi: '30 दिवसीय स्ट्रीक' },
+  photo_uploader: { en: 'Photo Uploader', kn: 'ಫೋಟೋ ಅಪ್‌ಲೋಡರ್', hi: 'फोटो अपलोडर' },
+  diary_starter: { en: 'Diary Starter', kn: 'ದಿನಚರಿ ಆರಂಭಿಕ', hi: 'डायरी स्टार्टर' },
+  dairy: { en: 'Diary', kn: 'ದಿನಚರಿ', hi: 'डायरी' },
+  call_made: { en: 'First Call', kn: 'ಮೊದಲ ಕರೆ', hi: 'पहला कॉल' },
+  week_warrior: { en: 'Weekly Warrior', kn: 'ವಾರದ ಯೋಧ', hi: 'साप्ताहिक योद्धा' },
+  pain_free: { en: 'Pain Free Days', kn: 'ನೋವಿಲ್ಲದ ದಿನಗಳು', hi: 'दर्द मुक्त दिन' },
+  recovery_hero: { en: 'Recovery Hero', kn: 'ಚೇತರಿಕೆ ವೀರ', hi: 'रिकवरी हीरो' },
 };
 
 export default function DashboardScreen() {
@@ -66,20 +81,7 @@ export default function DashboardScreen() {
   };
 
   const getBadgeLabel = (badgeId: BadgeId, defaultLabel: string) => {
-    switch (badgeId) {
-      case 'first_checkin': return language === 'kn' ? 'ಮೊದಲ ಚೆಕ್-ಇನ್' : language === 'hi' ? 'पहला चेक-इन' : defaultLabel;
-      case 'streak_3': return language === 'kn' ? '3 ದಿನದ ಸರಣಿ' : language === 'hi' ? '3 दिवसीय स्ट्रीक' : defaultLabel;
-      case 'streak_7': return language === 'kn' ? 'ವಾರದ ಸರಣಿ' : language === 'hi' ? 'ಸಾಪ್ತಾಹಿಕ ಸ್ಟ್ರೀಕ್' : defaultLabel;
-      case 'streak_30': return language === 'kn' ? '30 ದಿನದ ಸರಣಿ' : language === 'hi' ? '30 दिवसीय स्ट्रीक' : defaultLabel;
-      case 'photo_uploader': return language === 'kn' ? 'ಫೋಟೋ ಅಪ್‌ಲೋಡರ್' : language === 'hi' ? 'फोटो अपलोडर' : defaultLabel;
-      case 'diary_starter': return language === 'kn' ? 'ದಿನಚರಿ ಆರಂಭಿಕ' : language === 'hi' ? 'डायरी स्टार्टर' : defaultLabel;
-      case 'dairy': return language === 'kn' ? 'ದಿನಚರಿ' : language === 'hi' ? 'डायरी' : defaultLabel;
-      case 'call_made': return language === 'kn' ? 'ಮೊದಲ ಕರೆ' : language === 'hi' ? 'पहला कॉल' : defaultLabel;
-      case 'week_warrior': return language === 'kn' ? 'ವಾರದ ಯೋಧ' : language === 'hi' ? 'साप्ताहिक योद्धा' : defaultLabel;
-      case 'pain_free': return language === 'kn' ? 'ನೋವಿಲ್ಲದ ದಿನಗಳು' : language === 'hi' ? 'दर्द मुक्त दिन' : defaultLabel;
-      case 'recovery_hero': return language === 'kn' ? 'ಚೇತರಿಕೆ ವೀರ' : language === 'hi' ? 'रिकवरी हीरो' : defaultLabel;
-      default: return defaultLabel;
-    }
+    return BADGE_LABELS[badgeId]?.[language] ?? defaultLabel;
   };
 
   const countdown = useMemo(
@@ -92,12 +94,12 @@ export default function DashboardScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  // Shared initialization logic for gamification
+  const initializeGamification = async () => {
     try {
       await gamification.refresh();
       await gamification.checkDailyStreak();
-      
+
       // Auto-complete "Every day login" task
       const currentProfile = useGamificationStore.getState().profile;
       const completedToday = currentProfile?.tasksCompletedToday ?? [];
@@ -106,7 +108,14 @@ export default function DashboardScreen() {
         await gamification.completeTask(taskId, 10);
       }
     } catch (error) {
-      console.error('[Dashboard] pull to refresh error:', error);
+      console.error('[Dashboard] gamification init error:', error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await initializeGamification();
     } finally {
       setRefreshing(false);
     }
@@ -116,31 +125,17 @@ export default function DashboardScreen() {
     React.useCallback(() => {
       let isMounted = true;
 
-      const initializeGamification = async () => {
-        try {
-          await gamification.refresh();
-          if (!isMounted) return;
-          await gamification.checkDailyStreak();
-          if (!isMounted) return;
-
-          // Auto-complete "Every day login" task
-          const currentProfile = useGamificationStore.getState().profile;
-          const completedToday = currentProfile?.tasksCompletedToday ?? [];
-          const taskId = 'daily_logging';
-          if (!completedToday.includes(taskId)) {
-            await gamification.completeTask(taskId, 10);
-          }
-        } catch (error) {
-          console.error('[Dashboard] gamification focus init error:', error);
-        }
+      const initialize = async () => {
+        if (!isMounted) return;
+        await initializeGamification();
       };
 
-      void initializeGamification();
+      void initialize();
 
       return () => {
         isMounted = false;
       };
-    }, [])
+    }, [gamification])
   );
 
   const phase = gamification.phase;

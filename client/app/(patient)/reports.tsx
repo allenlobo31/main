@@ -8,7 +8,6 @@ import {
   Linking,
   TouchableOpacity,
   LayoutAnimation,
-  Image,
 } from 'react-native';
 import {
   AlertTriangle,
@@ -109,7 +108,6 @@ export default function ReportsScreen() {
       const base64 = await FileSystem.readAsStringAsync(compressed.uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
       // Provide all required arguments to uploadReport (passing base64 data)
       await uploadReport(

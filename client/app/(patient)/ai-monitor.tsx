@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  AppState,
   View,
   Text,
   StyleSheet,
@@ -30,7 +29,6 @@ import {
   TriangleAlert,
   CheckCircle2,
   Clock,
-  Sparkles,
 } from 'lucide-react-native';
 
 type AlertLevel = 'safe' | 'warning' | 'danger';
@@ -38,7 +36,7 @@ type AlertLevel = 'safe' | 'warning' | 'danger';
 
 
 export default function AIMonitorScreen() {
-  const { entries, aiInsight, isLoading, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
+  const { entries, aiInsight, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
   const gamification = useGamification();
   const { user } = useAuthStore();
 
