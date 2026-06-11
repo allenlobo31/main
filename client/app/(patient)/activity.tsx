@@ -37,19 +37,19 @@ export default function ActivityScreen() {
   const fadeNotToDoAnim = useRef(new Animated.Value(1)).current;
 
   const canDoSlides = useMemo(() => [
-    { id: '1', title: t('activity.canDoSlides.slide1.title'), subtitle: t('activity.canDoSlides.slide1.subtitle'), image: require('../../assets/diet_nutrition.png') },
-    { id: '2', title: t('activity.canDoSlides.slide2.title'), subtitle: t('activity.canDoSlides.slide2.subtitle'), image: require('../../assets/can_do_water.png') },
-    { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: require('../../assets/walking_recovery.png') },
-    { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: require('../../assets/peaceful_rest.png') },
-    { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: require('../../assets/can_do_task.png') },
+    { id: '1', title: t('activity.canDoSlides.slide1.title'), subtitle: t('activity.canDoSlides.slide1.subtitle'), image: require('../../assets/diet_nutrition.jpg') },
+    { id: '2', title: t('activity.canDoSlides.slide2.title'), subtitle: t('activity.canDoSlides.slide2.subtitle'), image: require('../../assets/can_do_water.jpg') },
+    { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: require('../../assets/walking_recovery.jpg') },
+    { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: require('../../assets/peaceful_rest.jpg') },
+    { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: require('../../assets/can_do_task.jpg') },
   ], [t]);
 
   const notToDoSlides = useMemo(() => [
-    { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: require('../../assets/prohibited_junk_food.png') },
-    { id: '2', title: t('activity.notToDoSlides.slide2.title'), subtitle: t('activity.notToDoSlides.slide2.subtitle'), image: require('../../assets/prohibited_alcohol.png') },
-    { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: require('../../assets/prohibited_running.png') },
-    { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: require('../../assets/prohibited_lifting.png') },
-    { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: require('../../assets/prohibited_bending.png') },
+    { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: require('../../assets/prohibited_junk_food.jpg') },
+    { id: '2', title: t('activity.notToDoSlides.slide2.title'), subtitle: t('activity.notToDoSlides.slide2.subtitle'), image: require('../../assets/prohibited_alcohol.jpg') },
+    { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: require('../../assets/prohibited_running.jpg') },
+    { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: require('../../assets/prohibited_lifting.jpg') },
+    { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: require('../../assets/prohibited_bending.jpg') },
   ], [t]);
 
   // Custom helpers to change indices with LayoutAnimation

@@ -35,6 +35,9 @@ yarn-error.*
 .env
 client/.env
 backend/.env
+**/.env
+**/.env.*
+**/.env*.local
 
 # typescript
 *.tsbuildinfo
@@ -42,3 +45,7 @@ backend/.env
 # generated native folders
 /ios
 /android
+
+# local CMake downloads/extractions
+cmake-3.31.7.zip
+cmake-extract/
