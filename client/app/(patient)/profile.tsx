@@ -364,7 +364,7 @@ function PatientProfileScreen() {
 
           <Card style={styles.profileCard}>
             <View style={styles.avatarRow}>
-              <Avatar name={form.name} size={90} />
+              <Avatar name={form.name} uri={user?.avatarUrl} size={90} />
               <View style={styles.identityBlock}>
                 <Text style={styles.name} numberOfLines={1}>{form.name || t('profile.defaultName')}</Text>
                 <Text style={styles.email} numberOfLines={1}>{user?.email ?? ''}</Text>

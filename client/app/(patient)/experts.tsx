@@ -26,6 +26,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
+import { Avatar } from '../../src/components/ui/Avatar';
 
 interface RemoveConnectionModalProps {
   visible: boolean;
@@ -261,15 +262,7 @@ function ExpertsScreen() {
             {pendingDoctors.map((pendDoc) => (
               <View key={pendDoc.uid} style={doctorListStyles.doctorCard}>
                 <View style={doctorListStyles.doctorInfo}>
-                  <View style={doctorListStyles.avatarCircle}>
-                    {pendDoc.avatarUrl ? (
-                      <Image source={{ uri: pendDoc.avatarUrl }} style={doctorListStyles.avatarImage} />
-                    ) : (
-                      <Text style={doctorListStyles.avatarInitials}>
-                        {(pendDoc.name ?? '?').trim().charAt(0).toUpperCase()}
-                      </Text>
-                    )}
-                  </View>
+                  <Avatar uri={pendDoc.avatarUrl} name={pendDoc.name} size={48} />
                   <View style={doctorListStyles.nameCol}>
                     <Text style={doctorListStyles.doctorName}>Dr. {pendDoc.name}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>

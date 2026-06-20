@@ -11,10 +11,20 @@ interface AvatarProps {
 function _Avatar({ uri, name, size = 40 }: AvatarProps) {
   const initials = (name ?? '?').trim().charAt(0).toUpperCase() || '?';
 
-  if (uri) {
+  const sanitizedUri = React.useMemo(() => {
+    if (uri && typeof uri === 'string') {
+      if (uri.includes('api.dicebear.com') && uri.includes('/svg')) {
+        return uri.replace('/svg', '/png');
+      }
+      return uri;
+    }
+    return null;
+  }, [uri]);
+
+  if (sanitizedUri) {
     return (
       <Image
-        source={{ uri }}
+        source={{ uri: sanitizedUri }}
         style={[
           styles.image,
           { width: size, height: size, borderRadius: size / 2 },

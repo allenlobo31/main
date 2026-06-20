@@ -278,7 +278,7 @@ function DashboardScreen() {
               activeOpacity={0.8}
               onPress={() => router.push('/(patient)/profile')}
             >
-              <Avatar name={user?.name} size={40} />
+              <Avatar name={user?.name} uri={user?.avatarUrl} size={40} />
             </TouchableOpacity>
           </View>
         </View>

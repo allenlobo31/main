@@ -18,6 +18,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
+import { Avatar } from '../../src/components/ui/Avatar';
 
 function ConnectDoctorScreen() {
   const { t, language } = useLanguageStore();
@@ -97,15 +98,6 @@ function ConnectDoctorScreen() {
     [user?.uid, updateProfile]
   );
 
-  const getInitials = (name: string | undefined): string => {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-    }
-    return parts[0].charAt(0).toUpperCase();
-  };
-
   const renderDoctorCard = ({ item }: { item: User }) => (
     <TouchableOpacity
       style={styles.doctorCard}
@@ -114,13 +106,7 @@ function ConnectDoctorScreen() {
     >
       <View style={styles.doctorRow}>
         {/* Avatar */}
-        <View style={styles.avatarCircle}>
-          {item.avatarUrl ? (
-            <Image source={{ uri: item.avatarUrl }} style={styles.avatarImage} />
-          ) : (
-            <Text style={styles.avatarInitials}>{getInitials(item.name)}</Text>
-          )}
-        </View>
+        <Avatar uri={item.avatarUrl} name={item.name} size={50} />
 
         {/* Doctor Info */}
         <View style={styles.doctorInfo}>

@@ -30,6 +30,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
+import { Avatar } from '../../src/components/ui/Avatar';
 
 // Modals
 interface LocationModalProps {
@@ -653,15 +654,7 @@ export default function DoctorProfileScreen() {
         {/* Large Centered Doctor Avatar */}
         <View style={styles.avatarMainCol}>
           <View style={styles.doctorProfileImageContainer}>
-            <View style={styles.avatarPlaceholderCircle}>
-              {doctor.avatarUrl ? (
-                <Image source={{ uri: doctor.avatarUrl }} style={styles.avatarImageInside} resizeMode="cover" />
-              ) : (
-                <Text style={styles.avatarInitialsText}>
-                  {getInitials(doctor.name)}
-                </Text>
-              )}
-            </View>
+            <Avatar uri={doctor.avatarUrl} name={doctor.name} size={130} />
           </View>
 
           {/* Centered Name and Specialty */}

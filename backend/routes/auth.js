@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       name,
       role,
-      avatarUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(name)}`,
+      avatarUrl: `https://api.dicebear.com/7.x/initials/png?seed=${encodeURIComponent(name)}`,
       surgeryStatus: role === 'patient' ? 'not-done' : null,
       profileSetupCompleted: role === 'doctor'
     });

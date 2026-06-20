@@ -37,3 +37,13 @@ expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
+
+def fixProjectDirs(project) {
+  def path = project.projectDir.absolutePath
+  if (path.startsWith("C:\\Users\\Allen Lobo\\React Projects\\React Native")) {
+    project.projectDir = new File(path.replace("C:\\Users\\Allen Lobo\\React Projects\\React Native", "Z:"))
+  }
+  project.children.each { fixProjectDirs(it) }
+}
+fixProjectDirs(rootProject)
+
