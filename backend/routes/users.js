@@ -20,7 +20,37 @@ router.put('/profile', authMiddleware, async (req, res) => {
     const userObj = await User.findById(req.user.id);
     if (!userObj) return res.status(404).json({ message: 'User not found' });
 
-    let update = { ...req.body };
+    const editableFields = [
+      'name', 'gender', 'herniaType', 'operationStage', 'surgeryStatus',
+      'surgeryType', 'scheduledSurgeryDate', 'phoneNumber', 'address',
+      'hospitalAddress', 'specialty', 'bio', 'availableAtHospital', 'experience',
+      'avatarUrl', 'expoPushToken', 'isActive', 'isOnline'
+    ];
+
+    let update = {};
+
+    // Whitelist top-level editable fields
+    editableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        update[field] = req.body[field];
+      }
+    });
+
+    // Whitelist XP & Level updates from gamification
+    if (req.body.xp !== undefined) update.xp = req.body.xp;
+    if (req.body.level !== undefined) update.level = req.body.level;
+    if (req.body.streakDays !== undefined) update.streakDays = req.body.streakDays;
+
+    // Whitelist update operators
+    if (req.body.$addToSet) {
+      update.$addToSet = {};
+      if (req.body.$addToSet.tasksCompletedToday) {
+        update.$addToSet.tasksCompletedToday = req.body.$addToSet.tasksCompletedToday;
+      }
+      if (req.body.$addToSet.badges) {
+        update.$addToSet.badges = req.body.$addToSet.badges;
+      }
+    }
 
     // Check if it's a new day to reset completed tasks
     if (userObj.lastTaskResetDate !== todayStr) {
@@ -277,6 +307,18 @@ router.post('/reports', authMiddleware, async (req, res) => {
 router.delete('/reports/:id', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
+    const reportToDelete = user.reports.find(r => r._id.toString() === req.params.id);
+
+    if (reportToDelete && reportToDelete.fileUrl) {
+      const urlParts = reportToDelete.fileUrl.split('/images/');
+      if (urlParts.length > 1) {
+        const imageId = urlParts[1];
+        const Image = require('../models/Image');
+        await Image.findByIdAndDelete(imageId);
+        console.log(`🧹 Cleaned up orphaned image binary: ${imageId}`);
+      }
+    }
+
     user.reports = user.reports.filter(r => r._id.toString() !== req.params.id);
     await user.save();
     res.json({ success: true });
@@ -288,6 +330,9 @@ router.delete('/reports/:id', authMiddleware, async (req, res) => {
 // Accept patient
 router.post('/patients/:uid/accept', authMiddleware, async (req, res) => {
   try {
+    if (req.user.role !== 'doctor') {
+      return res.status(403).json({ message: 'Access denied: Only doctors can accept patients' });
+    }
     const doctorId = req.user.id;
     const { uid: patientId } = req.params;
 

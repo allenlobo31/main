@@ -49,6 +49,7 @@ function AIMonitorScreen() {
   const [bleeding, setBleeding] = useState(false);
   const [difficultUrination, setDifficultUrination] = useState(false);
   const [painDescription, setPainDescription] = useState('');
+  const [painLevel, setPainLevel] = useState(5);
   const [showReport, setShowReport] = useState(false);
   const [submittedData, setSubmittedData] = useState<{
     painLevel: number;
@@ -84,15 +85,8 @@ function AIMonitorScreen() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Calculate dynamic pain level based on active symptoms
-      let calculatedPainLevel = 1;
-      if (redness || bleeding) {
-        calculatedPainLevel = 9;
-      } else if (vomiting || difficultUrination) {
-        calculatedPainLevel = 5;
-      } else if (fever || swelling) {
-        calculatedPainLevel = 1;
-      }
+      // Use the user-selected pain level from the slider
+      const calculatedPainLevel = painLevel;
 
       const loggedAt = new Date();
 
@@ -117,12 +111,12 @@ function AIMonitorScreen() {
                   ? 'okay'
                   : 'good';
 
-        const painLabel = calculatedPainLevel === 9 ? 'High 😭' : (calculatedPainLevel === 5 ? 'Medium 😣' : 'Mild 🙂');
+        const painLabel = calculatedPainLevel >= 8 ? 'High 😭' : (calculatedPainLevel >= 4 ? 'Medium 😣' : 'Mild 🙂');
 
         const miniReport = [
           'Health Monitor Report',
           `Logged at: ${loggedAt.toLocaleDateString()} ${loggedAt.toLocaleTimeString()}`,
-          `Pain (Dynamic): ${painLabel} (${calculatedPainLevel}/10)`,
+          `Pain Level: ${painLabel} (${calculatedPainLevel}/10)`,
           `Fever: ${fever ? 'Yes' : 'No'}`,
           `Swelling: ${swelling ? 'Yes' : 'No'}`,
           `Vomiting: ${vomiting ? 'Yes' : 'No'}`,
@@ -167,6 +161,7 @@ function AIMonitorScreen() {
       setBleeding(false);
       setDifficultUrination(false);
       setPainDescription('');
+      setPainLevel(5);
     } catch (error) {
       console.error('[AIMonitor] handleSubmit error:', error);
       Alert.alert(t('experts.errorTitle'), t('monitor.saveError'));
@@ -242,10 +237,14 @@ function AIMonitorScreen() {
               <Text style={styles.reportDetailLabel}>{t('monitor.severityRating')}</Text>
               <View style={[
                 styles.reportPainBadge,
-                submittedData.painLevel === 9 ? styles.painHigh : (submittedData.painLevel === 5 ? styles.painMedium : styles.painMild)
+                submittedData.painLevel >= 8 ? styles.painHigh : (submittedData.painLevel >= 4 ? styles.painMedium : styles.painMild)
               ]}>
                 <Text style={styles.reportPainBadgeText}>
-                  {submittedData.painLevel === 9 ? t('monitor.highSeverity') : (submittedData.painLevel === 5 ? t('monitor.mediumSeverity') : t('monitor.mildSeverity'))}
+                  {submittedData.painLevel >= 8
+                    ? `${t('monitor.highSeverity')} (${submittedData.painLevel}/10)`
+                    : submittedData.painLevel >= 4
+                      ? `${t('monitor.mediumSeverity')} (${submittedData.painLevel}/10)`
+                      : `${t('monitor.mildSeverity')} (${submittedData.painLevel}/10)`}
                 </Text>
               </View>
             </View>
@@ -311,7 +310,40 @@ function AIMonitorScreen() {
         <Card style={styles.formCard} bordered>
           <Text style={styles.formTitle}>{t('monitor.logTitle')}</Text>
 
-
+          {/* Pain Level Slider */}
+          <Text style={styles.fieldLabel}>{t('monitor.painHeader') ?? 'Pain Level'}</Text>
+          <View style={styles.sliderContainer}>
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((val) => {
+              const isSelected = val === painLevel;
+              const segColor =
+                val <= 3 ? '#22c55e' : val <= 6 ? '#f59e0b' : '#ef4444';
+              return (
+                <TouchableOpacity
+                  key={val}
+                  style={[
+                    styles.sliderSegment,
+                    { backgroundColor: isSelected ? segColor : `${segColor}33` },
+                    isSelected && styles.sliderSegmentActive,
+                  ]}
+                  onPress={() => setPainLevel(val)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[
+                    styles.sliderSegmentText,
+                    { color: isSelected ? '#ffffff' : segColor },
+                    isSelected && styles.sliderSegmentTextActive,
+                  ]}>
+                    {val}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <View style={styles.sliderLegend}>
+            <Text style={[styles.sliderLegendText, { color: '#22c55e' }]}>Mild</Text>
+            <Text style={[styles.sliderLegendText, { color: '#f59e0b' }]}>Moderate</Text>
+            <Text style={[styles.sliderLegendText, { color: '#ef4444' }]}>Severe</Text>
+          </View>
 
           <Text style={styles.fieldLabel}>{t('monitor.symptomsHeader')}</Text>
           <View style={[styles.optionRow, isCompact && styles.optionRowCompact]}>
@@ -488,6 +520,49 @@ const styles = StyleSheet.create({
   },
   formTitle: { ...theme.typography.h3, color: theme.colors.textPrimary, marginBottom: theme.spacing.md },
   fieldLabel: { ...theme.typography.caption, color: theme.colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
+  sliderContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 4,
+    marginTop: 2,
+  },
+  sliderSegment: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  sliderSegmentActive: {
+    borderColor: '#000000',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  sliderSegmentText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sliderSegmentTextActive: {
+    fontWeight: '900',
+    fontSize: 13,
+  },
+  sliderLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+    marginBottom: theme.spacing.sm,
+  },
+  sliderLegendText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
 
   optionRow: { flexDirection: 'row', gap: theme.spacing.xs, marginBottom: theme.spacing.sm, flexWrap: 'wrap' },
   optionRowCompact: { rowGap: theme.spacing.xs },

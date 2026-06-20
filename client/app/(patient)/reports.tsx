@@ -34,6 +34,7 @@ import { theme } from '../../src/constants/theme';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { formatDate } from '../../src/utils/dateHelpers';
 import { useLanguageStore } from '../../src/store/languageStore';
+import { useAuthStore } from '../../src/store/authStore';
 
 const TYPE_ICONS: Record<string, any> = {
   scan: ImageIcon,
@@ -56,6 +57,7 @@ function ReportsScreen() {
   } = useReports();
   const gamification = useGamification();
   const { width } = useWindowDimensions();
+  const token = useAuthStore((state) => state.token);
 
   const gapSize = 10;
   const paddingSize = 16; // theme.spacing.lg is 16
@@ -413,7 +415,13 @@ function ReportsScreen() {
                             activeOpacity={0.8}
                           >
                             {isPhoto ? (
-                              <Image source={{ uri: report.fileUrl }} style={styles.albumImage} />
+                              <Image
+                                source={{
+                                  uri: report.fileUrl,
+                                  headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                                }}
+                                style={styles.albumImage}
+                              />
                             ) : (
                               <View style={styles.albumDocFallback}>
                                 <Icon size={24} color="#000000" strokeWidth={1.5} />

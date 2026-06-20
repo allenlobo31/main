@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Pressable, Animated, Image } 
 import { theme } from '../../constants/theme';
 import { Report } from '../../types';
 import { formatDate } from '../../utils/dateHelpers';
+import { useAuthStore } from '../../store/authStore';
 import { FileText, Camera, Activity, Paperclip, Image as ImageIcon, Zap, Eye, Trash2 } from 'lucide-react-native';
 
 const TYPE_ICONS: Record<Report['type'], any> = {
@@ -29,6 +30,7 @@ interface ReportCardProps {
 
 function _ReportCard({ report, onView, onDelete }: ReportCardProps) {
   const [scaleValue] = useState(new Animated.Value(1));
+  const token = useAuthStore((state) => state.token);
 
   const onPressIn = () => {
     Animated.spring(scaleValue, {
@@ -51,7 +53,13 @@ function _ReportCard({ report, onView, onDelete }: ReportCardProps) {
     <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onView}>
       <Animated.View style={[styles.container, isPhoto && styles.photoContainer, { transform: [{ scale: scaleValue }] }]}>
         {isPhoto ? (
-          <Image source={{ uri: report.fileUrl }} style={styles.cardImage} />
+          <Image
+            source={{
+              uri: report.fileUrl,
+              headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            }}
+            style={styles.cardImage}
+          />
         ) : (
           <View style={styles.iconBox}>
             <Icon size={24} color="#000000" strokeWidth={1.5} />

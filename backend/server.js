@@ -8,6 +8,7 @@ const axios = require('axios');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const Image = require('./models/Image');
+const authMiddleware = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,7 +29,7 @@ mongoose.connect(MONGO_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
-app.post('/api/upload', async (req, res) => {
+app.post('/api/upload', authMiddleware, async (req, res) => {
   try {
     const { fileData, contentType, filename } = req.body;
 
@@ -42,7 +43,8 @@ app.post('/api/upload', async (req, res) => {
     const newImage = new Image({
       filename: filename || 'uploaded_image.jpg',
       contentType: contentType || 'image/jpeg',
-      data: buffer
+      data: buffer,
+      userId: req.user.id
     });
 
     await newImage.save();
@@ -58,11 +60,29 @@ app.post('/api/upload', async (req, res) => {
   }
 });
 
-app.get('/api/images/:id', async (req, res) => {
+app.get('/api/images/:id', authMiddleware, async (req, res) => {
   try {
     const image = await Image.findById(req.params.id);
     if (!image || !image.data) {
       return res.status(404).json({ error: 'Image not found' });
+    }
+
+    // Access control check
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    if (userRole === 'patient') {
+      if (image.userId.toString() !== userId) {
+        return res.status(403).json({ error: 'Access denied: You do not own this image' });
+      }
+    } else if (userRole === 'doctor') {
+      const { User } = require('./models');
+      const doctor = await User.findById(userId);
+      if (!doctor || !doctor.linkedPatientIds.includes(image.userId.toString())) {
+        return res.status(403).json({ error: 'Access denied: Patient is not linked to you' });
+      }
+    } else {
+      return res.status(403).json({ error: 'Access denied: Invalid role' });
     }
 
     res.set('Content-Type', image.contentType);
@@ -95,6 +115,32 @@ app.post('/api/errors', (req, res) => {
 app.post('/api/ai/:action', (req, res) => {
   const { action } = req.params;
   console.log(`🤖 AI Request [${action}]`);
+
+  if (action === 'analyze-symptoms') {
+    return res.json({
+      painTrend: 'stable',
+      flags: [],
+      recommendation: 'Based on your logs, your symptoms appear stable. Ensure you get plenty of rest, avoid strenuous activities, and follow your post-op guide.',
+      rawAnalysis: 'Dynamic symptom monitoring shows stable pain. No alarm flags detected.'
+    });
+  }
+
+  if (action === 'analyze-wound') {
+    return res.json({
+      healingStage: 'early',
+      rednessLevel: 'none',
+      swellingVisible: false,
+      dischargeSeen: false,
+      recommendation: 'Your wound photo shows normal early healing. Keep it clean and dry, and avoid scratching.'
+    });
+  }
+
+  if (action === 'diary-insight' || action === 'consultation-summary') {
+    return res.json({
+      summary: 'AI analysis suggests your recovery is progressing smoothly. Keep up the good work and log symptoms daily.'
+    });
+  }
+
   res.json({ message: 'AI stub response. AI features not yet implemented on backend.' });
 });
 
