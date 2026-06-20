@@ -15,8 +15,8 @@ export function useAuth() {
         try {
           await registerForPushNotifications(store.user!.uid);
           await scheduleDailyReminder();
-        } catch (e) {
-          console.log('[useAuth] push init fail', e);
+        } catch (_e) {
+          // Push notification init failed silently — non-critical
         }
       };
       initPush();

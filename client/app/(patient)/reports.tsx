@@ -71,19 +71,19 @@ function ReportsScreen() {
   }, [reports]);
 
   const careSlides = useMemo(() => [
-    { id: 'clean', title: t('reports.careTips.clean'), subtitle: t('reports.careTips.cleanSub'), image: require('../../assets/care_clean_dry.png') },
-    { id: 'clothes', title: t('reports.careTips.clothes'), subtitle: t('reports.careTips.clothesSub'), image: require('../../assets/care_loose_clothes.png') },
-    { id: 'dressing', title: t('reports.careTips.dressing'), subtitle: t('reports.careTips.dressingSub'), image: require('../../assets/care_change_dressing.png') },
-    { id: 'scratch', title: t('reports.careTips.scratch'), subtitle: t('reports.careTips.scratchSub'), image: require('../../assets/care_no_scratch.png') },
-    { id: 'meds', title: t('reports.careTips.meds'), subtitle: t('reports.careTips.medsSub'), image: require('../../assets/care_take_meds.png') },
-    { id: 'call', title: t('reports.careTips.call'), subtitle: t('reports.careTips.callSub'), image: require('../../assets/care_call_doctor.png') },
+    { id: 'clean', title: t('reports.careTips.clean'), subtitle: t('reports.careTips.cleanSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_clean_dry.webp' } },
+    { id: 'clothes', title: t('reports.careTips.clothes'), subtitle: t('reports.careTips.clothesSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_loose_clothes.webp' } },
+    { id: 'dressing', title: t('reports.careTips.dressing'), subtitle: t('reports.careTips.dressingSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_change_dressing.webp' } },
+    { id: 'scratch', title: t('reports.careTips.scratch'), subtitle: t('reports.careTips.scratchSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_no_scratch.webp' } },
+    { id: 'meds', title: t('reports.careTips.meds'), subtitle: t('reports.careTips.medsSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_take_meds.webp' } },
+    { id: 'call', title: t('reports.careTips.call'), subtitle: t('reports.careTips.callSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/care_call_doctor.webp' } },
   ], [t, language]);
 
   const warningSlides = useMemo(() => [
-    { id: 'redness', title: t('reports.warningSigns.redness'), subtitle: t('reports.warningSigns.rednessSub'), image: require('../../assets/warning_redness.png') },
-    { id: 'swelling', title: t('reports.warningSigns.swelling'), subtitle: t('reports.warningSigns.swellingSub'), image: require('../../assets/warning_swelling.png') },
-    { id: 'pus', title: t('reports.warningSigns.pus'), subtitle: t('reports.warningSigns.pusSub'), image: require('../../assets/warning_pus.png') },
-    { id: 'bleeding', title: t('reports.warningSigns.bleeding'), subtitle: t('reports.warningSigns.bleedingSub'), image: require('../../assets/warning_bleeding.png') },
+    { id: 'redness', title: t('reports.warningSigns.redness'), subtitle: t('reports.warningSigns.rednessSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/warning_redness.webp' } },
+    { id: 'swelling', title: t('reports.warningSigns.swelling'), subtitle: t('reports.warningSigns.swellingSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/warning_swelling.webp' } },
+    { id: 'pus', title: t('reports.warningSigns.pus'), subtitle: t('reports.warningSigns.pusSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/warning_pus.webp' } },
+    { id: 'bleeding', title: t('reports.warningSigns.bleeding'), subtitle: t('reports.warningSigns.bleedingSub'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/warning_bleeding.webp' } },
   ], [t, language]);
 
   const [activeCareIndex, setActiveCareIndex] = useState(0);

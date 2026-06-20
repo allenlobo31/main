@@ -63,7 +63,6 @@ export default function RootLayout() {
   useEffect(() => {
     const cleanup = setupNotificationTapHandler((data) => {
       // Deep link handled by Expo Router's linking config
-      console.log('[Notification tap]', data);
     });
     return cleanup;
   }, []);

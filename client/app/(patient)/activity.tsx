@@ -37,19 +37,19 @@ function ActivityScreen() {
   const fadeNotToDoAnim = useRef(new Animated.Value(1)).current;
 
   const canDoSlides = useMemo(() => [
-    { id: '1', title: t('activity.canDoSlides.slide1.title'), subtitle: t('activity.canDoSlides.slide1.subtitle'), image: require('../../assets/diet_nutrition.jpg') },
-    { id: '2', title: t('activity.canDoSlides.slide2.title'), subtitle: t('activity.canDoSlides.slide2.subtitle'), image: require('../../assets/can_do_water.jpg') },
-    { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: require('../../assets/walking_recovery.jpg') },
-    { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: require('../../assets/peaceful_rest.jpg') },
-    { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: require('../../assets/can_do_task.jpg') },
+    { id: '1', title: t('activity.canDoSlides.slide1.title'), subtitle: t('activity.canDoSlides.slide1.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/diet_nutrition.webp' } },
+    { id: '2', title: t('activity.canDoSlides.slide2.title'), subtitle: t('activity.canDoSlides.slide2.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/can_do_water.webp' } },
+    { id: '3', title: t('activity.canDoSlides.slide3.title'), subtitle: t('activity.canDoSlides.slide3.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/walking_recovery.webp' } },
+    { id: '4', title: t('activity.canDoSlides.slide4.title'), subtitle: t('activity.canDoSlides.slide4.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/peaceful_rest.webp' } },
+    { id: '5', title: t('activity.canDoSlides.slide5.title'), subtitle: t('activity.canDoSlides.slide5.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/can_do_task.webp' } },
   ], [t, language]);
 
   const notToDoSlides = useMemo(() => [
-    { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: require('../../assets/prohibited_junk_food.jpg') },
-    { id: '2', title: t('activity.notToDoSlides.slide2.title'), subtitle: t('activity.notToDoSlides.slide2.subtitle'), image: require('../../assets/prohibited_alcohol.jpg') },
-    { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: require('../../assets/prohibited_running.jpg') },
-    { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: require('../../assets/prohibited_lifting.jpg') },
-    { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: require('../../assets/prohibited_bending.jpg') },
+    { id: '1', title: t('activity.notToDoSlides.slide1.title'), subtitle: t('activity.notToDoSlides.slide1.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/prohibited_junk_food.webp' } },
+    { id: '2', title: t('activity.notToDoSlides.slide2.title'), subtitle: t('activity.notToDoSlides.slide2.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/prohibited_alcohol.webp' } },
+    { id: '3', title: t('activity.notToDoSlides.slide3.title'), subtitle: t('activity.notToDoSlides.slide3.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/prohibited_running.webp' } },
+    { id: '4', title: t('activity.notToDoSlides.slide4.title'), subtitle: t('activity.notToDoSlides.slide4.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/prohibited_lifting.webp' } },
+    { id: '5', title: t('activity.notToDoSlides.slide5.title'), subtitle: t('activity.notToDoSlides.slide5.subtitle'), image: { uri: 'https://raw.githubusercontent.com/allenlobo31/HerniaCareImages/refs/heads/main/prohibited_bending.webp' } },
   ], [t, language]);
 
   // Custom helpers to change indices with LayoutAnimation

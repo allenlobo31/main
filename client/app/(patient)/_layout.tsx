@@ -33,7 +33,7 @@ export default function PatientLayout() {
     completeDailyLogin();
 
     // Prefetch doctors list to warm the cache
-    fetchDoctorsCached().catch((err) => console.log('[PatientLayout] Prefetch doctors failed:', err));
+    fetchDoctorsCached().catch(() => {});
   }, []);
 
   return (

@@ -1,5 +1,4 @@
-import { Platform } from 'react-native';
-import Constants from 'expo-constants';
+// Notifications are disabled per user preference. Dashboard cards are used instead.
 
 // We are disabling expo-notifications as per user request to avoid Expo Go limitations.
 // Using dashboard cards instead.
@@ -7,7 +6,6 @@ import Constants from 'expo-constants';
 export async function registerForPushNotifications(
   userId: string,
 ): Promise<string | null> {
-  console.log('[PushService] Registration disabled by user preference.');
   return null;
 }
 
@@ -18,5 +16,5 @@ export function setupNotificationTapHandler(
 }
 
 export async function scheduleDailyReminder(): Promise<void> {
-  console.log('[PushService] Scheduling disabled. Using dashboard cards instead.');
+  // Notifications disabled. Dashboard cards used instead.
 }
