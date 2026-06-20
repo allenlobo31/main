@@ -12,6 +12,7 @@ import { getPatientDetail } from '../../src/services/dataService';
 import { AIInsightCard } from '../../src/components/ai/AIInsightCard';
 import { PainChart } from '../../src/components/ai/PainChart';
 import { ReportCard } from '../../src/components/reports/ReportCard';
+import { ReportModal } from '../../src/components/reports/ReportModal';
 import { Card } from '../../src/components/ui/Card';
 import { Avatar } from '../../src/components/ui/Avatar';
 import { Badge } from '../../src/components/ui/Badge';
@@ -27,6 +28,7 @@ export default function PatientDetailScreen() {
   const [reports, setReports] = useState<Report[]>([]);
   const [gamification, setGamification] = useState<GamificationProfile | null>(null);
   const [aiInsight, setAiInsight] = useState<AIInsight | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
 
@@ -133,12 +135,18 @@ export default function PatientDetailScreen() {
         {/* Reports */}
         <Text style={styles.sectionTitle}>Medical Reports</Text>
         {reports.map((r) => (
-          <ReportCard key={r.id} report={r} onView={() => {}} />
+          <ReportCard key={r.id} report={r} onView={() => setSelectedReport(r)} />
         ))}
         {reports.length === 0 && (
           <Text style={styles.empty}>No reports uploaded yet.</Text>
         )}
       </ScrollView>
+
+      <ReportModal
+        visible={selectedReport !== null}
+        report={selectedReport}
+        onClose={() => setSelectedReport(null)}
+      />
     </SafeAreaView>
   );
 }

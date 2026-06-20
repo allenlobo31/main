@@ -35,6 +35,8 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { formatDate } from '../../src/utils/dateHelpers';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { useAuthStore } from '../../src/store/authStore';
+import { ReportModal } from '../../src/components/reports/ReportModal';
+import { Report } from '../../src/types';
 
 const TYPE_ICONS: Record<string, any> = {
   scan: ImageIcon,
@@ -58,6 +60,7 @@ function ReportsScreen() {
   const gamification = useGamification();
   const { width } = useWindowDimensions();
   const token = useAuthStore((state) => state.token);
+  const [selectedReportForView, setSelectedReportForView] = useState<Report | null>(null);
 
   const gapSize = 10;
   const paddingSize = 16; // theme.spacing.lg is 16
@@ -192,23 +195,8 @@ function ReportsScreen() {
     }
   };
 
-  const handleViewReport = async (report: (typeof reports)[0]) => {
-    try {
-      const url = report.fileUrl;
-      if (!url) {
-        Alert.alert(t('experts.errorTitle'), t('reports.failUploadDesc'));
-        return;
-      }
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert(t('reports.pageTitle'), `URL:\n${url.slice(0, 120)}…`);
-      }
-    } catch (error) {
-      console.error('[Reports] view error:', error);
-      Alert.alert(t('experts.errorTitle'), t('reports.failUploadDesc'));
-    }
+  const handleViewReport = (report: Report) => {
+    setSelectedReportForView(report);
   };
 
   const groupedReports = React.useMemo(() => {
@@ -479,6 +467,12 @@ function ReportsScreen() {
           </View>
         )}
       </ScrollView>
+
+      <ReportModal
+        visible={selectedReportForView !== null}
+        report={selectedReportForView}
+        onClose={() => setSelectedReportForView(null)}
+      />
     </SafeAreaView>
   );
 }
