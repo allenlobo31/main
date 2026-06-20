@@ -83,7 +83,7 @@ function RemoveConnectionModal({ visible, onClose, onConfirm, doctorName, isPend
   );
 }
 
-export default function ExpertsScreen() {
+function ExpertsScreen() {
   const router = useRouter();
   const { t, language } = useLanguageStore();
   const user = useAuthStore(state => state.user);
@@ -577,3 +577,5 @@ const doctorListStyles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+export default React.memo(ExpertsScreen);

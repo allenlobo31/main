@@ -19,7 +19,7 @@ import { User } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { fetchDoctorsCached, getCachedDoctors } from '../../src/utils/doctorsCache';
 
-export default function ConnectDoctorScreen() {
+function ConnectDoctorScreen() {
   const { t, language } = useLanguageStore();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -215,6 +215,10 @@ export default function ConnectDoctorScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={renderEmptyState}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={true}
         />
       )}
     </SafeAreaView>
@@ -419,3 +423,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+
+export default React.memo(ConnectDoctorScreen);

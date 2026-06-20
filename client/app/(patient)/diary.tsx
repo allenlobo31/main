@@ -20,7 +20,7 @@ import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { MoodType } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 
-export default function DiaryScreen() {
+function DiaryScreen() {
   const { entries, isLoading, hasMore, isSubmitting, fetchEntries, addEntry } = useDiary();
   const { t, language } = useLanguageStore();
 
@@ -227,3 +227,5 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
 });
+
+export default React.memo(DiaryScreen);

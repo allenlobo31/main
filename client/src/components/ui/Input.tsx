@@ -16,7 +16,7 @@ interface InputProps extends TextInputProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-export function Input({ label, error, containerStyle, ...props }: InputProps) {
+function _Input({ label, error, containerStyle, ...props }: InputProps) {
   const [focused, setFocused] = useState(false);
 
   return (
@@ -79,3 +79,5 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
 });
+
+export const Input = React.memo(_Input);

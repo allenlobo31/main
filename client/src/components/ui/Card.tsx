@@ -9,7 +9,7 @@ interface CardProps {
   bordered?: boolean;
 }
 
-export function Card({ children, style, variant = 'default', bordered = false }: CardProps) {
+function _Card({ children, style, variant = 'default', bordered = false }: CardProps) {
   return (
     <View
       style={[
@@ -45,3 +45,5 @@ const styles = StyleSheet.create({
     borderColor: '#000000',
   },
 });
+
+export const Card = React.memo(_Card);

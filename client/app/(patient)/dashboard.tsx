@@ -48,7 +48,7 @@ const BADGE_LABELS: Record<BadgeId, Record<LanguageCode, string>> = {
   recovery_hero: { en: 'Recovery Hero', kn: 'ಚೇತರಿಕೆ ವೀರ', hi: 'रिकवरी हीरो' },
 };
 
-export default function DashboardScreen() {
+function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const gamification = useGamification();
@@ -662,3 +662,5 @@ const langModalStyles = StyleSheet.create({
     color: '#000000',
   },
 });
+
+export default React.memo(DashboardScreen);

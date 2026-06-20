@@ -89,7 +89,7 @@ type DetailField = {
   action?: string;
 };
 
-export default function PatientProfileScreen() {
+function PatientProfileScreen() {
   const router = useRouter();
   const { user, logout, updateProfile } = useAuthStore();
   const { t, language } = useLanguageStore();
@@ -1113,3 +1113,5 @@ const styles = StyleSheet.create({
     color: '#000000',
   },
 });
+
+export default React.memo(PatientProfileScreen);

@@ -18,7 +18,7 @@ interface TaskCardProps {
   isManuallyCompletable?: boolean;
 }
 
-export function TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCardProps) {
+function _TaskCard({ task, onPress, isManuallyCompletable = true }: TaskCardProps) {
   const { t, language } = useLanguageStore();
   
   return (
@@ -118,3 +118,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const TaskCard = React.memo(_TaskCard);

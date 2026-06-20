@@ -8,7 +8,7 @@ interface AvatarProps {
   size?: number;
 }
 
-export function Avatar({ uri, name, size = 40 }: AvatarProps) {
+function _Avatar({ uri, name, size = 40 }: AvatarProps) {
   const initials = (name ?? '?').trim().charAt(0).toUpperCase() || '?';
 
   if (uri) {
@@ -56,3 +56,5 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export const Avatar = React.memo(_Avatar);

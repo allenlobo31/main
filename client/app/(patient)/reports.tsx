@@ -43,7 +43,7 @@ const TYPE_ICONS: Record<string, any> = {
   other: Paperclip,
 };
 
-export default function ReportsScreen() {
+function ReportsScreen() {
   const { t, language } = useLanguageStore();
   const {
     reports,
@@ -808,3 +808,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
+export default React.memo(ReportsScreen);

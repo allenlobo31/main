@@ -7,7 +7,7 @@ interface StreakCounterProps {
   streak: number;
 }
 
-export function StreakCounter({ streak }: StreakCounterProps) {
+function _StreakCounter({ streak }: StreakCounterProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { t } = useLanguageStore();
 
@@ -60,3 +60,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
 });
+
+export const StreakCounter = React.memo(_StreakCounter);

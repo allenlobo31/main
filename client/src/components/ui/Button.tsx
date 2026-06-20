@@ -23,7 +23,7 @@ interface ButtonProps {
   fullWidth?: boolean;
 }
 
-export function Button({
+function _Button({
   label,
   onPress,
   variant = 'primary',
@@ -110,3 +110,5 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
 });
+
+export const Button = React.memo(_Button);

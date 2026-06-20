@@ -36,7 +36,7 @@ type AlertLevel = 'safe' | 'warning' | 'danger';
 
 
 
-export default function AIMonitorScreen() {
+function AIMonitorScreen() {
   const { entries, aiInsight, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
   const gamification = useGamification();
   const { user } = useAuthStore();
@@ -522,3 +522,5 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
 });
+
+export default React.memo(AIMonitorScreen);

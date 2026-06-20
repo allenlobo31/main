@@ -19,7 +19,7 @@ const TREND_CONFIG: Record<PainTrend, { label: string; color: string; iconName: 
 
 const ICONS: Record<string, any> = { TrendingUp, Minus, TrendingDown };
 
-export function AIInsightCard({ insight }: AIInsightCardProps) {
+function _AIInsightCard({ insight }: AIInsightCardProps) {
   const trendConfig = TREND_CONFIG[insight.painTrend];
   const TrendIcon = ICONS[trendConfig.iconName];
 
@@ -96,3 +96,5 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
 });
+
+export const AIInsightCard = React.memo(_AIInsightCard);

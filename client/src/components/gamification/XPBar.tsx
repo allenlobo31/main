@@ -7,7 +7,7 @@ interface XPBarProps {
   xp: number;
 }
 
-export function XPBar({ xp }: XPBarProps) {
+function _XPBar({ xp }: XPBarProps) {
   const levelDef = getLevelForXP(xp);
   const progress = getXPProgressInLevel(xp);
   const animValue = useRef(new Animated.Value(0)).current;
@@ -90,3 +90,5 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
 });
+
+export const XPBar = React.memo(_XPBar);

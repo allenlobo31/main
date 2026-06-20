@@ -9,7 +9,7 @@ interface BadgeProps {
   variant?: BadgeVariant;
 }
 
-export function Badge({ label, variant = 'primary' }: BadgeProps) {
+function _Badge({ label, variant = 'primary' }: BadgeProps) {
   return (
     <View style={[styles.base, styles[variant]]}>
       <Text style={[styles.label, styles[`${variant}Text`]]}>{label}</Text>
@@ -38,3 +38,5 @@ const styles = StyleSheet.create({
   warningText: { color: theme.colors.warning },
   mutedText: { color: theme.colors.textMuted },
 });
+
+export const Badge = React.memo(_Badge);

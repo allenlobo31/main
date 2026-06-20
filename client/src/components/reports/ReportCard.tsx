@@ -27,7 +27,7 @@ interface ReportCardProps {
   onDelete?: () => void;
 }
 
-export function ReportCard({ report, onView, onDelete }: ReportCardProps) {
+function _ReportCard({ report, onView, onDelete }: ReportCardProps) {
   const [scaleValue] = useState(new Animated.Value(1));
 
   const onPressIn = () => {
@@ -188,3 +188,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
+export const ReportCard = React.memo(_ReportCard);

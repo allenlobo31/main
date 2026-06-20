@@ -840,7 +840,16 @@ export const useLanguageStore = create<LanguageState & LanguageActions>()(
     (set, get) => ({
       language: 'en',
 
-      setLanguage: (lang) => set({ language: lang }),
+      setLanguage: (() => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        return (lang: LanguageCode) => {
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => {
+            set({ language: lang });
+            timer = null;
+          }, 200);
+        };
+      })(),
 
       t: (key, replacements) => {
         const lang = get().language;

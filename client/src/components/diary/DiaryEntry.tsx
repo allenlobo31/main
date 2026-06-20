@@ -19,7 +19,7 @@ interface DiaryEntryProps {
   entry: DiaryEntryType;
 }
 
-export function DiaryEntry({ entry }: DiaryEntryProps) {
+function _DiaryEntry({ entry }: DiaryEntryProps) {
   const moodCfg = MOOD_CONFIG[entry.mood];
   const Icon = ICONS[moodCfg?.iconName];
   const isHealthMonitorEntry = entry.text?.startsWith('Health Monitor Report') ?? false;
@@ -103,3 +103,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export const DiaryEntry = React.memo(_DiaryEntry);

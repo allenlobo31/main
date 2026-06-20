@@ -26,7 +26,7 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export default function ActivityScreen() {
+function ActivityScreen() {
   const { isCompact, horizontalPadding } = useResponsiveLayout();
   const { t, language } = useLanguageStore();
 
@@ -440,3 +440,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default React.memo(ActivityScreen);

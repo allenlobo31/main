@@ -12,7 +12,7 @@ interface MoodPickerProps {
   onSelect: (mood: MoodType) => void;
 }
 
-export function MoodPicker({ selected, onSelect }: MoodPickerProps) {
+function _MoodPicker({ selected, onSelect }: MoodPickerProps) {
   const { language, t } = useLanguageStore();
 
   const getMoodLabel = (mood: MoodType) => {
@@ -98,3 +98,5 @@ const styles = StyleSheet.create({
   },
   optLabelSelected: { color: theme.colors.primaryLight },
 });
+
+export const MoodPicker = React.memo(_MoodPicker);

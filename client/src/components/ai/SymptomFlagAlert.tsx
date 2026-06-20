@@ -8,7 +8,7 @@ interface SymptomFlagAlertProps {
   onPress?: () => void;
 }
 
-export function SymptomFlagAlert({ entry, onPress }: SymptomFlagAlertProps) {
+function _SymptomFlagAlert({ entry, onPress }: SymptomFlagAlertProps) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -70,3 +70,5 @@ const styles = StyleSheet.create({
     color: theme.colors.dangerLight,
   },
 });
+
+export const SymptomFlagAlert = React.memo(_SymptomFlagAlert);
