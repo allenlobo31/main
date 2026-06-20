@@ -72,13 +72,13 @@ app.get('/api/images/:id', authMiddleware, async (req, res) => {
     const userRole = req.user.role;
 
     if (userRole === 'patient') {
-      if (image.userId.toString() !== userId) {
+      if (!image.userId || image.userId.toString() !== userId) {
         return res.status(403).json({ error: 'Access denied: You do not own this image' });
       }
     } else if (userRole === 'doctor') {
       const { User } = require('./models');
       const doctor = await User.findById(userId);
-      if (!doctor || !doctor.linkedPatientIds.includes(image.userId.toString())) {
+      if (!doctor || !image.userId || !doctor.linkedPatientIds.includes(image.userId.toString())) {
         return res.status(403).json({ error: 'Access denied: Patient is not linked to you' });
       }
     } else {
