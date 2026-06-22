@@ -136,6 +136,35 @@ router.get('/diary', authMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/diary/:id', authMiddleware, async (req, res) => {
+  try {
+    const diary = await Diary.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!diary) {
+      return res.status(404).json({ error: 'Diary entry not found' });
+    }
+
+    if (diary.symptomId) {
+      await Symptom.deleteOne({ _id: diary.symptomId, userId: req.user.id });
+    } else {
+      // Fallback: delete symptom entries logged within +/- 10 seconds of this diary entry
+      const timeDiff = 10 * 1000;
+      const diaryTime = new Date(diary.date || diary.timestamp).getTime();
+      await Symptom.deleteOne({
+        userId: req.user.id,
+        timestamp: {
+          $gte: new Date(diaryTime - timeDiff),
+          $lte: new Date(diaryTime + timeDiff)
+        }
+      });
+    }
+
+    await Diary.deleteOne({ _id: req.params.id, userId: req.user.id });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Gamification / Profile shorthand
 router.get('/me', authMiddleware, async (req, res) => {
   try {

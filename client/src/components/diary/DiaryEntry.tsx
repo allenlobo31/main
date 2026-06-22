@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { theme } from '../../constants/theme';
 import { DiaryEntry as DiaryEntryType, MoodType } from '../../types';
 import { formatDate } from '../../utils/dateHelpers';
-import { Laugh, Smile, Meh, Frown, Annoyed, Bot } from 'lucide-react-native';
+import { Laugh, Smile, Meh, Frown, Annoyed, Bot, Trash2 } from 'lucide-react-native';
 
 const MOOD_CONFIG: Record<MoodType, { iconName: string; color: string }> = {
   great: { iconName: 'Laugh', color: theme.colors.successLight },
@@ -17,9 +17,10 @@ const ICONS: Record<string, any> = { Laugh, Smile, Meh, Frown, Annoyed };
 
 interface DiaryEntryProps {
   entry: DiaryEntryType;
+  onDelete?: (id: string) => void;
 }
 
-function _DiaryEntry({ entry }: DiaryEntryProps) {
+function _DiaryEntry({ entry, onDelete }: DiaryEntryProps) {
   const moodCfg = MOOD_CONFIG[entry.mood];
   const Icon = ICONS[moodCfg?.iconName];
   const isHealthMonitorEntry = entry.text?.startsWith('Health Monitor Report') ?? false;
@@ -36,7 +37,14 @@ function _DiaryEntry({ entry }: DiaryEntryProps) {
         ) : null}
         <View style={styles.header}>
           <Text style={styles.dateText}>{formatDate(entry.date)}</Text>
-          {Icon && <Icon size={20} color={moodCfg.color} strokeWidth={2} />}
+          <View style={styles.headerRight}>
+            {Icon && <Icon size={20} color={moodCfg.color} strokeWidth={2} />}
+            {onDelete && (
+              <TouchableOpacity onPress={() => onDelete(entry.id)} style={styles.deleteBtn} activeOpacity={0.7}>
+                <Trash2 size={16} color={theme.colors.dangerLight} strokeWidth={2} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <Text style={styles.text}>{entry.text}</Text>
         {entry.aiSummary ? (
@@ -92,6 +100,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.xs,
     gap: theme.spacing.sm,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  deleteBtn: {
+    padding: theme.spacing.xs,
   },
   dateText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
   text: { ...theme.typography.body, color: theme.colors.textSecondary, lineHeight: 20 },

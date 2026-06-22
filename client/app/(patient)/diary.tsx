@@ -21,8 +21,31 @@ import { MoodType } from '../../src/types';
 import { useLanguageStore } from '../../src/store/languageStore';
 
 function DiaryScreen() {
-  const { entries, isLoading, hasMore, isSubmitting, fetchEntries, addEntry } = useDiary();
+  const { entries, isLoading, hasMore, isSubmitting, fetchEntries, addEntry, deleteEntry } = useDiary();
   const { t, language } = useLanguageStore();
+
+  const handleDelete = async (id: string) => {
+    Alert.alert(
+      t('diary.deleteTitle'),
+      t('diary.deleteConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete') || 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await deleteEntry(id);
+            if (success) {
+              Alert.alert(t('common.success') || 'Success', t('diary.deleteSuccess'));
+            } else {
+              Alert.alert(t('common.error') || 'Error', t('diary.deleteError'));
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
 
   const [text, setText] = useState('');
   const [mood, setMood] = useState<MoodType | null>(null);
@@ -95,7 +118,7 @@ function DiaryScreen() {
               showsVerticalScrollIndicator={true}
             >
               {todaysEntries.map((item, index) => (
-                <DiaryEntry key={`${item.id}-${index}`} entry={item} />
+                <DiaryEntry key={`${item.id}-${index}`} entry={item} onDelete={handleDelete} />
               ))}
             </ScrollView>
           ) : (
@@ -112,7 +135,7 @@ function DiaryScreen() {
                 showsVerticalScrollIndicator={true}
               >
                 {otherEntries.map((item, index) => (
-                  <DiaryEntry key={`${item.id}-${index}`} entry={item} />
+                  <DiaryEntry key={`${item.id}-${index}`} entry={item} onDelete={handleDelete} />
                 ))}
               </ScrollView>
             </View>

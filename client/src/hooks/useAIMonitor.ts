@@ -34,6 +34,11 @@ export function useAIMonitor() {
     await store.fetchAIInsight(uid);
   }, [uid]);
 
+  const fetchEntries = useCallback(async (refresh = true) => {
+    if (!uid) return;
+    await store.fetchEntries(uid, refresh);
+  }, [uid]);
+
   const hasFlaggedEntries = store.entries.some((e) => e.aiFlag);
   const latestFlag = store.entries.find((e) => e.aiFlag);
 
@@ -47,5 +52,6 @@ export function useAIMonitor() {
     logSymptom,
     loadMore,
     refreshInsight,
+    fetchEntries,
   };
 }

@@ -44,6 +44,11 @@ export const getDiary = async () => {
   return response.data.map(normalizeDiary);
 };
 
+export const deleteDiary = async (id: string) => {
+  const response = await apiClient.delete(`/users/diary/${id}`);
+  return response.data;
+};
+
 export const getPatientDetail = async (uid: string) => {
   const response = await apiClient.get(`/users/patients/${uid}`);
   const data = response.data;

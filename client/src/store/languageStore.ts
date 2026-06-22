@@ -114,6 +114,10 @@ const translations = {
       todayHeader: 'Today',
       olderEntriesHeader: 'Older Logs',
       noEntriesToday: 'No logs written today.',
+      deleteTitle: 'Delete Entry',
+      deleteConfirm: 'Are you sure you want to delete this entry?',
+      deleteSuccess: 'Entry deleted successfully.',
+      deleteError: 'Could not delete entry. Try again.',
     },
     experts: {
       pageTitle: 'Find Doctors',
@@ -225,6 +229,7 @@ const translations = {
       noSymptomSelected: 'No critical symptoms',
       reportTitle: 'Symptom Report',
       saveError: 'Could not save. Try again.',
+      viewHistory: 'View History',
     },
     profile: {
       pageTitle: 'Profile',
@@ -388,6 +393,10 @@ const translations = {
       todayHeader: 'ಇಂದು',
       olderEntriesHeader: 'ಹಳೆಯ ದಾಖಲೆಗಳು',
       noEntriesToday: 'ಇಂದು ಯಾವುದೇ ದಾಖಲೆ ಇಲ್ಲ.',
+      deleteTitle: 'ದಾಖಲೆ ಅಳಿಸಿ',
+      deleteConfirm: 'ಈ ದಾಖಲೆಯನ್ನು ಅಳಿಸಲು ನಿಮಗೆ ಖಚಿತವೇ?',
+      deleteSuccess: 'ದಾಖಲೆಯನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಅಳಿಸಲಾಗಿದೆ.',
+      deleteError: 'ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ. ಮತ್ತೆ ಯತ್ನಿಸಿ.',
     },
     experts: {
       pageTitle: 'ವೈದ್ಯರನ್ನು ಹುಡುಕಿ',
@@ -499,6 +508,7 @@ const translations = {
       noSymptomSelected: 'ಯಾವ ಲಕ್ಷಣವೂ ಇಲ್ಲ',
       reportTitle: 'ಲಕ್ಷಣಗಳ ವರದಿ',
       saveError: 'ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ. ಮತ್ತೆ ಯತ್ನಿಸಿ.',
+      viewHistory: 'ದಿನಚರಿ ನೋಡಿ',
     },
     profile: {
       pageTitle: 'ಪ್ರೊಫೈಲ್',
@@ -662,6 +672,10 @@ const translations = {
       todayHeader: 'आज',
       olderEntriesHeader: 'पुराने लॉग',
       noEntriesToday: 'आज कोई लॉग नहीं लिखा।',
+      deleteTitle: 'लॉग हटाएं',
+      deleteConfirm: 'क्या आप वाकई इस लॉग को हटाना चाहते हैं?',
+      deleteSuccess: 'लॉग सफलतापूर्वक हटा दिया गया।',
+      deleteError: 'लॉग नहीं हटा सके। फिर प्रयास करें।',
     },
     experts: {
       pageTitle: 'डॉक्टर खोजें',
@@ -773,6 +787,7 @@ const translations = {
       noSymptomSelected: 'कोई लक्षण नहीं चुना',
       reportTitle: 'लक्षण रिपोर्ट',
       saveError: 'सहेज नहीं सके। फिर प्रयास करें।',
+      viewHistory: 'इतिहास देखें',
     },
     profile: {
       pageTitle: 'प्रोफ़ाइल',

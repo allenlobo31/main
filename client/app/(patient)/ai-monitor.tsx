@@ -12,6 +12,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAIMonitor } from '../../src/hooks/useAIMonitor';
 import { useLanguageStore } from '../../src/store/languageStore';
 import { useGamification } from '../../src/hooks/useGamification';
+import { useRouter } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { AIInsightCard } from '../../src/components/ai/AIInsightCard';
 import { SymptomFlagAlert } from '../../src/components/ai/SymptomFlagAlert';
 import { PainChart } from '../../src/components/ai/PainChart';
@@ -37,7 +39,8 @@ type AlertLevel = 'safe' | 'warning' | 'danger';
 
 
 function AIMonitorScreen() {
-  const { entries, aiInsight, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight } = useAIMonitor();
+  const { entries, aiInsight, hasFlaggedEntries, latestFlag, logSymptom, refreshInsight, fetchEntries } = useAIMonitor();
+  const router = useRouter();
   const gamification = useGamification();
   const { user } = useAuthStore();
   const { t, language } = useLanguageStore();
@@ -61,9 +64,17 @@ function AIMonitorScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
 
-  useEffect(() => {
-    refreshInsight();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchEntries(true);
+      refreshInsight();
+    }, [fetchEntries, refreshInsight])
+  );
+
+  const hasLoggedToday = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return entries.some((e) => new Date(e.date).toDateString() === todayStr);
+  }, [entries]);
 
   const alertLevel: AlertLevel = useMemo(() => {
     if (redness || bleeding) return 'danger';
@@ -90,7 +101,7 @@ function AIMonitorScreen() {
 
       const loggedAt = new Date();
 
-      await logSymptom({
+      const symptomId = await logSymptom({
         painLevel: calculatedPainLevel,
         swelling: swelling ? 'mild' : 'none',
         fever,
@@ -132,6 +143,7 @@ function AIMonitorScreen() {
           mood: diaryMood,
           date: new Date().toISOString(),
           aiSummary: null,
+          symptomId: symptomId,
         });
       }
 
@@ -306,6 +318,16 @@ function AIMonitorScreen() {
         {/* Chart */}
         <PainChart entries={entries} />
 
+        {hasLoggedToday && (
+          <Button
+            label={t('monitor.viewHistory') || 'View History'}
+            onPress={() => router.push('/(patient)/diary')}
+            variant="secondary"
+            style={styles.viewHistoryBtn}
+            fullWidth
+          />
+        )}
+
         {/* Symptom Log Form */}
         <Card style={styles.formCard} bordered>
           <Text style={styles.formTitle}>{t('monitor.logTitle')}</Text>
@@ -408,6 +430,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
   container: { paddingTop: theme.spacing.lg, paddingBottom: theme.spacing.xxxl },
   pageTitle: { ...theme.typography.h1, color: theme.colors.textPrimary, marginBottom: theme.spacing.lg },
+  viewHistoryBtn: {
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
   formCard: {
     marginTop: theme.spacing.md,
     backgroundColor: '#f0fdf4',

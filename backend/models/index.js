@@ -76,6 +76,7 @@ const DiarySchema = new Schema({
   mood: String,
   date: Date,
   aiSummary: String,
+  symptomId: { type: Schema.Types.ObjectId, ref: 'Symptom' },
   timestamp: { type: Date, default: Date.now },
 });
 

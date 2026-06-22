@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { DiaryEntry, MoodType } from '../types';
 import { useAuthStore } from '../store/authStore';
-import { submitDiary, getDiary } from '../services/dataService';
+import { submitDiary, getDiary, deleteDiary } from '../services/dataService';
 
 export function useDiary() {
   const { user } = useAuthStore();
@@ -40,12 +40,28 @@ export function useDiary() {
     [user?.uid, isSubmitting, fetchEntries],
   );
 
+  const deleteEntry = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!user?.uid) return false;
+      try {
+        await deleteDiary(id);
+        await fetchEntries();
+        return true;
+      } catch (error) {
+        console.error('[useDiary] deleteEntry error:', error);
+        return false;
+      }
+    },
+    [user?.uid, fetchEntries],
+  );
+
   return {
     entries,
     isLoading,
     isSubmitting,
     fetchEntries,
     addEntry,
+    deleteEntry,
     hasMore: false,
   };
 }
