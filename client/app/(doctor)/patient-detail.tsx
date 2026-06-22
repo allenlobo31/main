@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Image,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
@@ -20,6 +22,8 @@ import { theme } from '../../src/constants/theme';
 import { useResponsiveLayout } from '../../src/hooks/useResponsiveLayout';
 import { User, SymptomEntry, Report, GamificationProfile, AIInsight } from '../../src/types';
 import { todayDateString, formatDate } from '../../src/utils/dateHelpers';
+import { useAuthStore } from '../../src/store/authStore';
+import { Zap } from 'lucide-react-native';
 
 export default function PatientDetailScreen() {
   const { uid } = useLocalSearchParams<{ uid: string }>();
@@ -31,6 +35,33 @@ export default function PatientDetailScreen() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isCompact, horizontalPadding } = useResponsiveLayout();
+
+  const [activeDate, setActiveDate] = useState<Date>(new Date());
+  const token = useAuthStore((state) => state.token);
+
+  const activeDaySymptoms = useMemo(() => {
+    const activeStr = activeDate.toDateString();
+    return symptoms.filter((s) => new Date(s.date).toDateString() === activeStr);
+  }, [symptoms, activeDate]);
+
+  const activeDayReports = useMemo(() => {
+    const activeStr = activeDate.toDateString();
+    return reports.filter((r) => new Date(r.uploadedAt).toDateString() === activeStr);
+  }, [reports, activeDate]);
+
+  const activePhotos = useMemo(() => {
+    return activeDayReports.filter((r) => r.type === 'wound_photo');
+  }, [activeDayReports]);
+
+  const activeOtherReports = useMemo(() => {
+    return activeDayReports.filter((r) => r.type !== 'wound_photo');
+  }, [activeDayReports]);
+
+  const showAIInsight = useMemo(() => {
+    if (!aiInsight) return false;
+    const insightDate = new Date(aiInsight.generatedAt || new Date());
+    return insightDate.toDateString() === activeDate.toDateString();
+  }, [aiInsight, activeDate]);
 
   useEffect(() => {
     if (uid) loadData(uid);
@@ -103,7 +134,7 @@ export default function PatientDetailScreen() {
         </Card>
 
         {/* AI Insight */}
-        {aiInsight && (
+        {showAIInsight && aiInsight && (
           <>
             <Text style={styles.sectionTitle}>Today's AI Insight</Text>
             <AIInsightCard insight={aiInsight} />
@@ -112,11 +143,15 @@ export default function PatientDetailScreen() {
 
         {/* Pain Chart */}
         <Text style={styles.sectionTitle}>Pain Trend</Text>
-        <PainChart entries={symptoms} />
+        <PainChart 
+          entries={symptoms} 
+          selectedDate={activeDate}
+          onDateChange={setActiveDate}
+        />
 
         {/* Symptom Log */}
-        <Text style={styles.sectionTitle}>Recent Symptoms</Text>
-        {symptoms.slice(0, 5).map((s) => (
+        <Text style={styles.sectionTitle}>Logged Symptoms</Text>
+        {activeDaySymptoms.map((s) => (
           <Card key={s.id} style={styles.symptomCard} bordered={s.aiFlag}>
             <View style={styles.symptomRow}>
               <Text style={styles.symptomDate}>{formatDate(s.date)}</Text>
@@ -131,14 +166,47 @@ export default function PatientDetailScreen() {
             </Text>
           </Card>
         ))}
+        {activeDaySymptoms.length === 0 && (
+          <Text style={styles.empty}>No symptoms logged for this date.</Text>
+        )}
+
+        {/* Photos Grid (3 per row) */}
+        {activePhotos.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Wound Photos</Text>
+            <View style={styles.photosGrid}>
+              {activePhotos.map((photo) => (
+                <TouchableOpacity
+                  key={photo.id}
+                  style={styles.photoGridItem}
+                  onPress={() => setSelectedReport(photo)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{
+                      uri: photo.fileUrl,
+                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                    }}
+                    style={styles.photoGridImage}
+                  />
+                  {photo.aiWoundAnalysis && (
+                    <View style={styles.photoGridAiBadge}>
+                      <Zap size={10} color="#000000" fill="#000000" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
         {/* Reports */}
         <Text style={styles.sectionTitle}>Medical Reports</Text>
-        {reports.map((r) => (
+        {activeOtherReports.map((r) => (
           <ReportCard key={r.id} report={r} onView={() => setSelectedReport(r)} />
         ))}
-        {reports.length === 0 && (
-          <Text style={styles.empty}>No reports uploaded yet.</Text>
+        {activeOtherReports.length === 0 && (
+          <Text style={styles.empty}>No other reports for this date.</Text>
         )}
       </ScrollView>
 
@@ -174,4 +242,39 @@ const styles = StyleSheet.create({
   symptomDetail: { ...theme.typography.body, color: theme.colors.textSecondary },
   symptomNotes: { ...theme.typography.caption, color: theme.colors.textMuted, marginTop: 2 },
   empty: { ...theme.typography.body, color: theme.colors.textMuted, fontStyle: 'italic', textAlign: 'center', marginTop: theme.spacing.md },
+  photosGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: theme.spacing.xs,
+  },
+  photoGridItem: {
+    width: '31.5%',
+    aspectRatio: 1,
+    borderWidth: 2,
+    borderColor: '#000000',
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#f1f5f9',
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 1,
+  },
+  photoGridImage: {
+    width: '100%',
+    height: '100%',
+  },
+  photoGridAiBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#fbbf24',
+    borderRadius: 999,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#000000',
+  },
 });

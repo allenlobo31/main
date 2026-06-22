@@ -16,34 +16,37 @@ interface PainChartProps {
   hasLoggedToday?: boolean;
   onViewHistory?: () => void;
   viewHistoryLabel?: string;
+  selectedDate?: Date;
+  onDateChange?: (date: Date) => void;
 }
 
 export function PainChart({ 
   entries, 
   hasLoggedToday = false, 
   onViewHistory, 
-  viewHistoryLabel 
+  viewHistoryLabel,
+  selectedDate: propSelectedDate,
+  onDateChange
 }: PainChartProps) {
   const { width } = useWindowDimensions();
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [localSelectedDate, setLocalSelectedDate] = useState<Date>(new Date());
+
+  const selectedDate = propSelectedDate || localSelectedDate;
+  const setSelectedDate = onDateChange || setLocalSelectedDate;
 
   const chartWidth = Math.max(width - 64, 280);
 
   // Chevron navigation handlers
   const handlePrev = () => {
-    setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setDate(next.getDate() - 1);
-      return next;
-    });
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() - 1);
+    setSelectedDate(next);
   };
 
   const handleNext = () => {
-    setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setDate(next.getDate() + 1);
-      return next;
-    });
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + 1);
+    setSelectedDate(next);
   };
 
   // Determine if next button is disabled (cannot view future dates)
