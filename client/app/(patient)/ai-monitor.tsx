@@ -316,17 +316,12 @@ function AIMonitorScreen() {
         {aiInsight && <AIInsightCard insight={aiInsight} />}
 
         {/* Chart */}
-        <PainChart entries={entries} />
-
-        {hasLoggedToday && (
-          <Button
-            label={t('monitor.viewHistory') || 'View History'}
-            onPress={() => router.push('/(patient)/diary')}
-            variant="secondary"
-            style={styles.viewHistoryBtn}
-            fullWidth
-          />
-        )}
+        <PainChart
+          entries={entries}
+          hasLoggedToday={hasLoggedToday}
+          onViewHistory={() => router.push('/(patient)/diary')}
+          viewHistoryLabel={t('monitor.viewHistory')}
+        />
 
         {/* Symptom Log Form */}
         <Card style={styles.formCard} bordered>

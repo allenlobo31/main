@@ -134,6 +134,7 @@ export default function DoctorAppointmentsScreen() {
 
   // Filter appointments for the selected date
   const selectedDayAppointments = appointments.filter(app => app.date === selectedDateStr);
+  const isSelectedDatePast = selectedDateStr < getTodayStr();
 
   const formatDateLabel = (dateStr: string) => {
     try {
@@ -190,6 +191,7 @@ export default function DoctorAppointmentsScreen() {
               const hasApp = dayApps.length > 0;
               const isSelected = cell.dateStr === selectedDateStr;
               const isToday = cell.dateStr === getTodayStr();
+              const isPast = cell.dateStr < getTodayStr();
 
               return (
                 <TouchableOpacity
@@ -198,7 +200,7 @@ export default function DoctorAppointmentsScreen() {
                     styles.dayCell,
                     !cell.isCurrentMonth && styles.dayCellOutOfMonth,
                     isSelected && styles.dayCellSelected,
-                    hasApp && !isSelected && styles.dayCellHasApp,
+                    hasApp && !isSelected && (isPast ? styles.dayCellPastApp : styles.dayCellHasApp),
                   ]}
                   onPress={() => setSelectedDateStr(cell.dateStr)}
                   activeOpacity={0.8}
@@ -209,7 +211,7 @@ export default function DoctorAppointmentsScreen() {
                       !cell.isCurrentMonth && styles.dayTextOutOfMonth,
                       isSelected && styles.dayTextSelected,
                       isToday && !isSelected && styles.dayTextToday,
-                      hasApp && !isSelected && styles.dayTextHasApp,
+                      hasApp && !isSelected && (isPast ? styles.dayTextPastApp : styles.dayTextHasApp),
                     ]}
                   >
                     {cell.day}
@@ -220,7 +222,7 @@ export default function DoctorAppointmentsScreen() {
                     <View 
                       style={[
                         styles.appDot,
-                        isSelected ? styles.appDotSelected : styles.appDotHasApp
+                        isSelected ? styles.appDotSelected : (isPast ? styles.appDotPastApp : styles.appDotHasApp)
                       ]} 
                     />
                   )}
@@ -254,18 +256,18 @@ export default function DoctorAppointmentsScreen() {
             </View>
           ) : (
             selectedDayAppointments.map((item, index) => (
-              <View key={`${item.patientId}-${index}`} style={styles.appointmentCard}>
+              <View key={`${item.patientId}-${index}`} style={[styles.appointmentCard, isSelectedDatePast && styles.appointmentCardPast]}>
                 <View style={styles.patientRow}>
-                  <View style={styles.avatarMiniFallback}>
-                    <UserIcon size={16} color="#34d399" />
+                  <View style={[styles.avatarMiniFallback, isSelectedDatePast && styles.avatarMiniFallbackPast]}>
+                    <UserIcon size={16} color={isSelectedDatePast ? '#64748b' : '#34d399'} />
                   </View>
                   <View style={styles.patientInfo}>
-                    <Text style={styles.patientName}>{item.patientName}</Text>
+                    <Text style={[styles.patientName, isSelectedDatePast && styles.patientNamePast]}>{item.patientName}</Text>
                     <Text style={styles.patientMeta}>Hernia Recovery Consultation</Text>
                   </View>
-                  <View style={styles.timeTag}>
-                    <Clock size={12} color="#34d399" style={{ marginRight: 4 }} />
-                    <Text style={styles.timeTagText}>{item.time}</Text>
+                  <View style={[styles.timeTag, isSelectedDatePast && styles.timeTagPast]}>
+                    <Clock size={12} color={isSelectedDatePast ? '#64748b' : '#34d399'} style={{ marginRight: 4 }} />
+                    <Text style={[styles.timeTagText, isSelectedDatePast && styles.timeTagTextPast]}>{item.time}</Text>
                   </View>
                 </View>
                 
@@ -283,12 +285,21 @@ export default function DoctorAppointmentsScreen() {
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={[styles.actionBtn, styles.actionBtnPrimary]}
-                    onPress={() => Alert.alert('Consultation Call', `Initiating consult call with ${item.patientName}...`)}
+                    style={[styles.actionBtn, styles.actionBtnPrimary, isSelectedDatePast && styles.actionBtnPrimaryPast]}
+                    onPress={() => {
+                      if (isSelectedDatePast) {
+                        Alert.alert('Appointment Done', 'This appointment date is already passed/done.');
+                      } else {
+                        Alert.alert('Consultation Call', `Initiating consult call with ${item.patientName}...`);
+                      }
+                    }}
                     activeOpacity={0.8}
+                    disabled={isSelectedDatePast}
                   >
-                    <Phone size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                    <Text style={styles.actionBtnPrimaryText}>Start Call</Text>
+                    <Phone size={14} color={isSelectedDatePast ? '#94a3b8' : '#ffffff'} style={{ marginRight: 6 }} />
+                    <Text style={[styles.actionBtnPrimaryText, isSelectedDatePast && styles.actionBtnPrimaryTextPast]}>
+                      {isSelectedDatePast ? 'Done' : 'Start Call'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -569,5 +580,42 @@ const styles = StyleSheet.create({
     color: '#334155',
     fontSize: 12,
     fontWeight: '800',
+  },
+  dayCellPastApp: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+    borderWidth: 1.5,
+  },
+  dayTextPastApp: {
+    color: '#64748b',
+  },
+  appDotPastApp: {
+    backgroundColor: '#64748b',
+  },
+  appointmentCardPast: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#94a3b8',
+    opacity: 0.85,
+  },
+  avatarMiniFallbackPast: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+  },
+  patientNamePast: {
+    color: '#64748b',
+  },
+  timeTagPast: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#cbd5e1',
+  },
+  timeTagTextPast: {
+    color: '#64748b',
+  },
+  actionBtnPrimaryPast: {
+    backgroundColor: '#e2e8f0',
+    borderColor: '#cbd5e1',
+  },
+  actionBtnPrimaryTextPast: {
+    color: '#94a3b8',
   },
 });

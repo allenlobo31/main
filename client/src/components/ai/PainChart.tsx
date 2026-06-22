@@ -9,11 +9,21 @@ import {
   ChevronRight 
 } from 'lucide-react-native';
 
+import { Button } from '../ui/Button';
+
 interface PainChartProps {
   entries: SymptomEntry[];
+  hasLoggedToday?: boolean;
+  onViewHistory?: () => void;
+  viewHistoryLabel?: string;
 }
 
-export function PainChart({ entries }: PainChartProps) {
+export function PainChart({ 
+  entries, 
+  hasLoggedToday = false, 
+  onViewHistory, 
+  viewHistoryLabel 
+}: PainChartProps) {
   const { width } = useWindowDimensions();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
@@ -233,6 +243,16 @@ export function PainChart({ entries }: PainChartProps) {
           />
         </View>
       </View>
+
+      {hasLoggedToday && onViewHistory && (
+        <Button
+          label={viewHistoryLabel || 'View History'}
+          onPress={onViewHistory}
+          variant="secondary"
+          style={styles.viewHistoryBtn}
+          fullWidth
+        />
+      )}
     </View>
   );
 }
@@ -252,6 +272,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
+  },
+  viewHistoryBtn: {
+    marginTop: theme.spacing.md,
+    backgroundColor: '#ffffff',
   },
   toggleContainer: {
     backgroundColor: '#ffffff',

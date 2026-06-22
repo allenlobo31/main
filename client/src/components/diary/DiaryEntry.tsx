@@ -41,7 +41,7 @@ function _DiaryEntry({ entry, onDelete }: DiaryEntryProps) {
             {Icon && <Icon size={20} color={moodCfg.color} strokeWidth={2} />}
             {onDelete && (
               <TouchableOpacity onPress={() => onDelete(entry.id)} style={styles.deleteBtn} activeOpacity={0.7}>
-                <Trash2 size={16} color={theme.colors.dangerLight} strokeWidth={2} />
+                <Trash2 size={13} color="#ffffff" strokeWidth={2.5} />
               </TouchableOpacity>
             )}
           </View>
@@ -107,7 +107,19 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   deleteBtn: {
-    padding: theme.spacing.xs,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#000000',
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 1,
   },
   dateText: { ...theme.typography.caption, color: theme.colors.textMuted, fontWeight: '600' },
   text: { ...theme.typography.body, color: theme.colors.textSecondary, lineHeight: 20 },
